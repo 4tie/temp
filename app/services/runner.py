@@ -8,7 +8,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
 
-from app.core.config import BACKTEST_RESULTS_DIR, HYPEROPT_RESULTS_DIR, DATA_DIR
+from app.core.config import BACKTEST_RESULTS_DIR, HYPEROPT_RESULTS_DIR, DATA_DIR, STRATEGIES_DIR
 from app.core.processes import (
     set_process, append_log, set_status, get_status,
     get_logs, remove_process, get_process
@@ -17,6 +17,31 @@ from app.services.command_builder import build_backtest_command, build_download_
 from app.services.result_parser import parse_backtest_results
 from app.services.storage import save_run_meta, save_run_results, save_run_logs, get_run_dir
 from app.services.hyperopt_storage import save_hyperopt_meta, save_hyperopt_results, save_hyperopt_logs, get_hyperopt_run_dir
+
+
+_JSON_SCALAR_TYPES = (str, int, float, bool, type(None))
+
+
+def _ensure_valid_strategy_json(strategy: str, run_id: str) -> None:
+    json_path = STRATEGIES_DIR / f"{strategy}.json"
+    if not json_path.exists():
+        return
+    try:
+        raw = json_path.read_bytes()
+        if not raw.strip():
+            raise ValueError("empty file")
+        data = json.loads(raw)
+        if not isinstance(data, dict):
+            raise ValueError("not a dict")
+        for v in data.values():
+            if not isinstance(v, _JSON_SCALAR_TYPES):
+                raise ValueError(f"non-scalar value: {type(v).__name__}")
+    except Exception as exc:
+        json_path.write_text("{}")
+        append_log(
+            run_id,
+            f"WARNING: {strategy}.json was invalid ({exc}); reset to {{}} so FreqTrade uses class defaults.",
+        )
 
 
 def start_backtest(
@@ -30,6 +55,8 @@ def start_backtest(
     run_id = datetime.utcnow().strftime("%Y%m%d_%H%M%S") + "_" + uuid.uuid4().hex[:8]
     run_dir = BACKTEST_RESULTS_DIR / strategy
     run_dir.mkdir(parents=True, exist_ok=True)
+
+    _ensure_valid_strategy_json(strategy, run_id)
 
     cmd = build_backtest_command(
         strategy=strategy,
@@ -263,6 +290,8 @@ def start_hyperopt(
         "completed_at": None,
     }
     save_hyperopt_meta(run_id, meta)
+
+    _ensure_valid_strategy_json(strategy, run_id)
 
     thread = threading.Thread(target=_hyperopt_worker, args=(run_id, cmd, run_dir, meta, strategy), daemon=True)
     thread.start()

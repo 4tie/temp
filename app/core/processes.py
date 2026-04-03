@@ -13,7 +13,8 @@ def get_process(run_id: str) -> Optional[subprocess.Popen]:
 
 def set_process(run_id: str, proc: subprocess.Popen):
     _active_processes[run_id] = proc
-    _process_logs[run_id] = []
+    if run_id not in _process_logs:
+        _process_logs[run_id] = []
     _process_status[run_id] = "running"
 
 
