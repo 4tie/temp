@@ -15,7 +15,8 @@ window.FMT = (() => {
   function currency(value, decimals = 2, symbol = '$') {
     if (value === null || value === undefined || isNaN(value)) return '—';
     const n = parseFloat(value);
-    return `${symbol}${Math.abs(n).toLocaleString('en-US', {
+    const sign = n < 0 ? '-' : '';
+    return `${sign}${symbol}${Math.abs(n).toLocaleString('en-US', {
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals,
     })}`;

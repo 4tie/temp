@@ -64,6 +64,11 @@ window.SettingsPage = (() => {
                 <input class="form-input" id="s-stake" name="stake_amount" type="text" value="unlimited">
                 <span class="form-hint">Use "unlimited" to distribute wallet evenly.</span>
               </div>
+              <div class="form-group">
+                <label class="form-label" for="s-data-dir">Data Directory</label>
+                <input class="form-input" id="s-data-dir" name="data_directory" type="text" placeholder="/path/to/freqtrade/user_data/data">
+                <span class="form-hint">Path where FreqTrade OHLCV data is stored.</span>
+              </div>
               <div class="form-actions">
                 <button type="submit" class="btn btn--primary">Save Settings</button>
                 <button type="button" class="btn btn--secondary" id="s-reset-btn">Reset to Defaults</button>
@@ -104,6 +109,21 @@ window.SettingsPage = (() => {
         s('#s-wallet',     cfg.dry_run_wallet);
         s('#s-max-trades', cfg.max_open_trades);
         s('#s-stake',      cfg.stake_amount);
+        s('#s-data-dir',   cfg.data_directory);
+      }
+
+      const saved = localStorage.getItem('4tie_settings');
+      if (saved) {
+        try {
+          const cfg = JSON.parse(saved);
+          const s = (id, v) => { const el = DOM.$(id, _el); if (el && v != null) el.value = v; };
+          s('#s-exchange',   cfg.exchange);
+          s('#s-timeframe',  cfg.timeframe);
+          s('#s-wallet',     cfg.dry_run_wallet);
+          s('#s-max-trades', cfg.max_open_trades);
+          s('#s-stake',      cfg.stake_amount);
+          s('#s-data-dir',   cfg.data_directory);
+        } catch {}
       }
 
       _presets = presetsData.presets || {};
@@ -148,11 +168,12 @@ window.SettingsPage = (() => {
 
   function _getFormValues() {
     return {
-      exchange:       DOM.$('#s-exchange',   _el)?.value || 'binance',
-      timeframe:      DOM.$('#s-timeframe',  _el)?.value || '5m',
-      dry_run_wallet: parseFloat(DOM.$('#s-wallet',     _el)?.value) || 1000,
-      max_open_trades: parseInt(DOM.$('#s-max-trades', _el)?.value) || 3,
-      stake_amount:   DOM.$('#s-stake',      _el)?.value || 'unlimited',
+      exchange:        DOM.$('#s-exchange',  _el)?.value || 'binance',
+      timeframe:       DOM.$('#s-timeframe', _el)?.value || '5m',
+      dry_run_wallet:  parseFloat(DOM.$('#s-wallet',     _el)?.value) || 1000,
+      max_open_trades: parseInt(DOM.$('#s-max-trades',  _el)?.value) || 3,
+      stake_amount:    DOM.$('#s-stake',     _el)?.value || 'unlimited',
+      data_directory:  DOM.$('#s-data-dir',  _el)?.value || '',
     };
   }
 
@@ -165,13 +186,14 @@ window.SettingsPage = (() => {
   }
 
   function _onReset() {
-    const defaults = { exchange: 'binance', timeframe: '5m', dry_run_wallet: 1000, max_open_trades: 3, stake_amount: 'unlimited' };
+    const defaults = { exchange: 'binance', timeframe: '5m', dry_run_wallet: 1000, max_open_trades: 3, stake_amount: 'unlimited', data_directory: '' };
     const s = (id, v) => { const el = DOM.$(id, _el); if (el) el.value = v; };
     s('#s-exchange',   defaults.exchange);
     s('#s-timeframe',  defaults.timeframe);
     s('#s-wallet',     defaults.dry_run_wallet);
     s('#s-max-trades', defaults.max_open_trades);
     s('#s-stake',      defaults.stake_amount);
+    s('#s-data-dir',   defaults.data_directory);
     Toast.info('Reset to defaults (not saved).');
   }
 

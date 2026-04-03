@@ -104,8 +104,15 @@ window.BacktestPage = (() => {
             </div>
           </div>
           <div class="card" id="bt-results-card" style="display:none">
-            <div class="card__header"><span class="card__title">Results</span></div>
+            <div class="card__header">
+              <span class="card__title">Results</span>
+              <button class="btn btn--danger btn--sm" id="bt-delete-btn">Delete Run</button>
+            </div>
             <div class="card__body" id="bt-results-body"></div>
+          </div>
+          <div class="card" id="bt-history-card">
+            <div class="card__header"><span class="card__title">Recent Runs</span></div>
+            <div class="card__body" id="bt-history-body"><div class="empty-state">No runs yet.</div></div>
           </div>
         </div>
       </div>
@@ -114,10 +121,64 @@ window.BacktestPage = (() => {
     const form     = DOM.$('#bt-form', _el);
     const exchange = DOM.$('#bt-exchange', _el);
     const stopBtn  = DOM.$('#bt-stop-btn', _el);
+    const delBtn   = DOM.$('#bt-delete-btn', _el);
 
     DOM.on(exchange, 'change', () => _loadPairs(exchange.value));
     DOM.on(form,     'submit', _onSubmit);
     DOM.on(stopBtn,  'click',  _onStop);
+    DOM.on(delBtn,   'click',  _onDeleteRun);
+
+    _loadHistory();
+  }
+
+  async function _loadHistory() {
+    const wrap = DOM.$('#bt-history-body', _el);
+    if (!wrap) return;
+    try {
+      const data = await API.getRuns();
+      const runs = (data.runs || []).slice(-8).reverse();
+      if (!runs.length) { wrap.innerHTML = '<div class="empty-state">No runs yet.</div>'; return; }
+      wrap.innerHTML = `
+        <table class="data-table data-table--sm">
+          <thead><tr><th>Run ID</th><th>Strategy</th><th>Status</th><th>Started</th><th></th></tr></thead>
+          <tbody>
+            ${runs.map(r => `
+              <tr>
+                <td class="font-mono text-sm">${FMT.truncate(r.run_id || '—', 18)}</td>
+                <td>${r.strategy || '—'}</td>
+                <td><span class="badge badge--${FMT.statusColor(r.status)}">${FMT.statusLabel(r.status)}</span></td>
+                <td class="text-muted text-sm">${FMT.tsShort(r.started_at)}</td>
+                <td><button class="btn btn--danger btn--sm" data-delete-run="${_esc(r.run_id || '')}">Delete</button></td>
+              </tr>`).join('')}
+          </tbody>
+        </table>`;
+      wrap.querySelectorAll('[data-delete-run]').forEach(btn => {
+        DOM.on(btn, 'click', () => _deleteRun(btn.dataset.deleteRun));
+      });
+    } catch {}
+  }
+
+  async function _onDeleteRun() {
+    if (!_currentRunId) { Toast.warning('No active run to delete.'); return; }
+    await _deleteRun(_currentRunId);
+  }
+
+  async function _deleteRun(runId) {
+    if (!runId) return;
+    if (!confirm(`Delete run ${runId}? This cannot be undone.`)) return;
+    try {
+      await API.deleteRun(runId);
+      Toast.success(`Run deleted.`);
+      if (runId === _currentRunId) {
+        _currentRunId = null;
+        DOM.hide(DOM.$('#bt-status-card', _el));
+        DOM.hide(DOM.$('#bt-results-card', _el));
+        AppState.set('stream', 'Run deleted.');
+      }
+      _loadHistory();
+    } catch (err) {
+      Toast.error('Failed to delete run: ' + err.message);
+    }
   }
 
   async function _loadFormData() {

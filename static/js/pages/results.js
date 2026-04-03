@@ -83,16 +83,17 @@ window.ResultsPage = (() => {
           <th>Trades</th>
           <th>Win Rate</th>
           <th>Drawdown</th>
+          <th>Sharpe</th>
           <th></th>
         </tr></thead>
         <tbody>
           ${sorted.map(r => {
             const ov = r.results?.overview || r.overview || {};
-            const profit = ov.profit_total_abs ?? ov.profit_percent ?? null;
             const profitPct = ov.profit_percent ?? ov.profit_total ?? null;
             const trades = ov.total_trades ?? '—';
             const winRate = ov.win_rate != null ? FMT.pct(ov.win_rate * 100, 1, false) : '—';
             const dd = ov.max_drawdown != null ? FMT.pct(Math.abs(ov.max_drawdown * 100), 1, false) : '—';
+            const sharpe = ov.sharpe_ratio != null ? FMT.number(ov.sharpe_ratio, 2) : '—';
             const color = profitPct > 0 ? 'green' : profitPct < 0 ? 'red' : 'muted';
             return `
               <tr class="cursor-pointer" data-run-id="${r.run_id || ''}">
@@ -103,6 +104,7 @@ window.ResultsPage = (() => {
                 <td>${trades}</td>
                 <td>${winRate}</td>
                 <td class="text-red">${dd}</td>
+                <td class="text-secondary">${sharpe}</td>
                 <td><button class="btn btn--ghost btn--sm" data-detail-btn data-run-id="${r.run_id || ''}">View</button></td>
               </tr>`;
           }).join('')}
