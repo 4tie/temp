@@ -9,9 +9,70 @@ window.HyperoptPage = (() => {
   let _currentRunId = null;
 
   /* ── Favourites ── */
-  const _FAV_KEY = '4tie_fav_pairs';
+  const _FAV_KEY  = '4tie_fav_pairs';
+  const _FORM_KEY = '4tie_ho_form';
   function _getFavs() { try { return new Set(JSON.parse(localStorage.getItem(_FAV_KEY) || '[]')); } catch { return new Set(); } }
   function _saveFavs(s) { localStorage.setItem(_FAV_KEY, JSON.stringify([...s])); }
+
+  /* ── Form persistence ── */
+  function _saveForm() {
+    const get = id => { const el = DOM.$(`#${id}`, _el); return el ? el.value : undefined; };
+    const spacesEls = _el ? [..._el.querySelectorAll('#ho-spaces input[type="checkbox"]')] : [];
+    const saved = {
+      strategy:     get('ho-strategy'),
+      exchange:     get('ho-exchange'),
+      loss:         get('ho-loss'),
+      spaces:       spacesEls.filter(c => c.checked).map(c => c.value),
+      epochs:       get('ho-epochs'),
+      jobs:         get('ho-jobs'),
+      timeframe:    get('ho-timeframe'),
+      timerange:    get('ho-timerange'),
+      wallet:       get('ho-wallet'),
+      min_trades:   get('ho-min-trades'),
+      dl_exchange:  get('ho-dl-exchange'),
+      dl_timeframe: get('ho-dl-timeframe'),
+      dl_days:      get('ho-dl-days'),
+      pairs:        _getSelectedPairs('ho-pairs-list'),
+    };
+    try { localStorage.setItem(_FORM_KEY, JSON.stringify(saved)); } catch {}
+  }
+
+  function _loadSavedForm() {
+    try { return JSON.parse(localStorage.getItem(_FORM_KEY) || 'null'); } catch { return null; }
+  }
+
+  function _applySavedForm(saved) {
+    if (!saved) return;
+    const set = (id, v) => { const el = DOM.$(`#${id}`, _el); if (el && v != null && v !== '') el.value = v; };
+    set('ho-strategy',   saved.strategy);
+    set('ho-exchange',   saved.exchange);
+    set('ho-loss',       saved.loss);
+    set('ho-epochs',     saved.epochs);
+    set('ho-jobs',       saved.jobs);
+    set('ho-timeframe',  saved.timeframe);
+    set('ho-timerange',  saved.timerange);
+    set('ho-wallet',     saved.wallet);
+    set('ho-min-trades', saved.min_trades);
+    set('ho-dl-exchange',  saved.dl_exchange);
+    set('ho-dl-timeframe', saved.dl_timeframe);
+    set('ho-dl-days',      saved.dl_days);
+    if (Array.isArray(saved.spaces)) {
+      const spacesEls = _el ? [..._el.querySelectorAll('#ho-spaces input[type="checkbox"]')] : [];
+      spacesEls.forEach(c => { c.checked = saved.spaces.includes(c.value); });
+    }
+  }
+
+  function _wireSaveEvents() {
+    const ids = ['ho-strategy','ho-exchange','ho-loss','ho-epochs','ho-jobs','ho-timeframe','ho-timerange','ho-wallet','ho-min-trades','ho-dl-exchange','ho-dl-timeframe','ho-dl-days'];
+    ids.forEach(id => {
+      const el = DOM.$(`#${id}`, _el);
+      if (el) { el.addEventListener('change', _saveForm); el.addEventListener('input', _saveForm); }
+    });
+    const spacesEl = DOM.$('#ho-spaces', _el);
+    if (spacesEl) spacesEl.addEventListener('change', _saveForm);
+    const list = document.getElementById('ho-pairs-list');
+    if (list) list.addEventListener('change', e => { if (e.target.classList.contains('pairs-row__check')) _saveForm(); });
+  }
 
   /* ── Picker helpers ── */
   function _updateCount(listId, countId) {
@@ -78,12 +139,13 @@ window.HyperoptPage = (() => {
     const allBtn  = document.getElementById(allBtnId);
     const noneBtn = document.getElementById(noneBtnId);
     const favsBtn = document.getElementById(favsBtnId);
-    if (allBtn)  allBtn.addEventListener('click',  () => { list.querySelectorAll('.pairs-row__check').forEach(c => { c.checked = true;  c.closest('.pairs-row').classList.add('pairs-row--checked'); }); _updateCount(listId, countId); });
-    if (noneBtn) noneBtn.addEventListener('click', () => { list.querySelectorAll('.pairs-row__check').forEach(c => { c.checked = false; c.closest('.pairs-row').classList.remove('pairs-row--checked'); }); _updateCount(listId, countId); });
+    if (allBtn)  allBtn.addEventListener('click',  () => { list.querySelectorAll('.pairs-row__check').forEach(c => { c.checked = true;  c.closest('.pairs-row').classList.add('pairs-row--checked'); }); _updateCount(listId, countId); _saveForm(); });
+    if (noneBtn) noneBtn.addEventListener('click', () => { list.querySelectorAll('.pairs-row__check').forEach(c => { c.checked = false; c.closest('.pairs-row').classList.remove('pairs-row--checked'); }); _updateCount(listId, countId); _saveForm(); });
     if (favsBtn) favsBtn.addEventListener('click', () => {
       const favs = _getFavs();
       list.querySelectorAll('.pairs-row__check').forEach(c => { const f = favs.has(c.value); c.checked = f; c.closest('.pairs-row').classList.toggle('pairs-row--checked', f); });
       _updateCount(listId, countId);
+      _saveForm();
     });
   }
 
@@ -282,6 +344,7 @@ window.HyperoptPage = (() => {
     DOM.on(DOM.$('#ho-apply-btn',_el), 'click',  _onApply);
 
     _setupPickerEvents('ho-pairs-list', 'ho-pairs-count', 'ho-pairs-search', 'ho-pairs-all', 'ho-pairs-none', 'ho-pairs-favs');
+    _wireSaveEvents();
 
     const dlToggle  = DOM.$('#ho-dl-toggle', _el);
     const dlBody    = DOM.$('#ho-dl-body', _el);
@@ -320,8 +383,12 @@ window.HyperoptPage = (() => {
           ${_esc(s.label)}
         </label>`).join('');
 
+      const saved = _loadSavedForm();
+      if (saved) _applySavedForm(saved);
+
       const exVal = DOM.$('#ho-exchange', _el).value || 'binance';
-      await _loadPairs(exVal);
+      const preSelected = saved?.pairs?.length ? saved.pairs : null;
+      await _loadPairs(exVal, preSelected);
       await _loadHistory();
     } catch (err) {
       Toast.warning('Could not fully load hyperopt form: ' + err.message);

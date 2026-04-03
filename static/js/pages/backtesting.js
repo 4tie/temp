@@ -9,9 +9,58 @@ window.BacktestPage = (() => {
   let _currentRunId = null;
 
   /* ── Favourites ── */
-  const _FAV_KEY = '4tie_fav_pairs';
+  const _FAV_KEY  = '4tie_fav_pairs';
+  const _FORM_KEY = '4tie_bt_form';
   function _getFavs() { try { return new Set(JSON.parse(localStorage.getItem(_FAV_KEY) || '[]')); } catch { return new Set(); } }
   function _saveFavs(s) { localStorage.setItem(_FAV_KEY, JSON.stringify([...s])); }
+
+  /* ── Form persistence ── */
+  function _saveForm() {
+    const get = id => { const el = DOM.$(`#${id}`, _el); return el ? el.value : undefined; };
+    const saved = {
+      strategy:     get('bt-strategy'),
+      exchange:     get('bt-exchange'),
+      timeframe:    get('bt-timeframe'),
+      timerange:    get('bt-timerange'),
+      wallet:       get('bt-wallet'),
+      max_trades:   get('bt-max-trades'),
+      stake:        get('bt-stake'),
+      dl_exchange:  get('bt-dl-exchange'),
+      dl_timeframe: get('bt-dl-timeframe'),
+      dl_days:      get('bt-dl-days'),
+      pairs:        _getSelectedPairs('bt-pairs-list'),
+    };
+    try { localStorage.setItem(_FORM_KEY, JSON.stringify(saved)); } catch {}
+  }
+
+  function _loadSavedForm() {
+    try { return JSON.parse(localStorage.getItem(_FORM_KEY) || 'null'); } catch { return null; }
+  }
+
+  function _applySavedForm(saved) {
+    if (!saved) return;
+    const set = (id, v) => { const el = DOM.$(`#${id}`, _el); if (el && v != null && v !== '') el.value = v; };
+    set('bt-strategy',   saved.strategy);
+    set('bt-exchange',   saved.exchange);
+    set('bt-timeframe',  saved.timeframe);
+    set('bt-timerange',  saved.timerange);
+    set('bt-wallet',     saved.wallet);
+    set('bt-max-trades', saved.max_trades);
+    set('bt-stake',      saved.stake);
+    set('bt-dl-exchange',  saved.dl_exchange);
+    set('bt-dl-timeframe', saved.dl_timeframe);
+    set('bt-dl-days',      saved.dl_days);
+  }
+
+  function _wireSaveEvents() {
+    const ids = ['bt-strategy','bt-exchange','bt-timeframe','bt-timerange','bt-wallet','bt-max-trades','bt-stake','bt-dl-exchange','bt-dl-timeframe','bt-dl-days'];
+    ids.forEach(id => {
+      const el = DOM.$(`#${id}`, _el);
+      if (el) { el.addEventListener('change', _saveForm); el.addEventListener('input', _saveForm); }
+    });
+    const list = document.getElementById('bt-pairs-list');
+    if (list) list.addEventListener('change', e => { if (e.target.classList.contains('pairs-row__check')) _saveForm(); });
+  }
 
   /* ── Picker helpers ── */
   function _updateCount(listId, countId) {
@@ -83,10 +132,12 @@ window.BacktestPage = (() => {
     if (allBtn) allBtn.addEventListener('click', () => {
       list.querySelectorAll('.pairs-row__check').forEach(c => { c.checked = true; c.closest('.pairs-row').classList.add('pairs-row--checked'); });
       _updateCount(listId, countId);
+      _saveForm();
     });
     if (noneBtn) noneBtn.addEventListener('click', () => {
       list.querySelectorAll('.pairs-row__check').forEach(c => { c.checked = false; c.closest('.pairs-row').classList.remove('pairs-row--checked'); });
       _updateCount(listId, countId);
+      _saveForm();
     });
     if (favsBtn) favsBtn.addEventListener('click', () => {
       const favs = _getFavs();
@@ -96,6 +147,7 @@ window.BacktestPage = (() => {
         c.closest('.pairs-row').classList.toggle('pairs-row--checked', isFav);
       });
       _updateCount(listId, countId);
+      _saveForm();
     });
   }
 
@@ -293,6 +345,7 @@ window.BacktestPage = (() => {
     DOM.on(delBtn,   'click',  _onDeleteRun);
 
     _setupPickerEvents('bt-pairs-list', 'bt-pairs-count', 'bt-pairs-search', 'bt-pairs-all', 'bt-pairs-none', 'bt-pairs-favs');
+    _wireSaveEvents();
 
     const dlToggle = DOM.$('#bt-dl-toggle', _el);
     const dlBody   = DOM.$('#bt-dl-body', _el);
@@ -378,11 +431,16 @@ window.BacktestPage = (() => {
         select.innerHTML = '<option value="">No strategies found</option>';
       }
 
-      if (lastCfg.config) _applyLastConfig(lastCfg.config);
+      const saved = _loadSavedForm();
+      if (saved) {
+        _applySavedForm(saved);
+      } else if (lastCfg.config) {
+        _applyLastConfig(lastCfg.config);
+      }
 
-      const exVal    = DOM.$('#bt-exchange', _el).value || 'binance';
-      const lastPairs = lastCfg.config?.pairs || null;
-      await _loadPairs(exVal, lastPairs);
+      const exVal     = DOM.$('#bt-exchange', _el).value || 'binance';
+      const preSelected = saved?.pairs?.length ? saved.pairs : (lastCfg.config?.pairs || null);
+      await _loadPairs(exVal, preSelected);
     } catch (err) {
       Toast.warning('Could not load form data: ' + err.message);
     }
