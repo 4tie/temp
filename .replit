@@ -29,3 +29,7 @@ outputType = "webview"
 [postMerge]
 path = "scripts/post-merge.sh"
 timeoutMs = 60000
+
+[[ports]]
+localPort = 5000
+externalPort = 80

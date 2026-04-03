@@ -184,6 +184,8 @@ window.BacktestPage = (() => {
   function _refreshCommandPreview() {
     const cmdEl = DOM.$('#bt-cmd-preview', _el);
     if (!cmdEl) return;
+    const pairs = _getSelectedPairs('bt-pairs-list');
+    if (!pairs.length) { cmdEl.innerHTML = ''; return; }
     const cmd = _buildLiveCommand();
     _renderCommandBlock(cmdEl, cmd);
   }
@@ -227,6 +229,7 @@ window.BacktestPage = (() => {
         try {
           await API.patchConfig({ [key]: value });
           _showSaved(id);
+          _refreshCommandPreview();
         } catch {}
       });
     });
@@ -346,7 +349,6 @@ window.BacktestPage = (() => {
               <span class="badge" id="bt-status-badge">—</span>
             </div>
             <div class="card__body">
-              <div id="bt-cmd"></div>
               <div class="log-panel" id="bt-logs"></div>
             </div>
           </div>
@@ -689,7 +691,6 @@ window.BacktestPage = (() => {
 
   function _updateStatus(data) {
     const badge   = DOM.$('#bt-status-badge', _el);
-    const cmdEl   = DOM.$('#bt-cmd', _el);
     const logs    = DOM.$('#bt-logs', _el);
     const resCard = DOM.$('#bt-results-card', _el);
     const resBody = DOM.$('#bt-results-body', _el);
@@ -697,9 +698,6 @@ window.BacktestPage = (() => {
     if (badge) {
       badge.className = `badge badge--${FMT.statusColor(data.status)}`;
       badge.textContent = FMT.statusLabel(data.status);
-    }
-    if (cmdEl && data.meta?.command?.length && !cmdEl.querySelector('.cmd-block')) {
-      _renderCommandBlock(cmdEl, data.meta.command);
     }
     if (logs) {
       logs.innerHTML = (data.logs || []).slice(-200).map(l => `<div class="log-line">${_esc(l)}</div>`).join('');
