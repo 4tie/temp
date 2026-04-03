@@ -44,10 +44,13 @@ window.BacktestPage = (() => {
                   </select>
                 </div>
                 <div class="form-group">
-                  <label class="form-label" for="bt-pairs">Pairs <span class="form-hint">(hold Ctrl/Cmd for multiple)</span></label>
+                  <label class="form-label" for="bt-pairs">
+                    Pairs <span class="form-hint">(hold Ctrl/Cmd for multiple)</span>
+                  </label>
                   <select class="form-select form-select--multi" id="bt-pairs" name="pairs" multiple size="6" required>
-                    <option value="">Select exchange first</option>
+                    <option value="">Loading…</option>
                   </select>
+                  <div id="bt-pairs-hint" class="form-hint" style="margin-top:4px"></div>
                 </div>
                 <div class="form-row">
                   <div class="form-group">
@@ -91,6 +94,58 @@ window.BacktestPage = (() => {
               </form>
             </div>
           </div>
+
+          <!-- Download Data card -->
+          <div class="card" style="margin-top:var(--space-4)">
+            <div class="card__header" style="cursor:pointer" id="bt-dl-toggle">
+              <span class="card__title">Download Data</span>
+              <span id="bt-dl-badge" class="badge" style="margin-left:auto"></span>
+              <svg id="bt-dl-chevron" viewBox="0 0 16 16" width="14" height="14" fill="currentColor" style="margin-left:8px;transition:transform .2s"><path d="M4 6l4 4 4-4"/></svg>
+            </div>
+            <div class="card__body" id="bt-dl-body" style="display:none">
+              <p class="text-muted text-sm" style="margin-bottom:var(--space-3)">
+                Fetch historical OHLCV data for your selected pairs so they can be used in backtests.
+                Select pairs above, choose timeframe and date range, then click Download.
+              </p>
+              <div class="form form--compact">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label" for="bt-dl-exchange">Exchange</label>
+                    <select class="form-select" id="bt-dl-exchange">
+                      <option value="binance">Binance</option>
+                      <option value="kraken">Kraken</option>
+                      <option value="okx">OKX</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="bt-dl-timeframe">Timeframe</label>
+                    <select class="form-select" id="bt-dl-timeframe">
+                      <option value="1m">1m</option>
+                      <option value="5m" selected>5m</option>
+                      <option value="15m">15m</option>
+                      <option value="30m">30m</option>
+                      <option value="1h">1h</option>
+                      <option value="4h">4h</option>
+                      <option value="1d">1d</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="bt-dl-days">Days</label>
+                    <input class="form-input" id="bt-dl-days" type="number" value="365" min="1" max="1825">
+                  </div>
+                </div>
+                <div class="form-actions" style="margin-top:0">
+                  <button type="button" class="btn btn--secondary" id="bt-dl-btn">
+                    <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v8M4 7l4 5 4-5"/><path d="M2 13h12"/></svg>
+                    Download Data
+                  </button>
+                </div>
+                <div id="bt-dl-log-wrap" style="display:none;margin-top:var(--space-3)">
+                  <div class="log-panel" id="bt-dl-logs" style="max-height:160px"></div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
         <!-- Output panel -->
         <div class="split-layout__output">
@@ -127,6 +182,17 @@ window.BacktestPage = (() => {
     DOM.on(form,     'submit', _onSubmit);
     DOM.on(stopBtn,  'click',  _onStop);
     DOM.on(delBtn,   'click',  _onDeleteRun);
+
+    const dlToggle = DOM.$('#bt-dl-toggle', _el);
+    const dlBody   = DOM.$('#bt-dl-body', _el);
+    const dlBtn    = DOM.$('#bt-dl-btn', _el);
+    const dlChevron = DOM.$('#bt-dl-chevron', _el);
+    DOM.on(dlToggle, 'click', () => {
+      const open = dlBody.style.display !== 'none';
+      dlBody.style.display = open ? 'none' : '';
+      if (dlChevron) dlChevron.style.transform = open ? '' : 'rotate(180deg)';
+    });
+    DOM.on(dlBtn, 'click', _onDownload);
 
     _loadHistory();
   }
@@ -213,15 +279,107 @@ window.BacktestPage = (() => {
     sel.innerHTML = '<option value="">Loading…</option>';
     try {
       const data = await API.getPairs(exchange);
-      const pairs = data.pairs || [];
-      if (pairs.length) {
-        sel.innerHTML = pairs.map(p => `<option value="${_esc(p)}">${_esc(p)}</option>`).join('');
-      } else {
-        sel.innerHTML = '<option value="">No pair data found</option>';
+      const local   = data.local_pairs   || [];
+      const config  = data.config_pairs  || [];
+      const popular = data.popular_pairs || [];
+      const all     = data.pairs         || [];
+
+      if (!all.length) {
+        sel.innerHTML = '<option value="">No pairs found</option>';
+        return;
+      }
+
+      let html = '';
+      if (local.length) {
+        html += `<optgroup label="⬤ Downloaded Data">` +
+          local.map(p => `<option value="${_esc(p)}">${_esc(p)}</option>`).join('') +
+          `</optgroup>`;
+      }
+      if (config.length) {
+        html += `<optgroup label="⬤ From Config">` +
+          config.map(p => `<option value="${_esc(p)}">${_esc(p)}</option>`).join('') +
+          `</optgroup>`;
+      }
+      if (popular.length) {
+        html += `<optgroup label="Popular Pairs">` +
+          popular.map(p => `<option value="${_esc(p)}">${_esc(p)}</option>`).join('') +
+          `</optgroup>`;
+      }
+      sel.innerHTML = html;
+
+      const hint = DOM.$('#bt-pairs-hint', _el);
+      if (hint) {
+        if (local.length) {
+          hint.textContent = `${local.length} pair(s) with downloaded data`;
+          hint.style.color = 'var(--color-green)';
+        } else {
+          hint.textContent = 'No local data — select pairs and use Download Data to fetch history';
+          hint.style.color = 'var(--color-amber)';
+        }
       }
     } catch {
       sel.innerHTML = '<option value="">Failed to load pairs</option>';
     }
+  }
+
+  /* ── Download Data ── */
+  let _dlPollTimer = null;
+
+  async function _onDownload() {
+    const exchange = DOM.$('#bt-dl-exchange', _el)?.value || 'binance';
+    const tf       = DOM.$('#bt-dl-timeframe', _el)?.value || '5m';
+    const days     = parseInt(DOM.$('#bt-dl-days', _el)?.value) || 30;
+    const pairsSel = DOM.$('#bt-pairs', _el);
+    const selected = [...(pairsSel?.selectedOptions || [])].map(o => o.value).filter(Boolean);
+
+    if (!selected.length) { Toast.warning('Select at least one pair to download.'); return; }
+
+    const btn     = DOM.$('#bt-dl-btn', _el);
+    const logEl   = DOM.$('#bt-dl-logs', _el);
+    const logWrap = DOM.$('#bt-dl-log-wrap', _el);
+    const badge   = DOM.$('#bt-dl-badge', _el);
+
+    if (btn) btn.disabled = true;
+    if (logWrap) DOM.show(logWrap);
+    if (badge) { badge.textContent = 'Running'; badge.className = 'badge badge--amber'; }
+
+    try {
+      const res = await API.downloadData({ pairs: selected, timeframe: tf, exchange, days });
+      _pollDownload(res.job_id || res.run_id, logEl, badge, btn);
+      Toast.info('Download started…');
+    } catch (err) {
+      if (btn) btn.disabled = false;
+      if (badge) { badge.textContent = 'Error'; badge.className = 'badge badge--red'; }
+      Toast.error('Download failed: ' + err.message);
+    }
+  }
+
+  function _pollDownload(jobId, logEl, badge, btn) {
+    if (_dlPollTimer) clearInterval(_dlPollTimer);
+    _dlPollTimer = setInterval(async () => {
+      try {
+        const data = await API.getDownload(jobId);
+        if (logEl) {
+          logEl.innerHTML = (data.logs || []).slice(-100).map(l => `<div class="log-line">${_esc(l)}</div>`).join('');
+          logEl.scrollTop = logEl.scrollHeight;
+        }
+        if (data.status === 'completed' || data.status === 'failed') {
+          clearInterval(_dlPollTimer);
+          if (btn) btn.disabled = false;
+          if (badge) {
+            badge.textContent = data.status === 'completed' ? 'Done' : 'Failed';
+            badge.className   = data.status === 'completed' ? 'badge badge--green' : 'badge badge--red';
+          }
+          if (data.status === 'completed') {
+            Toast.success('Data downloaded. Refreshing pairs…');
+            const ex = DOM.$('#bt-exchange', _el)?.value || 'binance';
+            await _loadPairs(ex);
+          } else {
+            Toast.error('Download failed.');
+          }
+        }
+      } catch {}
+    }, 2500);
   }
 
   function _applyLastConfig(cfg) {

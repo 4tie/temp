@@ -132,16 +132,11 @@ async def get_last_config():
     return {"config": config}
 
 
-@router.get("/pairs")
-async def get_pairs(
-    exchange: str = Query("binance"),
-    timeframe: str = Query(None),
-):
+def _scan_local_pairs(exchange: str, timeframe: str | None) -> list[str]:
     from app.core.config import DATA_DIR
     import os
-    pairs = set()
-    search_dirs = [DATA_DIR / exchange, DATA_DIR]
-    for search_dir in search_dirs:
+    pairs: set[str] = set()
+    for search_dir in [DATA_DIR / exchange, DATA_DIR]:
         if not search_dir.is_dir():
             continue
         for f in os.listdir(search_dir):
@@ -155,7 +150,63 @@ async def get_pairs(
                 if timeframe and tf != timeframe:
                     continue
                 pairs.add(pair_name)
-    return {"pairs": sorted(pairs)}
+    return sorted(pairs)
+
+
+def _read_config_pairs() -> list[str]:
+    """Read pair_whitelist from user_data/config.json."""
+    from app.core.config import BASE_DIR
+    import json as _json
+    cfg_file = BASE_DIR / "config.json"
+    pairs: set[str] = set()
+    if cfg_file.exists():
+        try:
+            cfg = _json.loads(cfg_file.read_text())
+            for source in [
+                cfg.get("exchange", {}).get("pair_whitelist", []),
+                *[pl.get("pair_whitelist", []) for pl in cfg.get("pairlists", [])],
+            ]:
+                pairs.update(p for p in source if isinstance(p, str) and "/" in p)
+        except Exception:
+            pass
+    return sorted(pairs)
+
+
+_POPULAR_PAIRS = [
+    "BTC/USDT", "ETH/USDT", "BNB/USDT", "SOL/USDT", "XRP/USDT",
+    "ADA/USDT", "DOGE/USDT", "AVAX/USDT", "DOT/USDT", "LINK/USDT",
+    "MATIC/USDT", "LTC/USDT", "UNI/USDT", "ATOM/USDT", "ETC/USDT",
+    "XLM/USDT", "BCH/USDT", "NEAR/USDT", "APT/USDT", "ARB/USDT",
+    "OP/USDT", "INJ/USDT", "FTM/USDT", "HBAR/USDT", "VET/USDT",
+    "ALGO/USDT", "AAVE/USDT", "ICP/USDT", "GRT/USDT", "FIL/USDT",
+    "SAND/USDT", "MANA/USDT", "RUNE/USDT", "EGLD/USDT", "TRX/USDT",
+    "WIF/USDT", "PEPE/USDT", "PEOPLE/USDT", "GALA/USDT", "CRV/USDT",
+    "1INCH/USDT", "COMP/USDT", "MKR/USDT", "SNX/USDT", "YFI/USDT",
+    "ZEC/USDT", "DASH/USDT", "EOS/USDT", "XTZ/USDT", "IOTA/USDT",
+]
+
+
+@router.get("/pairs")
+async def get_pairs(
+    exchange: str = Query("binance"),
+    timeframe: str = Query(None),
+):
+    local_pairs  = _scan_local_pairs(exchange, timeframe)
+    config_pairs = _read_config_pairs()
+
+    # Categorise: local takes priority; config pairs not in local are "config";
+    # remaining popular pairs are "suggested"
+    local_set   = set(local_pairs)
+    config_set  = set(config_pairs) - local_set
+    popular_set = set(_POPULAR_PAIRS) - local_set - config_set
+
+    return {
+        "pairs": sorted(local_set | config_set | popular_set),
+        "local_pairs":  sorted(local_set),
+        "config_pairs": sorted(config_set),
+        "popular_pairs": sorted(popular_set),
+        "has_local_data": bool(local_set),
+    }
 
 
 @router.get("/ohlcv")

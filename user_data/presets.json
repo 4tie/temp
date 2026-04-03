@@ -1,0 +1,13 @@
+{
+  "wd": {
+    "config": {
+      "exchange": "binance",
+      "timeframe": "5m",
+      "dry_run_wallet": 50,
+      "max_open_trades": 2,
+      "stake_amount": "unlimited",
+      "data_directory": ""
+    },
+    "saved_at": "2026-04-03T14:41:29.524189"
+  }
+}
