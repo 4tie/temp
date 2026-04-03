@@ -13,15 +13,25 @@ from fastapi import APIRouter, HTTPException, Path, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+from app.ai.models.openrouter_client import (
+    list_models as fetch_openrouter_models,
+    stream_chat,
+    chat_complete,
+)
+from app.ai.models.ollama_client import (
+    list_models as _oll_list_models,
+    is_available as check_ollama_status,
+)
 from app.ai.conversation_store import (
     list_conversations, get_conversation, create_conversation,
     append_message, delete_conversation,
 )
-from app.ai.openrouter_client import (
-    fetch_openrouter_models, fetch_ollama_models, check_ollama_status,
-    stream_chat, chat_complete,
-)
 from app.services.storage import list_runs, load_run_results, load_run_meta
+
+
+async def fetch_ollama_models() -> list[dict]:
+    names = await _oll_list_models()
+    return [{"name": n} for n in names]
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/ai", tags=["ai"])
@@ -253,7 +263,7 @@ async def deep_analyze(run_id: str = Path(...)):
         if not results:
             raise HTTPException(status_code=404, detail="Run results not found")
 
-        from app.ai.deep_analysis import analyze as run_analysis
+        from app.ai.tools.deep_analysis import analyze as run_analysis
         result = run_analysis(results, run_id=run_id)
         return result
     except HTTPException:

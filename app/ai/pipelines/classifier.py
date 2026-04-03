@@ -11,8 +11,8 @@ from enum import Enum
 
 from pydantic import BaseModel
 
-from .openrouter_client import chat_complete
-from .ai_registry import fetch_free_models, get_model_for_role
+from ..models.provider_dispatch import chat_complete
+from ..models.registry import fetch_free_models, get_model_for_role
 
 logger = logging.getLogger(__name__)
 

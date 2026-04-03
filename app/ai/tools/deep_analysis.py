@@ -1892,7 +1892,7 @@ def _try_ai_narrative(
 
 
 async def _chat_complete_with_timeout(messages: list[dict]) -> str:
-    from .openrouter_client import chat_complete as _chat_complete
+    from ..models.openrouter_client import chat_complete as _chat_complete
     return await asyncio.wait_for(_chat_complete(messages), timeout=8.0)
 
 
@@ -2081,7 +2081,7 @@ def _call_openrouter_narrative(
     overfitting: dict, n_trades: int,
 ) -> dict | None:
     import asyncio
-    from .openrouter_client import _api_key
+    from ..models.openrouter_client import _api_key
 
     api_key = _api_key()
     if not api_key:
@@ -2166,7 +2166,7 @@ Rules you must follow:
     ]
 
     try:
-        from .openrouter_client import chat_complete as _or_chat_complete
+        from ..models.openrouter_client import chat_complete as _or_chat_complete
 
         async def _call_async() -> str:
             return await _or_chat_complete(messages, model="meta-llama/llama-3.3-70b-instruct:free")

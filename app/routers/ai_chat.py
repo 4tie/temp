@@ -5,57 +5,53 @@ from __future__ import annotations
 
 import json
 import logging
-import re
 import uuid
 from datetime import datetime, timezone
-from pathlib import Path
-from typing import Any, AsyncGenerator, Optional
+from typing import AsyncGenerator, Optional
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 
-from app.core.config import AI_CONVERSATIONS_DIR
 from app.schemas.ai_chat import ChatRequest, ChatResponse, ChatMessage, ConversationSummary
+from app.ai.pipelines.orchestrator import stream_run
+from app.ai.pipelines.classifier import classify
+from app.ai.models.registry import fetch_free_models
+from app.ai.models.openrouter_client import list_models as or_list_models
+from app.ai.models.ollama_client import is_available, list_models as oll_list_models
+from app.ai.tools.deep_analysis import analyze
+from app.ai.memory.conversations import (
+    load_conversation,
+    save_conversation,
+    list_conversations,
+    delete_conversation,
+    new_conversation_id,
+    _validate_conv_id,
+)
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/ai", tags=["ai"])
 
-_SAFE_CONV_ID_RE = re.compile(r"^[A-Za-z0-9_\-]+$")
-
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Conversation helpers
+# Conversation helpers (local wrappers for HTTP error handling)
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _validate_conv_id(conv_id: str) -> str:
-    if not conv_id or not _SAFE_CONV_ID_RE.match(conv_id):
-        raise HTTPException(status_code=400, detail=f"Invalid conversation ID: {conv_id!r}")
-    resolved = (AI_CONVERSATIONS_DIR / f"{conv_id}.json").resolve()
-    if not str(resolved).startswith(str(AI_CONVERSATIONS_DIR.resolve())):
-        raise HTTPException(status_code=400, detail="Path traversal detected in conversation ID")
-    return conv_id
-
-
-def _conv_path(conv_id: str) -> Path:
-    return AI_CONVERSATIONS_DIR / f"{conv_id}.json"
+def _validate_conv_id_http(conv_id: str) -> str:
+    try:
+        return _validate_conv_id(conv_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 def _load_conv(conv_id: str) -> dict | None:
-    _validate_conv_id(conv_id)
-    p = _conv_path(conv_id)
-    if not p.exists():
-        return None
-    try:
-        return json.loads(p.read_text(encoding="utf-8"))
-    except Exception:
-        return None
+    _validate_conv_id_http(conv_id)
+    return load_conversation(conv_id)
 
 
 def _save_conv(conv: dict) -> None:
-    _validate_conv_id(conv["conversation_id"])
-    p = _conv_path(conv["conversation_id"])
-    p.write_text(json.dumps(conv, indent=2, default=str), encoding="utf-8")
+    _validate_conv_id_http(conv["conversation_id"])
+    save_conversation(conv)
 
 
 def _new_conv(conv_id: str, provider: str, model: str | None, goal_id: str | None) -> dict:
@@ -106,8 +102,6 @@ def _sse_line(data: dict) -> str:
 
 @router.get("/providers")
 async def get_providers():
-    from app.ai.openrouter_client import list_models as or_list_models
-    from app.ai.ollama_client import is_available as oll_available, list_models as oll_list_models
     import os
 
     or_key = bool(os.environ.get("OPENROUTER_API_KEY", ""))
@@ -119,7 +113,7 @@ async def get_providers():
         except Exception as exc:
             logger.warning("OpenRouter model list failed: %s", exc)
 
-    oll_avail = await oll_available()
+    oll_avail = await is_available()
     oll_models = []
     if oll_avail:
         try:
@@ -161,14 +155,11 @@ async def chat(req: ChatRequest):
             yield _sse_line({"error": "OPENROUTER_API_KEY is not configured. Please set it in environment secrets.", "done": True})
             return
         if req.provider == "ollama":
-            from app.ai.ollama_client import is_available as oll_check
-            if not await oll_check():
+            if not await is_available():
                 yield _sse_line({"error": "Ollama is not available. Please ensure Ollama is running locally.", "done": True})
                 return
 
         try:
-            from app.ai.ai_orchestrator import stream_run
-
             pipeline_history = "\n".join(
                 f"{m['role'].upper()}: {m['content']}" for m in history[-10:]
             )
@@ -238,20 +229,13 @@ async def chat(req: ChatRequest):
 
 
 @router.get("/conversations")
-async def list_conversations():
-    convs = []
-    if not AI_CONVERSATIONS_DIR.exists():
-        return convs
-    files = sorted(
-        AI_CONVERSATIONS_DIR.glob("*.json"),
-        key=lambda p: p.stat().st_mtime,
-        reverse=True,
-    )[:50]
-    for f in files:
+async def list_conversations_endpoint():
+    convs_data = list_conversations(limit=50)
+    result = []
+    for data in convs_data:
         try:
-            data = json.loads(f.read_text(encoding="utf-8"))
-            convs.append(ConversationSummary(
-                conversation_id=data.get("conversation_id", f.stem),
+            result.append(ConversationSummary(
+                conversation_id=data.get("conversation_id", ""),
                 title=data.get("title", "Untitled"),
                 created_at=data.get("created_at", ""),
                 updated_at=data.get("updated_at", ""),
@@ -262,7 +246,7 @@ async def list_conversations():
             ))
         except Exception:
             continue
-    return convs
+    return result
 
 
 @router.get("/conversations/{conv_id}")
@@ -274,18 +258,17 @@ async def get_conversation(conv_id: str):
 
 
 @router.delete("/conversations/{conv_id}")
-async def delete_conversation(conv_id: str):
-    p = _conv_path(conv_id)
-    if not p.exists():
+async def delete_conversation_endpoint(conv_id: str):
+    _validate_conv_id_http(conv_id)
+    deleted = delete_conversation(conv_id)
+    if not deleted:
         raise HTTPException(status_code=404, detail="Conversation not found")
-    p.unlink()
     return {"deleted": conv_id}
 
 
 @router.post("/analyze/{run_id}")
 async def analyze_run(run_id: str):
     from app.services.storage import load_run_results, load_run_meta
-    from app.ai.deep_analysis import analyze
 
     meta = load_run_meta(run_id)
     if meta is None:
@@ -304,5 +287,5 @@ async def analyze_run(run_id: str):
 
 @router.get("/pipeline-logs")
 async def get_pipeline_logs():
-    from app.ai.ai_orchestrator import list_pipeline_logs
+    from app.ai.pipelines.orchestrator import list_pipeline_logs
     return list_pipeline_logs(limit=50)
