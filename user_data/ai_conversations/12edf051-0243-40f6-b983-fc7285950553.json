@@ -1,0 +1,14 @@
+{
+  "id": "12edf051-0243-40f6-b983-fc7285950553",
+  "strategy_name": "",
+  "preview": "test",
+  "created_at": "2026-04-03T17:13:18Z",
+  "updated_at": "2026-04-03T17:13:18Z",
+  "messages": [
+    {
+      "role": "user",
+      "content": "test",
+      "ts": "2026-04-03T17:13:18Z"
+    }
+  ]
+}

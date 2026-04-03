@@ -124,6 +124,7 @@ async def stream_chat(
     except ValueError as e:
         yield {"error": str(e), "done": True}
         return
+
     key = _api_key()
     if not key:
         yield {"error": "OPENROUTER_API_KEY not set", "done": True}
@@ -136,22 +137,19 @@ async def stream_chat(
     }
 
     try:
-        async with httpx.AsyncClient(timeout=120) as client:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(120.0, connect=10.0)) as client:
             async with client.stream(
                 "POST",
                 f"{_BASE_URL}/chat/completions",
                 headers=_headers(),
                 json=payload,
             ) as resp:
-                if resp.status_code == 429:
-                    yield {"error": "Rate limited by OpenRouter", "done": True}
-                    return
                 resp.raise_for_status()
                 async for line in resp.aiter_lines():
                     if not line or not line.startswith("data: "):
                         continue
-                    raw = line[6:]
-                    if raw.strip() == "[DONE]":
+                    raw = line[6:].strip()
+                    if raw == "[DONE]":
                         yield {"done": True}
                         return
                     try:
@@ -162,6 +160,7 @@ async def stream_chat(
                             yield {"delta": delta, "done": False}
                     except Exception:
                         continue
-    except Exception as exc:
-        logger.error("OpenRouter stream_chat error: %s", exc)
-        yield {"error": str(exc), "done": True}
+        yield {"done": True}
+    except Exception as e:
+        logger.error("OpenRouter stream failed: %s", e)
+        yield {"error": str(e), "done": True}

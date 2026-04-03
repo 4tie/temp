@@ -3,8 +3,9 @@ from pathlib import Path
 from typing import Any
 
 
-def _ensure(path: Path) -> None:
+def _ensure(path: Path) -> Path:
     path.mkdir(parents=True, exist_ok=True)
+    return path
 
 
 def write_json(path: Path, data: Any) -> None:

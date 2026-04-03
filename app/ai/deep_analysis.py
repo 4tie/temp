@@ -2183,6 +2183,7 @@ Rules you must follow:
         except RuntimeError:
             content = asyncio.run(_call_async())
 
+
         if content.startswith("```"):
             content = re.sub(r"^```[a-z]*\n?", "", content)
             content = re.sub(r"\n?```$", "", content)
