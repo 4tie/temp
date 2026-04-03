@@ -1,0 +1,21 @@
+{
+  "strategy": "A15m",
+  "settings": {
+    "timeframe": "30m",
+    "process_only_new_candles": true,
+    "use_exit_signal": true,
+    "startup_candle_count": 250,
+    "minimal_roi": {
+      "0": 0.06,
+      "60": 0.03,
+      "180": 0.015,
+      "480": 0
+    },
+    "stoploss": -0.045,
+    "trailing_stop": true,
+    "trailing_stop_positive": 0.015,
+    "trailing_stop_positive_offset": 0.035,
+    "trailing_only_offset_is_reached": true
+  },
+  "parameters": {}
+}

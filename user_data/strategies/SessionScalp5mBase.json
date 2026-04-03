@@ -1,0 +1,17 @@
+{
+  "strategy": "SessionScalp5mBase",
+  "settings": {
+    "minimal_roi": {
+      "0": 0.08,
+      "30": 0.04,
+      "90": 0.02,
+      "240": 0.0
+    },
+    "stoploss": -0.09,
+    "trailing_stop": false,
+    "trailing_stop_positive_offset": 0.0,
+    "trailing_only_offset_is_reached": false,
+    "startup_candle_count": 220
+  },
+  "parameters": {}
+}

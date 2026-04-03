@@ -1,0 +1,95 @@
+{
+  "strategy": "mabStra",
+  "settings": {
+    "minimal_roi": {
+      "0": 0.598,
+      "644": 0.166,
+      "3269": 0.115,
+      "7289": 0
+    },
+    "stoploss": -0.028,
+    "timeframe": "5m"
+  },
+  "parameters": {
+    "buy_mojo_ma_timeframe": {
+      "type": "IntParameter",
+      "low": 2,
+      "high": 100,
+      "default": 7,
+      "space": "buy",
+      "value": 7
+    },
+    "buy_fast_ma_timeframe": {
+      "type": "IntParameter",
+      "low": 2,
+      "high": 100,
+      "default": 14,
+      "space": "buy",
+      "value": 14
+    },
+    "buy_slow_ma_timeframe": {
+      "type": "IntParameter",
+      "low": 2,
+      "high": 100,
+      "default": 28,
+      "space": "buy",
+      "value": 28
+    },
+    "buy_div_max": {
+      "type": "DecimalParameter",
+      "low": 0,
+      "high": 2,
+      "default": 2.25446,
+      "space": "buy",
+      "value": 2.25446
+    },
+    "buy_div_min": {
+      "type": "DecimalParameter",
+      "low": 0,
+      "high": 2,
+      "default": 0.29497,
+      "space": "buy",
+      "value": 0.29497
+    },
+    "sell_mojo_ma_timeframe": {
+      "type": "IntParameter",
+      "low": 2,
+      "high": 100,
+      "default": 7,
+      "space": "sell",
+      "value": 7
+    },
+    "sell_fast_ma_timeframe": {
+      "type": "IntParameter",
+      "low": 2,
+      "high": 100,
+      "default": 14,
+      "space": "sell",
+      "value": 14
+    },
+    "sell_slow_ma_timeframe": {
+      "type": "IntParameter",
+      "low": 2,
+      "high": 100,
+      "default": 28,
+      "space": "sell",
+      "value": 28
+    },
+    "sell_div_max": {
+      "type": "DecimalParameter",
+      "low": 0,
+      "high": 2,
+      "default": 1.54593,
+      "space": "sell",
+      "value": 1.54593
+    },
+    "sell_div_min": {
+      "type": "DecimalParameter",
+      "low": 0,
+      "high": 2,
+      "default": 2.81436,
+      "space": "sell",
+      "value": 2.81436
+    }
+  }
+}

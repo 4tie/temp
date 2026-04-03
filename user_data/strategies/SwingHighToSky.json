@@ -1,0 +1,71 @@
+{
+  "strategy": "SwingHighToSky",
+  "settings": {
+    "timeframe": "15m",
+    "stoploss": -0.34338,
+    "minimal_roi": {
+      "0": 0.27058,
+      "33": 0.0853,
+      "64": 0.04093,
+      "244": 0
+    }
+  },
+  "parameters": {
+    "buy_cci": {
+      "type": "IntParameter",
+      "default": 100,
+      "space": "buy",
+      "optimize": true,
+      "value": -175
+    },
+    "buy_cciTime": {
+      "type": "IntParameter",
+      "default": 20,
+      "space": "buy",
+      "optimize": true,
+      "value": 72
+    },
+    "buy_rsi": {
+      "type": "IntParameter",
+      "default": 30,
+      "space": "buy",
+      "optimize": true,
+      "value": 90
+    },
+    "buy_rsiTime": {
+      "type": "IntParameter",
+      "default": 26,
+      "space": "buy",
+      "optimize": true,
+      "value": 36
+    },
+    "sell_cci": {
+      "type": "IntParameter",
+      "default": 100,
+      "space": "sell",
+      "optimize": true,
+      "value": -106
+    },
+    "sell_cciTime": {
+      "type": "IntParameter",
+      "default": 20,
+      "space": "sell",
+      "optimize": true,
+      "value": 66
+    },
+    "sell_rsi": {
+      "type": "IntParameter",
+      "default": 30,
+      "space": "sell",
+      "optimize": true,
+      "value": 88
+    },
+    "sell_rsiTime": {
+      "type": "IntParameter",
+      "default": 26,
+      "space": "sell",
+      "optimize": true,
+      "value": 45
+    }
+  }
+}

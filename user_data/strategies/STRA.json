@@ -1,0 +1,310 @@
+{
+  "strategy": "STRA",
+  "settings": {
+    "timeframe": "15m",
+    "process_only_new_candles": true,
+    "startup_candle_count": 240,
+    "minimal_roi": {
+      "0": 0.02
+    },
+    "stoploss": -0.1,
+    "trailing_stop": false,
+    "use_exit_signal": true
+  },
+  "parameters": {
+    "enter_trigger": {
+      "type": "CategoricalParameter",
+      "categories": [
+        "rsi_cross",
+        "bb_rebound",
+        "zscore_revert",
+        "ema_cross",
+        "macd_cross",
+        "roc_momentum",
+        "donchian_breakout",
+        "bb_squeeze_breakout",
+        "keltner_breakout",
+        "atr_breakout",
+        "vol_spike_breakout",
+        "stoch_cross",
+        "adx_trend_follow",
+        "range_breakout"
+      ],
+      "default": "rsi_cross",
+      "space": "enter",
+      "value": "rsi_cross"
+    },
+    "use_adx_guard": {
+      "type": "BooleanParameter",
+      "default": false,
+      "space": "enter",
+      "value": false
+    },
+    "adx_min": {
+      "type": "IntParameter",
+      "low": 10,
+      "high": 40,
+      "default": 20,
+      "space": "enter",
+      "value": 20
+    },
+    "use_trend_guard": {
+      "type": "BooleanParameter",
+      "default": false,
+      "space": "enter",
+      "value": false
+    },
+    "trend_ema_period": {
+      "type": "IntParameter",
+      "low": 50,
+      "high": 200,
+      "default": 200,
+      "space": "enter",
+      "optimize": false,
+      "value": 200
+    },
+    "rsi_period": {
+      "type": "IntParameter",
+      "low": 7,
+      "high": 30,
+      "default": 14,
+      "space": "enter",
+      "optimize": false,
+      "value": 14
+    },
+    "rsi_buy": {
+      "type": "IntParameter",
+      "low": 10,
+      "high": 40,
+      "default": 30,
+      "space": "enter",
+      "value": 30
+    },
+    "ema_fast_period": {
+      "type": "IntParameter",
+      "low": 5,
+      "high": 50,
+      "default": 12,
+      "space": "enter",
+      "optimize": false,
+      "value": 12
+    },
+    "ema_slow_period": {
+      "type": "IntParameter",
+      "low": 20,
+      "high": 200,
+      "default": 26,
+      "space": "enter",
+      "optimize": false,
+      "value": 26
+    },
+    "macd_fast": {
+      "type": "IntParameter",
+      "low": 8,
+      "high": 20,
+      "default": 12,
+      "space": "enter",
+      "optimize": false,
+      "value": 12
+    },
+    "macd_slow": {
+      "type": "IntParameter",
+      "low": 18,
+      "high": 40,
+      "default": 26,
+      "space": "enter",
+      "optimize": false,
+      "value": 26
+    },
+    "macd_signal": {
+      "type": "IntParameter",
+      "low": 5,
+      "high": 15,
+      "default": 9,
+      "space": "enter",
+      "optimize": false,
+      "value": 9
+    },
+    "bb_period": {
+      "type": "IntParameter",
+      "low": 10,
+      "high": 40,
+      "default": 20,
+      "space": "enter",
+      "optimize": false,
+      "value": 20
+    },
+    "bb_dev": {
+      "type": "DecimalParameter",
+      "low": 1.0,
+      "high": 3.0,
+      "default": 2.0,
+      "space": "enter",
+      "value": 2.0
+    },
+    "bb_width_max": {
+      "type": "DecimalParameter",
+      "low": 0.01,
+      "high": 0.2,
+      "default": 0.06,
+      "space": "enter",
+      "value": 0.06
+    },
+    "donchian_period": {
+      "type": "IntParameter",
+      "low": 10,
+      "high": 80,
+      "default": 20,
+      "space": "enter",
+      "value": 20
+    },
+    "atr_period": {
+      "type": "IntParameter",
+      "low": 7,
+      "high": 50,
+      "default": 14,
+      "space": "enter",
+      "optimize": false,
+      "value": 14
+    },
+    "atr_mult_breakout": {
+      "type": "DecimalParameter",
+      "low": 0.5,
+      "high": 5.0,
+      "default": 1.5,
+      "space": "enter",
+      "value": 1.5
+    },
+    "atr_mult_keltner": {
+      "type": "DecimalParameter",
+      "low": 0.5,
+      "high": 4.0,
+      "default": 1.5,
+      "space": "enter",
+      "value": 1.5
+    },
+    "stoch_k_period": {
+      "type": "IntParameter",
+      "low": 5,
+      "high": 30,
+      "default": 14,
+      "space": "enter",
+      "optimize": false,
+      "value": 14
+    },
+    "stoch_d_period": {
+      "type": "IntParameter",
+      "low": 3,
+      "high": 10,
+      "default": 3,
+      "space": "enter",
+      "optimize": false,
+      "value": 3
+    },
+    "stoch_buy": {
+      "type": "IntParameter",
+      "low": 5,
+      "high": 30,
+      "default": 20,
+      "space": "enter",
+      "value": 20
+    },
+    "z_period": {
+      "type": "IntParameter",
+      "low": 20,
+      "high": 200,
+      "default": 50,
+      "space": "enter",
+      "optimize": false,
+      "value": 50
+    },
+    "z_buy": {
+      "type": "DecimalParameter",
+      "low": -3.0,
+      "high": -0.5,
+      "default": -1.5,
+      "space": "enter",
+      "value": -1.5
+    },
+    "roc_period": {
+      "type": "IntParameter",
+      "low": 5,
+      "high": 50,
+      "default": 10,
+      "space": "enter",
+      "optimize": false,
+      "value": 10
+    },
+    "roc_min": {
+      "type": "DecimalParameter",
+      "low": 0.5,
+      "high": 10.0,
+      "default": 2.0,
+      "space": "enter",
+      "value": 2.0
+    },
+    "vol_sma_period": {
+      "type": "IntParameter",
+      "low": 10,
+      "high": 100,
+      "default": 30,
+      "space": "enter",
+      "optimize": false,
+      "value": 30
+    },
+    "vol_mult": {
+      "type": "DecimalParameter",
+      "low": 1.0,
+      "high": 6.0,
+      "default": 2.0,
+      "space": "enter",
+      "value": 2.0
+    },
+    "range_period": {
+      "type": "IntParameter",
+      "low": 10,
+      "high": 80,
+      "default": 20,
+      "space": "enter",
+      "value": 20
+    },
+    "range_breakout_pct": {
+      "type": "DecimalParameter",
+      "low": 0.001,
+      "high": 0.05,
+      "default": 0.01,
+      "space": "enter",
+      "value": 0.01
+    },
+    "exit_trigger": {
+      "type": "CategoricalParameter",
+      "categories": [
+        "none",
+        "rsi_tp",
+        "ema_cross_down",
+        "macd_cross_down",
+        "bb_mid",
+        "atr_flip"
+      ],
+      "default": "rsi_tp",
+      "space": "exit",
+      "value": "rsi_tp"
+    },
+    "rsi_sell": {
+      "type": "IntParameter",
+      "low": 50,
+      "high": 90,
+      "default": 70,
+      "space": "exit",
+      "value": 70
+    },
+    "atr_mult_exit": {
+      "type": "DecimalParameter",
+      "low": 0.5,
+      "high": 5.0,
+      "default": 2.0,
+      "space": "exit",
+      "value": 2.0
+    }
+  }
+}

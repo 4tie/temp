@@ -1,0 +1,103 @@
+{
+  "strategy": "Diamond",
+  "settings": {
+    "minimal_roi": {
+      "0": 0.242,
+      "13": 0.044,
+      "51": 0.02,
+      "170": 0
+    },
+    "stoploss": -0.25,
+    "trailing_stop": true,
+    "trailing_stop_positive": 0.011,
+    "trailing_stop_positive_offset": 0.054,
+    "trailing_only_offset_is_reached": false,
+    "timeframe": "5m"
+  },
+  "parameters": {
+    "buy_fast_key": {
+      "type": "CategoricalParameter",
+      "categories": [
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume"
+      ],
+      "default": "ma_fast",
+      "space": "buy",
+      "value": "ma_fast"
+    },
+    "buy_horizontal_push": {
+      "type": "IntParameter",
+      "low": 0,
+      "high": 10,
+      "default": 0,
+      "space": "buy",
+      "value": 0
+    },
+    "buy_slow_key": {
+      "type": "CategoricalParameter",
+      "categories": [
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume"
+      ],
+      "default": "ma_slow",
+      "space": "buy",
+      "value": "ma_slow"
+    },
+    "buy_vertical_push": {
+      "type": "DecimalParameter",
+      "low": 0.5,
+      "high": 1.5,
+      "default": 1,
+      "space": "buy",
+      "value": 1
+    },
+    "sell_fast_key": {
+      "type": "CategoricalParameter",
+      "categories": [
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume"
+      ],
+      "default": "ma_fast",
+      "space": "sell",
+      "value": "ma_fast"
+    },
+    "sell_horizontal_push": {
+      "type": "IntParameter",
+      "low": 0,
+      "high": 10,
+      "default": 0,
+      "space": "sell",
+      "value": 0
+    },
+    "sell_slow_key": {
+      "type": "CategoricalParameter",
+      "categories": [
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume"
+      ],
+      "default": "ma_slow",
+      "space": "sell",
+      "value": "ma_slow"
+    },
+    "sell_vertical_push": {
+      "type": "DecimalParameter",
+      "low": 0.5,
+      "high": 1.5,
+      "default": 1,
+      "space": "sell",
+      "value": 1
+    }
+  }
+}

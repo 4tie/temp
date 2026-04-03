@@ -1,0 +1,352 @@
+import asyncio
+import json
+import shutil
+import subprocess
+import threading
+import uuid
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Optional
+
+from app.core.config import BACKTEST_RESULTS_DIR, HYPEROPT_RESULTS_DIR, DATA_DIR
+from app.core.processes import (
+    set_process, append_log, set_status, get_status,
+    get_logs, remove_process, get_process
+)
+from app.services.command_builder import build_backtest_command, build_download_data_command, build_hyperopt_command
+from app.services.result_parser import parse_backtest_results
+from app.services.storage import save_run_meta, save_run_results, save_run_logs, get_run_dir
+from app.services.hyperopt_storage import save_hyperopt_meta, save_hyperopt_results, save_hyperopt_logs, get_hyperopt_run_dir
+
+
+def start_backtest(
+    strategy: str,
+    pairs: list[str],
+    timeframe: str,
+    timerange: Optional[str],
+    dry_run_wallet: float,
+    max_open_trades: int,
+    stake_amount: str,
+    exchange: str,
+    strategy_params: dict[str, Any],
+) -> str:
+    run_id = datetime.utcnow().strftime("%Y%m%d_%H%M%S") + "_" + uuid.uuid4().hex[:8]
+    run_dir = get_run_dir(run_id)
+
+    cmd = build_backtest_command(
+        strategy=strategy,
+        pairs=pairs,
+        timeframe=timeframe,
+        timerange=timerange,
+        dry_run_wallet=dry_run_wallet,
+        max_open_trades=max_open_trades,
+        stake_amount=stake_amount,
+        exchange=exchange,
+        strategy_params=strategy_params,
+    )
+
+    cmd = [c.replace("{run_id}", run_id) for c in cmd]
+
+    meta = {
+        "run_id": run_id,
+        "strategy": strategy,
+        "pairs": pairs,
+        "timeframe": timeframe,
+        "timerange": timerange,
+        "dry_run_wallet": dry_run_wallet,
+        "max_open_trades": max_open_trades,
+        "stake_amount": stake_amount,
+        "exchange": exchange,
+        "strategy_params": strategy_params,
+        "command": cmd,
+        "status": "running",
+        "started_at": datetime.utcnow().isoformat(),
+        "completed_at": None,
+    }
+    save_run_meta(run_id, meta)
+
+    _run_subprocess(run_id, cmd, run_dir, meta)
+    return run_id
+
+
+def start_download(
+    pairs: list[str],
+    timeframe: str,
+    exchange: str,
+    days: int,
+    timerange: Optional[str] = None,
+) -> str:
+    job_id = "dl_" + datetime.utcnow().strftime("%Y%m%d_%H%M%S") + "_" + uuid.uuid4().hex[:8]
+
+    cmd = build_download_data_command(
+        pairs=pairs,
+        timeframe=timeframe,
+        exchange=exchange,
+        days=days,
+        timerange=timerange,
+    )
+
+    set_status(job_id, "running")
+    set_process(job_id, None)
+
+    thread = threading.Thread(target=_download_worker, args=(job_id, cmd), daemon=True)
+    thread.start()
+
+    return job_id
+
+
+def _download_worker(job_id: str, cmd: list[str]):
+    try:
+        append_log(job_id, f"$ {' '.join(cmd)}")
+        append_log(job_id, "")
+        proc = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+        )
+        set_process(job_id, proc)
+
+        for line in proc.stdout:
+            append_log(job_id, line.rstrip())
+
+        proc.wait()
+
+        if proc.returncode == 0:
+            set_status(job_id, "completed")
+        else:
+            set_status(job_id, "failed")
+            append_log(job_id, f"Process exited with code {proc.returncode}")
+    except FileNotFoundError:
+        set_status(job_id, "failed")
+        append_log(job_id, "ERROR: freqtrade command not found. Please install FreqTrade.")
+    except Exception as e:
+        set_status(job_id, "failed")
+        append_log(job_id, f"ERROR: {str(e)}")
+
+
+def _run_subprocess(run_id: str, cmd: list[str], run_dir: Path, meta: dict):
+    thread = threading.Thread(target=_backtest_worker, args=(run_id, cmd, run_dir, meta), daemon=True)
+    thread.start()
+
+
+def _copy_latest_result(run_dir: Path):
+    last_result_file = BACKTEST_RESULTS_DIR / ".last_result.json"
+    if not last_result_file.exists():
+        return
+    try:
+        last_ref = json.loads(last_result_file.read_text())
+        latest_name = last_ref.get("latest_backtest", "")
+        if not latest_name:
+            return
+        latest_path = BACKTEST_RESULTS_DIR / latest_name
+        if latest_path.exists():
+            shutil.copy2(latest_path, run_dir / latest_path.name)
+            meta_name = latest_name.replace(".zip", ".meta.json")
+            meta_path = BACKTEST_RESULTS_DIR / meta_name
+            if meta_path.exists():
+                shutil.copy2(meta_path, run_dir / meta_path.name)
+    except (json.JSONDecodeError, OSError):
+        pass
+
+
+def _backtest_worker(run_id: str, cmd: list[str], run_dir: Path, meta: dict):
+    try:
+        append_log(run_id, f"$ {' '.join(cmd)}")
+        append_log(run_id, "")
+        proc = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+        )
+        set_process(run_id, proc)
+
+        for line in proc.stdout:
+            append_log(run_id, line.rstrip())
+
+        proc.wait()
+
+        if proc.returncode == 0:
+            set_status(run_id, "completed")
+            _copy_latest_result(run_dir)
+            results = parse_backtest_results(run_dir)
+            save_run_results(run_id, results)
+        else:
+            set_status(run_id, "failed")
+            append_log(run_id, f"Process exited with code {proc.returncode}")
+
+        meta["status"] = get_status(run_id)
+        meta["completed_at"] = datetime.utcnow().isoformat()
+        save_run_meta(run_id, meta)
+        save_run_logs(run_id, get_logs(run_id))
+
+    except FileNotFoundError:
+        set_status(run_id, "failed")
+        append_log(run_id, "ERROR: freqtrade command not found. Please install FreqTrade.")
+        meta["status"] = "failed"
+        meta["error"] = "freqtrade not found"
+        meta["completed_at"] = datetime.utcnow().isoformat()
+        save_run_meta(run_id, meta)
+        save_run_logs(run_id, get_logs(run_id))
+    except Exception as e:
+        set_status(run_id, "failed")
+        append_log(run_id, f"ERROR: {str(e)}")
+        meta["status"] = "failed"
+        meta["error"] = str(e)
+        meta["completed_at"] = datetime.utcnow().isoformat()
+        save_run_meta(run_id, meta)
+        save_run_logs(run_id, get_logs(run_id))
+    finally:
+        remove_process(run_id)
+
+
+def start_hyperopt(
+    strategy: str,
+    pairs: list[str],
+    timeframe: str,
+    timerange: Optional[str],
+    epochs: int,
+    spaces: list[str],
+    loss_function: str,
+    jobs: int,
+    min_trades: int,
+    early_stop: Optional[int],
+    dry_run_wallet: float,
+    max_open_trades: int,
+    stake_amount: str,
+    exchange: str,
+    random_state: Optional[int],
+) -> str:
+    run_id = "ho_" + datetime.utcnow().strftime("%Y%m%d_%H%M%S") + "_" + uuid.uuid4().hex[:8]
+    run_dir = get_hyperopt_run_dir(run_id)
+
+    cmd = build_hyperopt_command(
+        strategy=strategy,
+        pairs=pairs,
+        timeframe=timeframe,
+        timerange=timerange,
+        epochs=epochs,
+        spaces=spaces,
+        loss_function=loss_function,
+        jobs=jobs,
+        min_trades=min_trades,
+        early_stop=early_stop,
+        dry_run_wallet=dry_run_wallet,
+        max_open_trades=max_open_trades,
+        stake_amount=stake_amount,
+        exchange=exchange,
+        random_state=random_state,
+    )
+
+    meta = {
+        "run_id": run_id,
+        "type": "hyperopt",
+        "strategy": strategy,
+        "pairs": pairs,
+        "timeframe": timeframe,
+        "timerange": timerange,
+        "epochs": epochs,
+        "spaces": spaces,
+        "loss_function": loss_function,
+        "jobs": jobs,
+        "min_trades": min_trades,
+        "early_stop": early_stop,
+        "dry_run_wallet": dry_run_wallet,
+        "max_open_trades": max_open_trades,
+        "stake_amount": stake_amount,
+        "exchange": exchange,
+        "command": cmd,
+        "status": "running",
+        "started_at": datetime.utcnow().isoformat(),
+        "completed_at": None,
+    }
+    save_hyperopt_meta(run_id, meta)
+
+    thread = threading.Thread(target=_hyperopt_worker, args=(run_id, cmd, run_dir, meta, strategy), daemon=True)
+    thread.start()
+
+    return run_id
+
+
+def _copy_hyperopt_results(run_dir: Path, strategy: str):
+    last_file = HYPEROPT_RESULTS_DIR / ".last_hyperopt.json"
+    if last_file.exists():
+        try:
+            ref = json.loads(last_file.read_text())
+            latest_name = ref.get("latest_hyperopt", "")
+            if latest_name:
+                src = HYPEROPT_RESULTS_DIR / latest_name
+                if src.exists():
+                    shutil.copy2(src, run_dir / src.name)
+                    return
+        except (json.JSONDecodeError, OSError):
+            pass
+
+    if HYPEROPT_RESULTS_DIR.exists():
+        fthypt_files = list(HYPEROPT_RESULTS_DIR.glob(f"strategy_{strategy}_*.fthypt"))
+        if not fthypt_files:
+            fthypt_files = list(HYPEROPT_RESULTS_DIR.glob("*.fthypt"))
+        if fthypt_files:
+            latest = sorted(fthypt_files, key=lambda x: x.stat().st_mtime, reverse=True)[0]
+            shutil.copy2(latest, run_dir / latest.name)
+
+
+def _hyperopt_worker(run_id: str, cmd: list[str], run_dir: Path, meta: dict, strategy: str):
+    try:
+        append_log(run_id, f"$ {' '.join(cmd)}")
+        append_log(run_id, "")
+        proc = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+        )
+        set_process(run_id, proc)
+
+        for line in proc.stdout:
+            append_log(run_id, line.rstrip())
+
+        proc.wait()
+
+        if proc.returncode == 0:
+            set_status(run_id, "completed")
+            _copy_hyperopt_results(run_dir, strategy)
+            from app.services.hyperopt_parser import parse_hyperopt_results, load_params_file
+            results = parse_hyperopt_results(run_dir, strategy)
+
+            exported_params = load_params_file(strategy)
+            if exported_params:
+                results["exported_params"] = exported_params
+
+            save_hyperopt_results(run_id, results)
+        else:
+            set_status(run_id, "failed")
+            append_log(run_id, f"Process exited with code {proc.returncode}")
+
+        meta["status"] = get_status(run_id)
+        meta["completed_at"] = datetime.utcnow().isoformat()
+        save_hyperopt_meta(run_id, meta)
+        save_hyperopt_logs(run_id, get_logs(run_id))
+
+    except FileNotFoundError:
+        set_status(run_id, "failed")
+        append_log(run_id, "ERROR: freqtrade command not found.")
+        meta["status"] = "failed"
+        meta["error"] = "freqtrade not found"
+        meta["completed_at"] = datetime.utcnow().isoformat()
+        save_hyperopt_meta(run_id, meta)
+        save_hyperopt_logs(run_id, get_logs(run_id))
+    except Exception as e:
+        set_status(run_id, "failed")
+        append_log(run_id, f"ERROR: {str(e)}")
+        meta["status"] = "failed"
+        meta["error"] = str(e)
+        meta["completed_at"] = datetime.utcnow().isoformat()
+        save_hyperopt_meta(run_id, meta)
+        save_hyperopt_logs(run_id, get_logs(run_id))
+    finally:
+        remove_process(run_id)
