@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routers import backtest, strategies, presets, compare, hyperopt
 
 app = FastAPI(
-    title="FreqTrade Backtest API",
+    title="4tie",
     version="1.0.0",
     root_path="",
 )
