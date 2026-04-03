@@ -1,0 +1,128 @@
+[32mINFO[0m:     Will watch for changes in these directories: ['/home/runner/workspace/app', '/home/runner/workspace/static', '/home/runner/workspace/templates']
+[32mINFO[0m:     Uvicorn running on [1mhttp://0.0.0.0:5000[0m (Press CTRL+C to quit)
+[32mINFO[0m:     Started reloader process [[36m[1m2832[0m] using [36m[1mStatReload[0m
+[32mINFO[0m:     Started server process [[36m2844[0m]
+[32mINFO[0m:     Waiting for application startup.
+[32mINFO[0m:     Application startup complete.
+[32mINFO[0m:     10.84.3.5:0 - "[1mGET / HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.3.5:0 - "[1mGET /static/css/components.css HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     10.84.4.42:0 - "[1mGET /static/css/layout.css HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /static/css/utilities.css HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /static/css/base.css HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     10.84.3.5:0 - "[1mGET /static/js/utils/state.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     10.84.9.36:0 - "[1mGET /static/js/utils/format.js HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.4.42:0 - "[1mGET /static/js/core/dom.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     10.84.3.5:0 - "[1mGET /static/js/core/api-client.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /static/js/core/auth.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /static/js/components/toast.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     10.84.3.5:0 - "[1mGET /static/js/components/modal.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     10.84.9.36:0 - "[1mGET /static/js/components/tabs.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     10.84.4.42:0 - "[1mGET /static/js/components/sidebar.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     10.84.3.5:0 - "[1mGET /static/js/pages/dashboard.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /static/js/pages/backtesting.js HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /static/js/pages/hyperopt.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     10.84.9.36:0 - "[1mGET /static/js/pages/strategy-lab.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     10.84.4.42:0 - "[1mGET /static/js/pages/ai-diagnosis.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     10.84.3.5:0 - "[1mGET /static/js/pages/jobs.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     10.84.3.5:0 - "[1mGET /static/js/pages/results.js HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /static/js/pages/settings.js HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:37704 - "[1mGET / HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:37704 - "[1mGET /static/css/base.css HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:37716 - "[1mGET /static/css/layout.css HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:37720 - "[1mGET /static/css/components.css HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:37730 - "[1mGET /static/css/utilities.css HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:37730 - "[1mGET /static/js/utils/format.js HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:37720 - "[1mGET /static/js/utils/state.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:37716 - "[1mGET /static/js/core/dom.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:37704 - "[1mGET /static/js/core/api-client.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:37736 - "[1mGET /static/js/core/auth.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:37742 - "[1mGET /static/js/components/modal.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:37720 - "[1mGET /static/js/components/toast.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:37716 - "[1mGET /static/js/pages/hyperopt.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:37736 - "[1mGET /static/js/pages/dashboard.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:37742 - "[1mGET /static/js/components/sidebar.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:37704 - "[1mGET /static/js/pages/backtesting.js HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:37720 - "[1mGET /static/js/components/tabs.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     10.84.9.36:0 - "[1mGET /static/js/core/app.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:37716 - "[1mGET /static/js/pages/results.js HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:37736 - "[1mGET /static/js/pages/jobs.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:37742 - "[1mGET /static/js/pages/ai-diagnosis.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:37720 - "[1mGET /static/js/pages/strategy-lab.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:37720 - "[1mGET /static/js/pages/settings.js HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:37742 - "[1mGET /static/js/core/app.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:37720 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:37716 - "[1mGET /runs HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:37704 - "[1mGET /hyperopt/runs HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:37730 - "[1mGET /strategies HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.9.36:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.3.5:0 - "[1mGET /runs HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /hyperopt/runs HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /strategies HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:43690 - "[1mGET / HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:43690 - "[1mGET /static/js/pages/results.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:43714 - "[1mGET /static/js/pages/settings.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:43714 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:43690 - "[1mGET /last-config HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:43726 - "[1mGET /presets HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:43714 - "[1mGET / HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:43714 - "[1mGET /static/js/pages/backtesting.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:43714 - "[1mGET /static/js/pages/settings.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:43714 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:43714 - "[1mGET /runs HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:43726 - "[1mGET /strategies HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:43690 - "[1mGET /last-config HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:43714 - "[1mGET /pairs?exchange=binance HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     10.84.2.49:0 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     Shutting down
+[32mINFO[0m:     Waiting for application shutdown.
+[32mINFO[0m:     Application shutdown complete.
+[32mINFO[0m:     Finished server process [[36m2844[0m]
+[32mINFO[0m:     Stopping reloader process [[36m[1m2832[0m]

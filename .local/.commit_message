@@ -1,0 +1,27 @@
+Fix duplicate command block in backtesting page (Task #11)
+
+Three targeted changes to static/js/pages/backtesting.js:
+
+1. Removed #bt-cmd div from #bt-status-card HTML template — the old
+   post-run command block inside the status card is gone. Only one
+   command element exists: #bt-cmd-preview in the Configuration card.
+
+2. Removed cmdEl variable and _renderCommandBlock(cmdEl, data.meta.command)
+   call from _updateStatus() — eliminates the stale reference and prevents
+   any attempt to render into the now-deleted #bt-cmd element.
+
+3. Guarded _refreshCommandPreview() against empty-pair state — if no pairs
+   are selected, the container is cleared (innerHTML = '') instead of
+   rendering a bare "COMMAND / Copy" shell with no tokens. The preview
+   only renders when at least one pair is checked.
+
+4. Added _refreshCommandPreview() call after successful patchConfig() in
+   _wireConfigSyncEvents() — the live command now updates immediately when
+   strategy, wallet, max-trades, or stake-amount fields are changed and
+   saved to config.json.
+
+Bug fix: _getSelectedPairs() was called without its required listId
+argument — corrected to pass 'bt-pairs-list' (matching every other call
+site in the file).
+
+No changes to hyperopt.js, CSS, or backend files.
