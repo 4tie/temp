@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-BASE_DIR = Path(os.environ.get("USER_DATA_DIR", Path(__file__).resolve().parents[3] / "user_data"))
+BASE_DIR = Path(os.environ.get("USER_DATA_DIR", Path(__file__).resolve().parents[2] / "user_data"))
 BACKTEST_RESULTS_DIR = BASE_DIR / "backtest_results"
 HYPEROPT_RESULTS_DIR = BASE_DIR / "hyperopt_results"
 STRATEGIES_DIR = BASE_DIR / "strategies"
