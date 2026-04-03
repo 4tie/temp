@@ -1,6 +1,9 @@
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse
 
 from app.routers import backtest, strategies, presets, compare, hyperopt
 
@@ -18,6 +21,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+templates = Jinja2Templates(directory="templates")
+
 app.include_router(backtest.router)
 app.include_router(strategies.router)
 app.include_router(presets.router)
@@ -28,3 +35,8 @@ app.include_router(hyperopt.router)
 @app.get("/healthz")
 async def health():
     return {"status": "ok"}
+
+
+@app.get("/", response_class=HTMLResponse)
+async def serve_index(request: Request):
+    return templates.TemplateResponse(request=request, name="layouts/base.html")

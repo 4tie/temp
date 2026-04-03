@@ -1,0 +1,27 @@
+<div class="statusbar" id="statusbar" data-statusbar>
+
+  <div class="statusbar__left">
+
+    <!-- Connection indicator -->
+    <div class="statusbar__conn" id="statusbar-conn" data-statusbar-conn>
+      <span class="statusbar__conn-dot statusbar__conn-dot--offline" id="statusbar-conn-dot" data-conn-dot></span>
+      <span id="statusbar-conn-label" data-conn-label>Connecting…</span>
+    </div>
+
+    <div class="statusbar__sep"></div>
+
+    <!-- Version / app info -->
+    <span class="statusbar__meta" id="statusbar-version">4tie v1.0</span>
+
+  </div>
+
+  <!-- Log / status stream -->
+  <div class="statusbar__stream" id="statusbar-stream" data-stream aria-live="polite">
+    Ready.
+  </div>
+
+  <div class="statusbar__right">
+    <span class="statusbar__meta" id="statusbar-time" data-clock></span>
+  </div>
+
+</div>

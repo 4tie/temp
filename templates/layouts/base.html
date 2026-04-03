@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="4tie — FreqTrade Strategy Management">
+  <title>4tie</title>
+
+  <!-- Preconnect -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <!-- Inter font -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet"
+  >
+
+  <!-- Core styles -->
+  <link rel="stylesheet" href="/static/css/base.css">
+  <link rel="stylesheet" href="/static/css/layout.css">
+  <link rel="stylesheet" href="/static/css/components.css">
+  <link rel="stylesheet" href="/static/css/utilities.css">
+
+  <!-- Page styles -->
+  <link rel="stylesheet" href="/static/css/pages/dashboard.css">
+  <link rel="stylesheet" href="/static/css/pages/backtesting.css">
+  <link rel="stylesheet" href="/static/css/pages/hyperopt.css">
+  <link rel="stylesheet" href="/static/css/pages/strategy-lab.css">
+  <link rel="stylesheet" href="/static/css/pages/ai-diagnosis.css">
+  <link rel="stylesheet" href="/static/css/pages/jobs.css">
+  <link rel="stylesheet" href="/static/css/pages/results.css">
+  <link rel="stylesheet" href="/static/css/pages/settings.css">
+
+  <!-- Favicon placeholder -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='6' height='8' x='1' y='4' rx='1' fill='%238b5cf6'/%3E%3Crect width='6' height='10' x='9' y='2' rx='1' fill='%2322c55e'/%3E%3C/svg%3E">
+</head>
+
+<body>
+
+<div class="app-shell" id="app-shell" data-app-shell>
+
+  <!-- ---- Sidebar ----------------------------------------- -->
+  {% include "partials/sidebar.html" %}
+
+  <!-- ---- Topbar ------------------------------------------ -->
+  {% include "partials/topbar.html" %}
+
+  <!-- ---- Main content ------------------------------------ -->
+  <main class="page-content" id="page-content" data-page-content role="main">
+
+    <!-- Dashboard -->
+    <div class="page-view" id="page-dashboard" data-view="dashboard">
+      {% include "pages/dashboard/index.html" %}
+    </div>
+
+    <!-- Backtesting -->
+    <div class="page-view" id="page-backtesting" data-view="backtesting">
+      {% include "pages/backtesting/index.html" %}
+    </div>
+
+    <!-- Hyperopt -->
+    <div class="page-view" id="page-hyperopt" data-view="hyperopt">
+      {% include "pages/hyperopt/index.html" %}
+    </div>
+
+    <!-- Strategy Lab -->
+    <div class="page-view" id="page-strategy-lab" data-view="strategy-lab">
+      {% include "pages/strategy-lab/index.html" %}
+    </div>
+
+    <!-- AI Diagnosis -->
+    <div class="page-view" id="page-ai-diagnosis" data-view="ai-diagnosis">
+      {% include "pages/ai-diagnosis/index.html" %}
+    </div>
+
+    <!-- Jobs -->
+    <div class="page-view" id="page-jobs" data-view="jobs">
+      {% include "pages/jobs/index.html" %}
+    </div>
+
+    <!-- Results -->
+    <div class="page-view" id="page-results" data-view="results">
+      {% include "pages/results/index.html" %}
+    </div>
+
+    <!-- Settings -->
+    <div class="page-view" id="page-settings" data-view="settings">
+      {% include "pages/settings/index.html" %}
+    </div>
+
+  </main>
+
+  <!-- ---- Status bar -------------------------------------- -->
+  {% include "partials/statusbar.html" %}
+
+</div>
+
+<!-- ---- JavaScript --------------------------------------- -->
+<!-- Utilities -->
+<script src="/static/js/utils/format.js" defer></script>
+<script src="/static/js/utils/state.js" defer></script>
+
+<!-- Core -->
+<script src="/static/js/core/dom.js" defer></script>
+<script src="/static/js/core/api-client.js" defer></script>
+<script src="/static/js/core/auth.js" defer></script>
+
+<!-- Components -->
+<script src="/static/js/components/toast.js" defer></script>
+<script src="/static/js/components/modal.js" defer></script>
+<script src="/static/js/components/tabs.js" defer></script>
+<script src="/static/js/components/sidebar.js" defer></script>
+
+<!-- Pages -->
+<script src="/static/js/pages/dashboard.js" defer></script>
+<script src="/static/js/pages/backtesting.js" defer></script>
+<script src="/static/js/pages/hyperopt.js" defer></script>
+<script src="/static/js/pages/strategy-lab.js" defer></script>
+<script src="/static/js/pages/ai-diagnosis.js" defer></script>
+<script src="/static/js/pages/jobs.js" defer></script>
+<script src="/static/js/pages/results.js" defer></script>
+<script src="/static/js/pages/settings.js" defer></script>
+
+<!-- App bootstrap (last) -->
+<script src="/static/js/core/app.js" defer></script>
+
+</body>
+</html>
