@@ -76,6 +76,16 @@ window.AIDiagPage = (() => {
     return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
+  /* ---- Evolution state ------------------------------------ */
+  let _evo = {
+    loopId: null,
+    evtSource: null,
+    activeTab: 'config',   // 'config' | 'running' | 'results'
+    generations: [],       // accumulated generation events
+    maxGenerations: 3,
+    originalSource: null,  // source code before mutation (for diff)
+  };
+
   /* ---- Build layout HTML ----------------------------------- */
   function _buildLayout() {
     return `
@@ -145,6 +155,15 @@ window.AIDiagPage = (() => {
           <line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
         </svg>
         Deep Analyse
+      </button>
+
+      <!-- Evolve Strategy button -->
+      <button class="ai-evolve-btn" id="ai-evolve-btn" disabled title="Inject a backtest first">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+        </svg>
+        Evolve Strategy
       </button>
     </div>
 
@@ -238,6 +257,57 @@ window.AIDiagPage = (() => {
     </div>
   </div>
 </div>
+
+<!-- Evolution Panel -->
+<div class="evo-panel" id="evo-panel">
+  <div class="evo-panel__header">
+    <span class="evo-panel__title">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2">
+        <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+      </svg>
+      Evolve Strategy
+    </span>
+    <button class="evo-panel__close" id="evo-panel-close">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  </div>
+  <div class="evo-tabs">
+    <button class="evo-tab active" id="evo-tab-config" data-tab="config">Configure</button>
+    <button class="evo-tab" id="evo-tab-running" data-tab="running">Running</button>
+    <button class="evo-tab" id="evo-tab-results" data-tab="results">Results</button>
+  </div>
+  <div class="evo-panel__body" id="evo-panel-body"></div>
+</div>
+
+<!-- Code Diff Modal -->
+<div class="evo-diff-overlay" id="evo-diff-overlay">
+  <div class="evo-diff-modal">
+    <div class="evo-diff-modal__header">
+      <span class="evo-diff-modal__title" id="evo-diff-title">Code Diff</span>
+      <button class="evo-diff-modal__close" id="evo-diff-close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="evo-diff-cols">
+      <div class="evo-diff-col">
+        <div class="evo-diff-col__label evo-diff-col__label--original">Original</div>
+        <div class="evo-diff-scroll"><div class="evo-diff" id="evo-diff-original"></div></div>
+      </div>
+      <div class="evo-diff-col">
+        <div class="evo-diff-col__label evo-diff-col__label--mutated">Mutated</div>
+        <div class="evo-diff-scroll"><div class="evo-diff" id="evo-diff-mutated"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="evo-toast" id="evo-toast"></div>
     `;
   }
 
@@ -273,6 +343,20 @@ window.AIDiagPage = (() => {
       deepPanel:       $('ai-deep-panel'),
       deepPanelBody:   $('ai-deep-panel-body'),
       deepPanelClose:  $('ai-deep-panel-close'),
+      // Evolution
+      evolveBtn:       $('ai-evolve-btn'),
+      evoPanel:        $('evo-panel'),
+      evoPanelClose:   $('evo-panel-close'),
+      evoPanelBody:    $('evo-panel-body'),
+      evoTabConfig:    $('evo-tab-config'),
+      evoTabRunning:   $('evo-tab-running'),
+      evoTabResults:   $('evo-tab-results'),
+      evoDiffOverlay:  $('evo-diff-overlay'),
+      evoDiffClose:    $('evo-diff-close'),
+      evoDiffOriginal: $('evo-diff-original'),
+      evoDiffMutated:  $('evo-diff-mutated'),
+      evoDiffTitle:    $('evo-diff-title'),
+      evoToast:        $('evo-toast'),
     };
   }
 
@@ -428,11 +512,17 @@ window.AIDiagPage = (() => {
         return;
       }
       const latest = completed[0];
-      _state.contextRunId = latest.id;
+      _state.contextRunId = latest.run_id || latest.id;
       _state.contextStrategyName = latest.strategy || latest.id;
       _state.contextTimeframe = latest.timeframe || '';
       _updateContextBar();
       _el.deepAnalyseBtn.disabled = false;
+
+      // Pre-fetch original strategy source for diff
+      try {
+        const srcResp = await fetch(`/strategies/${encodeURIComponent(_state.contextStrategyName)}/source`);
+        if (srcResp.ok) _evo.originalSource = await srcResp.text();
+      } catch (_) {}
     } catch (e) {
       _setStatus('Could not fetch backtest runs');
     }
@@ -447,6 +537,8 @@ window.AIDiagPage = (() => {
       const tf = _state.contextTimeframe ? ` · ${_state.contextTimeframe}` : '';
       _el.contextBadge.textContent = `${strat}${tf}`;
     }
+
+    if (_el.evolveBtn) _el.evolveBtn.disabled = !active;
   }
 
   function _clearContext() {
@@ -455,6 +547,7 @@ window.AIDiagPage = (() => {
     _state.contextTimeframe = null;
     _updateContextBar();
     _el.deepAnalyseBtn.disabled = true;
+    if (_el.evolveBtn) _el.evolveBtn.disabled = true;
   }
 
   /* ---- Message rendering ----------------------------------- */
@@ -670,6 +763,10 @@ window.AIDiagPage = (() => {
   async function _openDeepPanel() {
     if (!_state.contextRunId) return;
     _el.deepPanel.classList.add('open');
+    // If evo panel is already open, push it left to avoid overlap
+    if (_el.evoPanel && _el.evoPanel.classList.contains('open')) {
+      _el.evoPanel.classList.add('evo-panel--offset');
+    }
     _el.deepPanelBody.innerHTML = `
       <div class="ai-deep-panel__loading">
         <div class="ai-deep-panel__loading-spinner"></div>
@@ -824,6 +921,521 @@ window.AIDiagPage = (() => {
     _el.sendBtn.disabled = !hasText || _state.streaming;
   }
 
+  /* ---- Evolution panel ------------------------------------ */
+
+  function _openEvolutionPanel() {
+    _el.evoPanel.classList.add('open');
+    // If deep analysis panel is also open, offset evo panel to avoid overlap
+    if (_el.deepPanel && _el.deepPanel.classList.contains('open')) {
+      _el.evoPanel.classList.add('evo-panel--offset');
+    } else {
+      _el.evoPanel.classList.remove('evo-panel--offset');
+    }
+    _evoSwitchTab('config');
+    _renderEvoConfig();
+  }
+
+  function _evoSwitchTab(tab) {
+    _evo.activeTab = tab;
+    ['config', 'running', 'results'].forEach(t => {
+      document.getElementById(`evo-tab-${t}`)?.classList.toggle('active', t === tab);
+    });
+    if (tab === 'config')   _renderEvoConfig();
+    if (tab === 'running')  _renderEvoRunning();
+    if (tab === 'results')  _renderEvoResults();
+  }
+
+  /* ---- Config tab ----------------------------------------- */
+
+  function _renderEvoConfig() {
+    const strat = _state.contextStrategyName || 'strategy';
+    _el.evoPanelBody.innerHTML = `
+      <div class="evo-config-form">
+        <div class="evo-field">
+          <label class="evo-label">Goal</label>
+          <select class="evo-select" id="evo-goal-select">
+            <option value="">Auto (AI decides)</option>
+            <option value="lower_drawdown">Lower Drawdown</option>
+            <option value="higher_win_rate">Higher Win Rate</option>
+            <option value="higher_profit">Higher Profit</option>
+            <option value="more_trades">More Trades</option>
+            <option value="cut_losers">Cut Losers</option>
+            <option value="lower_risk">Lower Risk</option>
+            <option value="scalping">Scalping</option>
+            <option value="swing_trading">Swing Trading</option>
+            <option value="compound_growth">Compound Growth</option>
+          </select>
+        </div>
+        <div class="evo-field">
+          <label class="evo-label">Max Generations</label>
+          <input class="evo-input" type="number" id="evo-max-gen" min="1" max="5" value="3">
+        </div>
+        <div class="evo-field">
+          <label class="evo-label">Provider</label>
+          <select class="evo-select" id="evo-provider-select">
+            <option value="openrouter" ${_state.provider === 'openrouter' ? 'selected' : ''}>OpenRouter</option>
+            <option value="ollama" ${_state.provider === 'ollama' ? 'selected' : ''}>Ollama</option>
+          </select>
+        </div>
+        <div class="evo-field">
+          <label class="evo-label">Model (optional override)</label>
+          <select class="evo-select" id="evo-model-select">
+            <option value="">Same as chat</option>
+          </select>
+        </div>
+        <p style="font-size:var(--text-xs);color:var(--text-muted);margin:0">
+          Evolving <strong style="color:var(--text-secondary)">${_escHtml(strat)}</strong>
+          from run <code style="font-size:10px">${_escHtml(_state.contextRunId || '')}</code>.
+          Each generation mutates the strategy, runs a backtest, and keeps the best result.
+        </p>
+        <button class="evo-start-btn" id="evo-start-btn">Start Evolution</button>
+      </div>
+    `;
+
+    // Populate model dropdown from current provider models
+    const modelSel = document.getElementById('evo-model-select');
+    const provSel  = document.getElementById('evo-provider-select');
+    const _fillModels = () => {
+      const prov = provSel.value;
+      const models = prov === 'ollama'
+        ? (_state.providers?.ollama?.models || [])
+        : (_state.providers?.openrouter?.models || []);
+      modelSel.innerHTML = '<option value="">Same as chat</option>';
+      models.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        opt.textContent = m.name || m.id;
+        if (m.id === _state.model) opt.selected = true;
+        modelSel.appendChild(opt);
+      });
+    };
+    _fillModels();
+    provSel.addEventListener('change', _fillModels);
+
+    document.getElementById('evo-start-btn').addEventListener('click', async () => {
+      const goalId    = document.getElementById('evo-goal-select').value || null;
+      const maxGen    = parseInt(document.getElementById('evo-max-gen').value, 10) || 3;
+      const provider  = document.getElementById('evo-provider-select').value;
+      const model     = document.getElementById('evo-model-select').value || null;
+      await _startEvolution({ goalId, maxGen, provider, model });
+    });
+  }
+
+  /* ---- Start evolution ------------------------------------ */
+
+  async function _startEvolution({ goalId, maxGen, provider, model }) {
+    if (!_state.contextRunId) return;
+
+    const startBtn = document.getElementById('evo-start-btn');
+    if (startBtn) { startBtn.disabled = true; startBtn.textContent = 'Starting…'; }
+
+    try {
+      const resp = await fetch('/evolution/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          run_id: _state.contextRunId,
+          goal_id: goalId,
+          max_generations: maxGen,
+          provider,
+          model,
+        }),
+      });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.detail || `HTTP ${resp.status}`);
+      }
+      const { loop_id } = await resp.json();
+      _evo.loopId = loop_id;
+      _evo.maxGenerations = maxGen;
+      _evo.generations = [];
+
+      // Capture original source for diff
+      _evo.originalSource = null;
+      try {
+        const versResp = await fetch(`/evolution/versions/${encodeURIComponent(_state.contextStrategyName || '')}`);
+        // We'll fetch source lazily when diff is opened
+      } catch (_) {}
+
+      _evoSwitchTab('running');
+      _listenEvolutionStream(loop_id, maxGen);
+    } catch (e) {
+      if (startBtn) { startBtn.disabled = false; startBtn.textContent = 'Start Evolution'; }
+      _showEvoToast(`Failed to start: ${e.message}`, true);
+    }
+  }
+
+  /* ---- Running tab ---------------------------------------- */
+
+  function _renderEvoRunning() {
+    _el.evoPanelBody.innerHTML = `
+      <div class="evo-progress-wrap" id="evo-progress-wrap">
+        <div class="evo-progress-label">
+          <span id="evo-progress-text">Generation 0 / ${_evo.maxGenerations}</span>
+          <span id="evo-progress-pct">0%</span>
+        </div>
+        <div class="evo-progress-track">
+          <div class="evo-progress-fill" id="evo-progress-fill" style="width:0%"></div>
+        </div>
+      </div>
+      <div id="evo-gen-cards"></div>
+    `;
+
+    // Re-render any already-received generations
+    _evo.generations.forEach(evt => _renderGenerationCard(evt));
+  }
+
+  /* ---- SSE stream listener -------------------------------- */
+
+  function _listenEvolutionStream(loopId, maxGen) {
+    let buffer = '';
+    const ctrl = new AbortController();
+    _evo.evtSource = ctrl;
+
+    fetch(`/evolution/stream/${loopId}`, { signal: ctrl.signal })
+      .then(resp => {
+        const reader = resp.body.getReader();
+        const decoder = new TextDecoder();
+
+        const pump = () => reader.read().then(({ done, value }) => {
+          if (done) return;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            try {
+              const evt = JSON.parse(line.slice(6));
+              _handleEvoEvent(evt, maxGen);
+            } catch (_) {}
+          }
+          pump();
+        }).catch(() => {});
+
+        pump();
+      })
+      .catch(() => {});
+  }
+
+  function _handleEvoEvent(evt, maxGen) {
+    const step = evt.step;
+
+    if (step === 'comparing') {
+      _evo.generations.push(evt);
+      const gen = evt.generation || _evo.generations.length;
+      _updateEvoProgress(gen, maxGen);
+      if (_evo.activeTab === 'running') _renderGenerationCard(evt);
+    }
+
+    if (step === 'analyzing' || step === 'mutating' || step === 'backtesting') {
+      _updateActiveGenStep(evt);
+    }
+
+    if (step === 'done' || evt.done) {
+      if (_evo.activeTab === 'running') {
+        setTimeout(() => _evoSwitchTab('results'), 1200);
+      }
+    }
+
+    if (step === 'error') {
+      _showEvoToast(`Evolution error: ${evt.message}`, true);
+    }
+  }
+
+  function _updateEvoProgress(gen, maxGen) {
+    const pct = Math.round((gen / maxGen) * 100);
+    const fill = document.getElementById('evo-progress-fill');
+    const text = document.getElementById('evo-progress-text');
+    const pctEl = document.getElementById('evo-progress-pct');
+    if (fill) fill.style.width = pct + '%';
+    if (text) text.textContent = `Generation ${gen} / ${maxGen}`;
+    if (pctEl) pctEl.textContent = pct + '%';
+  }
+
+  // Track the "in-progress" card for live step updates
+  let _activeGenCard = null;
+
+  function _updateActiveGenStep(evt) {
+    if (_evo.activeTab !== 'running') return;
+    const container = document.getElementById('evo-gen-cards');
+    if (!container) return;
+
+    const gen = evt.generation;
+    let card = container.querySelector(`[data-gen="${gen}"]`);
+    if (!card) {
+      card = document.createElement('div');
+      card.className = 'evo-gen-card';
+      card.dataset.gen = gen;
+      card.innerHTML = `
+        <div class="evo-gen-card__head">
+          <span>Generation ${gen} of ${_evo.maxGenerations}</span>
+          <span style="color:#8b5cf6;font-size:10px">🔄 Live</span>
+        </div>
+        <div class="evo-gen-card__body" id="evo-card-body-${gen}">
+          <div class="evo-step evo-step--pending" id="evo-step-analyzing-${gen}">
+            <span class="evo-step__icon"></span><span>Analyzing backtest…</span>
+          </div>
+          <div class="evo-step evo-step--pending" id="evo-step-mutating-${gen}">
+            <span class="evo-step__icon"></span><span>AI mutating strategy code…</span>
+          </div>
+          <div class="evo-step evo-step--pending" id="evo-step-backtesting-${gen}">
+            <span class="evo-step__icon"></span><span>Running backtest…</span>
+          </div>
+          <div class="evo-step evo-step--pending" id="evo-step-comparing-${gen}">
+            <span class="evo-step__icon"></span><span>Comparing results…</span>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    }
+
+    const stepMap = { analyzing: 'analyzing', mutating: 'mutating', backtesting: 'backtesting' };
+    const stepKey = stepMap[evt.step];
+    if (stepKey) {
+      // Mark previous steps done
+      const order = ['analyzing', 'mutating', 'backtesting', 'comparing'];
+      const idx = order.indexOf(stepKey);
+      order.slice(0, idx).forEach(s => {
+        const el = document.getElementById(`evo-step-${s}-${gen}`);
+        if (el) { el.className = 'evo-step evo-step--done'; }
+      });
+      const el = document.getElementById(`evo-step-${stepKey}-${gen}`);
+      if (el) {
+        el.className = 'evo-step evo-step--running';
+        const label = el.querySelector('span:last-child');
+        if (label && evt.message) label.textContent = evt.message;
+      }
+    }
+  }
+
+  /* ---- Render a completed generation card ----------------- */
+
+  function _renderGenerationCard(evt) {
+    const container = document.getElementById('evo-gen-cards');
+    if (!container) return;
+
+    const gen = evt.generation;
+    const accepted = evt.accepted;
+    const fitBefore = (evt.fitness_before || 0).toFixed(1);
+    const fitAfter  = (evt.fitness_after  || 0).toFixed(1);
+    const delta     = evt.delta || '0';
+    const deltaNum  = parseFloat(delta);
+    const deltaClass = deltaNum > 0 ? 'pos' : deltaNum < 0 ? 'neg' : 'zero';
+    const badgeClass = accepted ? 'accepted' : 'rejected';
+    const badgeText  = accepted ? 'ACCEPTED' : 'REJECTED';
+    const changes    = evt.changes_summary || '';
+    const newRunId   = evt.new_run_id || '';
+    const versionName = evt.version_name || '';
+
+    // Replace live card if it exists, otherwise append
+    let card = container.querySelector(`[data-gen="${gen}"]`);
+    if (!card) {
+      card = document.createElement('div');
+      card.dataset.gen = gen;
+      container.appendChild(card);
+    }
+    card.className = 'evo-gen-card';
+
+    const barWidth = Math.min(parseFloat(fitAfter), 100).toFixed(1);
+
+    card.innerHTML = `
+      <div class="evo-gen-card__head">
+        <span>Generation ${gen} of ${_evo.maxGenerations}</span>
+        <span class="evo-badge evo-badge--${badgeClass}">${badgeText}</span>
+      </div>
+      <div class="evo-gen-card__body">
+        <div class="evo-step evo-step--done"><span class="evo-step__icon"></span><span>Analyzed backtest</span></div>
+        <div class="evo-step evo-step--done"><span class="evo-step__icon"></span><span>AI mutated strategy code</span></div>
+        <div class="evo-step evo-step--done"><span class="evo-step__icon"></span><span>Ran backtest on ${_escHtml(versionName)}</span></div>
+        <div class="evo-step evo-step--done"><span class="evo-step__icon"></span><span>Compared results</span></div>
+
+        <div class="evo-fitness-row">
+          <div class="evo-fitness-numbers">
+            <span>${fitBefore}</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            <span>${fitAfter}</span>
+          </div>
+          <span class="evo-fitness-delta evo-fitness-delta--${deltaClass}">(${delta})</span>
+          <div class="evo-fitness-bar-wrap">
+            <div class="evo-fitness-bar" style="width:${barWidth}%"></div>
+          </div>
+        </div>
+
+        ${changes ? `<div class="evo-changes">&ldquo;${_escHtml(changes)}&rdquo;</div>` : ''}
+
+        <div class="evo-card-actions">
+          ${versionName ? `<button class="evo-link" onclick="window.AIDiagPage._openDiff('${_escHtml(versionName)}')">View Code Diff</button>` : ''}
+          ${newRunId ? `<button class="evo-link" onclick="window.location.hash='results/${_escHtml(newRunId)}'">View Backtest</button>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  /* ---- Results tab ---------------------------------------- */
+
+  async function _renderEvoResults() {
+    if (!_evo.loopId) {
+      _el.evoPanelBody.innerHTML = '<p style="color:var(--text-muted);font-size:var(--text-sm)">No evolution run yet.</p>';
+      return;
+    }
+
+    _el.evoPanelBody.innerHTML = '<div style="color:var(--text-muted);font-size:var(--text-sm)">Loading results…</div>';
+
+    try {
+      const data = await fetch(`/evolution/run/${_evo.loopId}`).then(r => r.json());
+      const session = data.session || {};
+      const gens = data.generations || [];
+
+      const bestFitness = (session.best_fitness || 0).toFixed(1);
+      const bestVersion = session.best_version || '—';
+      const initialFitness = gens.length ? (gens[0].fitness_before || 0).toFixed(1) : '—';
+      const totalDelta = gens.length ? ((session.best_fitness || 0) - (gens[0].fitness_before || 0)).toFixed(1) : '0';
+      const totalDeltaNum = parseFloat(totalDelta);
+      const deltaClass = totalDeltaNum > 0 ? 'pos' : totalDeltaNum < 0 ? 'neg' : 'zero';
+
+      // Find best generation index
+      let bestGen = 1;
+      gens.forEach(g => { if (g.version_name === session.best_version) bestGen = g.generation; });
+
+      const rows = gens.map(g => {
+        const acc = g.accepted;
+        const badge = acc ? 'accepted' : 'rejected';
+        const label = acc ? 'Accepted' : 'Rejected';
+        const d = (g.delta || 0).toFixed(1);
+        const dNum = parseFloat(d);
+        const dc = dNum > 0 ? 'pos' : dNum < 0 ? 'neg' : 'zero';
+        return `
+          <tr>
+            <td>${g.generation}</td>
+            <td style="font-family:var(--font-mono);font-size:10px">${_escHtml(g.version_name || '—')}</td>
+            <td>${(g.fitness_after || 0).toFixed(1)}</td>
+            <td class="evo-fitness-delta evo-fitness-delta--${dc}">${dNum > 0 ? '+' : ''}${d}</td>
+            <td><span class="evo-badge evo-badge--${badge}">${label}</span></td>
+          </tr>
+        `;
+      }).join('');
+
+      _el.evoPanelBody.innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3)">
+          <div class="evo-summary-card">
+            <div class="evo-summary-card__title">Best Version</div>
+            <div class="evo-summary-card__value" style="font-size:var(--text-sm);font-family:var(--font-mono)">${_escHtml(bestVersion)}</div>
+          </div>
+          <div class="evo-summary-card">
+            <div class="evo-summary-card__title">Fitness</div>
+            <div class="evo-summary-card__value">${initialFitness} → ${bestFitness}</div>
+            <div class="evo-summary-card__sub evo-fitness-delta evo-fitness-delta--${deltaClass}">${totalDeltaNum >= 0 ? '+' : ''}${totalDelta}</div>
+          </div>
+        </div>
+
+        <table class="evo-results-table">
+          <thead>
+            <tr>
+              <th>Gen</th><th>Version</th><th>Fitness</th><th>Δ</th><th>Status</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+
+        ${session.best_version ? `
+        <button class="evo-accept-best-btn" id="evo-accept-best-btn">
+          Accept Best Version (${_escHtml(bestVersion)})
+        </button>` : ''}
+      `;
+
+      const acceptBtn = document.getElementById('evo-accept-best-btn');
+      if (acceptBtn) {
+        acceptBtn.addEventListener('click', () => _acceptBestVersion(bestGen, bestVersion));
+      }
+    } catch (e) {
+      _el.evoPanelBody.innerHTML = `<div style="color:var(--red)">Failed to load results: ${_escHtml(e.message)}</div>`;
+    }
+  }
+
+  async function _acceptBestVersion(generation, versionName) {
+    if (!_evo.loopId) return;
+    const btn = document.getElementById('evo-accept-best-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Applying…'; }
+    try {
+      const resp = await fetch(`/evolution/accept/${_evo.loopId}/${generation}`, { method: 'POST' });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+      _showEvoToast(`✓ ${data.accepted} has been applied as ${data.applied_to}`);
+      _el.evoPanel.classList.remove('open');
+    } catch (e) {
+      if (btn) { btn.disabled = false; btn.textContent = `Accept Best Version (${versionName})`; }
+      _showEvoToast(`Failed: ${e.message}`, true);
+    }
+  }
+
+  /* ---- Code diff modal ------------------------------------ */
+
+  async function _openDiff(versionName) {
+    _el.evoDiffTitle.textContent = `Code Diff — ${versionName}`;
+    _el.evoDiffOriginal.textContent = 'Loading…';
+    _el.evoDiffMutated.textContent  = 'Loading…';
+    _el.evoDiffOverlay.classList.add('open');
+
+    try {
+      // Fetch mutated source from strategies dir via versions endpoint
+      const stratName = _state.contextStrategyName || '';
+
+      // Original: fetch from the base strategy file via a simple text fetch
+      // We don't have a direct source endpoint, so we use the versions list
+      // and fall back to showing the mutated code only if original unavailable.
+      const [versionsResp, mutatedResp] = await Promise.all([
+        fetch(`/evolution/versions/${encodeURIComponent(stratName)}`).then(r => r.json()).catch(() => []),
+        fetch(`/strategies/${encodeURIComponent(versionName)}/source`).then(r => r.ok ? r.text() : null).catch(() => null),
+      ]);
+
+      const originalSrc = _evo.originalSource || '(Original source not available)';
+      const mutatedSrc  = mutatedResp || '(Mutated source not available)';
+
+      _renderCodeDiff(originalSrc, mutatedSrc);
+    } catch (e) {
+      _el.evoDiffOriginal.textContent = 'Error loading source.';
+      _el.evoDiffMutated.textContent  = 'Error loading source.';
+    }
+  }
+
+  function _renderCodeDiff(original, mutated) {
+    const origLines = original.split('\n');
+    const mutLines  = mutated.split('\n');
+    const maxLen    = Math.max(origLines.length, mutLines.length);
+
+    const origHtml = [];
+    const mutHtml  = [];
+
+    for (let i = 0; i < maxLen; i++) {
+      const o = origLines[i] !== undefined ? origLines[i] : '';
+      const m = mutLines[i]  !== undefined ? mutLines[i]  : '';
+
+      if (o === m) {
+        origHtml.push(`<span class="evo-diff__line evo-diff__line--same">${_escHtml(o)}</span>`);
+        mutHtml.push( `<span class="evo-diff__line evo-diff__line--same">${_escHtml(m)}</span>`);
+      } else {
+        origHtml.push(`<span class="evo-diff__line evo-diff__line--removed">${_escHtml(o)}</span>`);
+        mutHtml.push( `<span class="evo-diff__line evo-diff__line--added">${_escHtml(m)}</span>`);
+      }
+    }
+
+    _el.evoDiffOriginal.innerHTML = origHtml.join('');
+    _el.evoDiffMutated.innerHTML  = mutHtml.join('');
+  }
+
+  /* ---- Toast ---------------------------------------------- */
+
+  function _showEvoToast(msg, isError = false) {
+    const t = _el.evoToast;
+    if (!t) return;
+    t.textContent = msg;
+    t.style.borderColor = isError ? 'var(--red)' : 'var(--border)';
+    t.style.color = isError ? '#ef4444' : 'var(--text-primary)';
+    t.classList.add('visible');
+    setTimeout(() => t.classList.remove('visible'), 3500);
+  }
+
   /* ---- Bind events ----------------------------------------- */
   function _bindEvents() {
     // Provider buttons
@@ -920,6 +1532,30 @@ window.AIDiagPage = (() => {
     // Deep panel close
     _el.deepPanelClose.addEventListener('click', () => {
       _el.deepPanel.classList.remove('open');
+      // If evo panel was offset, remove offset now
+      if (_el.evoPanel) _el.evoPanel.classList.remove('evo-panel--offset');
+    });
+
+    // Evolve button
+    _el.evolveBtn.addEventListener('click', _openEvolutionPanel);
+
+    // Evolution panel close
+    _el.evoPanelClose.addEventListener('click', () => {
+      _el.evoPanel.classList.remove('open');
+      _el.evoPanel.classList.remove('evo-panel--offset');
+    });
+
+    // Evolution tabs
+    [_el.evoTabConfig, _el.evoTabRunning, _el.evoTabResults].forEach(btn => {
+      if (btn) btn.addEventListener('click', () => _evoSwitchTab(btn.dataset.tab));
+    });
+
+    // Diff modal close
+    _el.evoDiffClose.addEventListener('click', () => {
+      _el.evoDiffOverlay.classList.remove('open');
+    });
+    _el.evoDiffOverlay.addEventListener('click', e => {
+      if (e.target === _el.evoDiffOverlay) _el.evoDiffOverlay.classList.remove('open');
     });
 
     // Mobile hamburger
@@ -954,5 +1590,5 @@ window.AIDiagPage = (() => {
     _loadConversations();
   }
 
-  return { init, refresh };
+  return { init, refresh, _openDiff };
 })();

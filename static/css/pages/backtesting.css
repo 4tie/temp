@@ -1,0 +1,82 @@
+/* ============================================================
+   BACKTESTING PAGE
+   ============================================================ */
+
+/* ── Split layout column heights ─────────────────────────────
+   The output column must never grow taller than the viewport
+   content area. Each card inside it scrolls independently.
+   ──────────────────────────────────────────────────────────── */
+
+.split-layout__output {
+  /* Stick to the top of the grid row so cards don't float */
+  align-self: start;
+  /* Cap total column height so it never overflows the page */
+  max-height: calc(100vh - var(--topbar-height) - var(--statusbar-height) - 120px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  /* Thin scrollbar so it doesn't look heavy */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+/* ── History card — constrain body height ────────────────────
+   The table must scroll inside the card, not push the card
+   (and everything below it) off-screen.
+   ──────────────────────────────────────────────────────────── */
+
+#bt-history-card .card__body {
+  padding: 0;           /* table has its own cell padding */
+  max-height: 320px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+/* Keep the sticky thead working inside the scrollable body */
+#bt-history-card .data-table th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+/* ── Status / results cards — cap log height ─────────────────
+   Prevent the log panel from blowing up the card height.
+   ──────────────────────────────────────────────────────────── */
+
+#bt-status-card .card__body,
+#bt-results-card .card__body {
+  max-height: 420px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+/* ── Form column — never wider than its natural size ─────────
+   Prevents the form from being squeezed on narrow viewports.
+   ──────────────────────────────────────────────────────────── */
+
+.split-layout__form {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* ── Responsive: stack columns on narrow screens ─────────────
+   Below 900 px the two-column grid becomes a single column.
+   ──────────────────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .split-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .split-layout__output {
+    max-height: none;   /* let it scroll with the page on mobile */
+    overflow-y: visible;
+  }
+}

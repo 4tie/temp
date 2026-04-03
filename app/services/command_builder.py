@@ -1,5 +1,5 @@
 from typing import Any, Optional
-from app.core.config import STRATEGIES_DIR, DATA_DIR, FREQTRADE_CONFIG_DIR, HYPEROPT_RESULTS_DIR, BASE_DIR
+from app.core.config import STRATEGIES_DIR, DATA_DIR, FREQTRADE_CONFIG_DIR, HYPEROPT_RESULTS_DIR, BASE_DIR, PYTHON_EXECUTABLE
 
 
 def build_backtest_command(
@@ -10,7 +10,7 @@ def build_backtest_command(
     strategy_params: dict[str, Any],
 ) -> list[str]:
     cmd = [
-        "python", "-m", "freqtrade", "backtesting",
+        PYTHON_EXECUTABLE, "-m", "freqtrade", "backtesting",
         "-c", "user_data/config.json",
         "--timeframe", timeframe,
         "--export", "trades",
@@ -34,7 +34,7 @@ def build_download_data_command(
     timeframe: str,
 ) -> list[str]:
     cmd = [
-        "python", "-m", "freqtrade", "download-data",
+        PYTHON_EXECUTABLE, "-m", "freqtrade", "download-data",
         "-c", "user_data/config.json",
         "--timeframe", timeframe,
         "--timerange", "20251001-20260321",

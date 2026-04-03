@@ -1,10 +1,8 @@
 {
-  "strategy": "MultiMa",
-  "pairs": [
-    "ETH/USDT"
-  ],
-  "timeframe": "5m",
-  "timerange": "20251001-20260321",
-  "strategy_params": {},
-  "exchange": "binance"
+  "download": {
+    "pairs": [
+      "ETH/USDT"
+    ],
+    "timeframe": "5m"
+  }
 }

@@ -15,11 +15,26 @@ from app.core.processes import (
 )
 from app.services.command_builder import build_backtest_command, build_download_data_command, build_hyperopt_command
 from app.services.result_parser import parse_backtest_results
-from app.services.storage import save_run_meta, save_run_results, save_run_logs, get_run_dir
+from app.services.storage import save_run_meta, save_run_results, save_run_logs, get_run_dir, load_run_meta
 from app.services.hyperopt_storage import save_hyperopt_meta, save_hyperopt_results, save_hyperopt_logs, get_hyperopt_run_dir
 
 
 _JSON_SCALAR_TYPES = (str, int, float, bool, type(None))
+
+
+def wait_for_run(run_id: str, timeout_s: int = 600) -> dict:
+    """Block until a backtest run finishes or timeout. Returns final meta dict."""
+    import time as _time
+    deadline = _time.monotonic() + timeout_s
+    while _time.monotonic() < deadline:
+        meta = load_run_meta(run_id)
+        if meta and meta.get("status") not in ("running", None):
+            return meta
+        status = get_status(run_id)
+        if status not in ("running", "unknown"):
+            return load_run_meta(run_id) or {"run_id": run_id, "status": status}
+        _time.sleep(5)
+    return load_run_meta(run_id) or {"run_id": run_id, "status": "timeout"}
 
 
 def _ensure_valid_strategy_json(strategy: str, run_id: str) -> None:

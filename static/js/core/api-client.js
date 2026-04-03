@@ -73,6 +73,10 @@ window.API = (() => {
   const savePreset     = (body)      => post('/presets', body);
   const deletePreset   = (name)      => del(`/presets/${encodeURIComponent(name)}`);
 
+  /* ---- App Settings --------------------------------------- */
+  const getSettings  = ()     => get('/settings');
+  const saveSettings = (body) => post('/settings', body);
+
   /* ---- Compare ---------------------------------------------- */
   const compareRuns    = (body)      => post('/compare', body);
 
@@ -88,5 +92,6 @@ window.API = (() => {
     getLossFunctions, getHyperoptSpaces, applyHyperoptParams,
     getPresets, savePreset, deletePreset,
     compareRuns,
+    getSettings, saveSettings,
   };
 })();

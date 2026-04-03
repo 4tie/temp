@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 
-from app.routers import backtest, strategies, presets, compare, hyperopt, ai_chat
+from app.routers import backtest, strategies, presets, compare, hyperopt, ai_chat, evolution, settings
 
 app = FastAPI(
     title="4tie",
@@ -31,6 +31,8 @@ app.include_router(presets.router)
 app.include_router(compare.router)
 app.include_router(hyperopt.router)
 app.include_router(ai_chat.router)
+app.include_router(evolution.router)
+app.include_router(settings.router)
 
 
 @app.get("/healthz")

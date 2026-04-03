@@ -7,33 +7,134 @@ window.SettingsPage = (() => {
   let _el = null;
   let _presets = [];
 
-  function init() {
-    _el = DOM.$('[data-view="settings"]');
-    if (!_el) return;
-    _render();
-    load();
+  /* ── Helpers ─────────────────────────────────────────────── */
+  function _esc(str) {
+    const d = document.createElement('div');
+    d.textContent = String(str || '');
+    return d.innerHTML;
   }
 
+  function _val(id) {
+    return (DOM.$(`#${id}`, _el) || {}).value || '';
+  }
+
+  function _set(id, v) {
+    const el = DOM.$(`#${id}`, _el);
+    if (el && v != null) el.value = v;
+  }
+
+  /* ── Render ──────────────────────────────────────────────── */
   function _render() {
     DOM.setHTML(_el, `
       <div class="page-header">
         <h1 class="page-header__title">Settings</h1>
-        <p class="page-header__subtitle">Configure default exchange, data paths, and trade parameters.</p>
+        <p class="page-header__subtitle">Configure API keys, paths, and trade defaults. Changes are written to <code class="settings-code">.env</code> and take effect immediately.</p>
       </div>
+
       <div class="settings-layout">
+
+        <!-- ── Environment / Secrets ── -->
         <div class="card">
-          <div class="card__header"><span class="card__title">Default Configuration</span></div>
+          <div class="card__header">
+            <span class="card__title">Environment &amp; Secrets</span>
+            <span class="settings-hint">Saved to <code class="settings-code">.env</code></span>
+          </div>
+          <div class="card__body">
+            <form id="env-form" class="form">
+
+              <div class="settings-section-label">AI Providers</div>
+
+              <div class="form-group">
+                <label class="form-label" for="s-or-key">
+                  OpenRouter API Key
+                  <a class="settings-link" href="https://openrouter.ai/keys" target="_blank" rel="noopener">Get key ↗</a>
+                </label>
+                <div class="settings-secret-wrap">
+                  <input class="form-input settings-secret-input" id="s-or-key"
+                    type="password" autocomplete="off" placeholder="sk-or-…" spellcheck="false">
+                  <button type="button" class="settings-reveal-btn" id="s-or-key-reveal" title="Show/hide">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  </button>
+                </div>
+                <span class="form-hint">Required for OpenRouter AI pipeline. Leave blank to use Ollama only.</span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="s-ollama-url">Ollama Base URL</label>
+                <input class="form-input" id="s-ollama-url" type="text"
+                  placeholder="http://localhost:11434" spellcheck="false">
+                <span class="form-hint">Host and port of your Ollama server. Default: <code class="settings-code">http://localhost:11434</code></span>
+              </div>
+
+              <div class="settings-section-label" style="margin-top:var(--space-4)">FreqTrade</div>
+
+              <div class="form-group">
+                <label class="form-label" for="s-ft-path">FreqTrade Executable Path</label>
+                <input class="form-input" id="s-ft-path" type="text"
+                  placeholder="/home/user/.local/bin/freqtrade" spellcheck="false">
+                <span class="form-hint">Absolute path to the <code class="settings-code">freqtrade</code> binary. Leave blank to use system PATH.</span>
+              </div>
+
+              <div class="settings-section-label" style="margin-top:var(--space-4)">Data Directories</div>
+
+              <div class="form-group">
+                <label class="form-label" for="s-user-data">user_data Directory</label>
+                <input class="form-input" id="s-user-data" type="text"
+                  placeholder="./user_data" spellcheck="false">
+                <span class="form-hint">Root of all FreqTrade data. Contains <code class="settings-code">backtest_results/</code>, <code class="settings-code">strategies/</code>, <code class="settings-code">data/</code>.</span>
+              </div>
+
+              <div class="settings-section-label" style="margin-top:var(--space-4)">Server</div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="s-port">API Port</label>
+                  <input class="form-input" id="s-port" type="number" min="1024" max="65535" placeholder="5000">
+                  <span class="form-hint">Requires server restart.</span>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="s-exchange-env">Default Exchange</label>
+                  <select class="form-select" id="s-exchange-env">
+                    <option value="binance">Binance</option>
+                    <option value="binanceus">Binance US</option>
+                    <option value="kraken">Kraken</option>
+                    <option value="okx">OKX</option>
+                    <option value="bybit">Bybit</option>
+                    <option value="ftx">FTX</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" class="btn btn--primary" id="env-save-btn">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                  Save to .env
+                </button>
+                <span class="settings-save-status" id="env-save-status"></span>
+              </div>
+
+            </form>
+          </div>
+        </div>
+
+        <!-- ── Trade Defaults ── -->
+        <div class="card" style="margin-top:var(--space-4)">
+          <div class="card__header">
+            <span class="card__title">Trade Defaults</span>
+            <span class="settings-hint">Saved to browser storage</span>
+          </div>
           <div class="card__body">
             <form id="settings-form" class="form">
               <div class="form-row">
                 <div class="form-group">
-                  <label class="form-label" for="s-exchange">Default Exchange</label>
+                  <label class="form-label" for="s-exchange">Exchange</label>
                   <select class="form-select" id="s-exchange" name="exchange">
                     <option value="binance">Binance</option>
+                    <option value="binanceus">Binance US</option>
                     <option value="kraken">Kraken</option>
                     <option value="okx">OKX</option>
-                    <option value="ftx">FTX</option>
                     <option value="bybit">Bybit</option>
+                    <option value="ftx">FTX</option>
                   </select>
                 </div>
                 <div class="form-group">
@@ -64,67 +165,70 @@ window.SettingsPage = (() => {
                 <input class="form-input" id="s-stake" name="stake_amount" type="text" value="unlimited">
                 <span class="form-hint">Use "unlimited" to distribute wallet evenly.</span>
               </div>
-              <div class="form-group">
-                <label class="form-label" for="s-data-dir">Data Directory</label>
-                <input class="form-input" id="s-data-dir" name="data_directory" type="text" placeholder="/path/to/freqtrade/user_data/data">
-                <span class="form-hint">Path where FreqTrade OHLCV data is stored.</span>
-              </div>
               <div class="form-actions">
-                <button type="submit" class="btn btn--primary">Save Settings</button>
-                <button type="button" class="btn btn--secondary" id="s-reset-btn">Reset to Defaults</button>
+                <button type="submit" class="btn btn--primary">Save Defaults</button>
+                <button type="button" class="btn btn--secondary" id="s-reset-btn">Reset</button>
               </div>
             </form>
           </div>
         </div>
 
+        <!-- ── Presets ── -->
         <div class="card" style="margin-top:var(--space-4)">
           <div class="card__header">
-            <span class="card__title">Presets</span>
+            <span class="card__title">Backtest Presets</span>
             <button class="btn btn--secondary btn--sm" id="s-save-preset-btn">Save Current as Preset</button>
           </div>
           <div class="card__body" id="s-presets-body">
             <div class="empty-state">Loading…</div>
           </div>
         </div>
+
       </div>
     `);
 
-    DOM.on(DOM.$('#settings-form', _el), 'submit', _onSave);
+    /* ── Bind env form ── */
+    DOM.on(DOM.$('#env-form', _el), 'submit', _onSaveEnv);
+
+    const revealBtn = DOM.$('#s-or-key-reveal', _el);
+    const keyInput  = DOM.$('#s-or-key', _el);
+    DOM.on(revealBtn, 'click', () => {
+      const isHidden = keyInput.type === 'password';
+      keyInput.type = isHidden ? 'text' : 'password';
+      revealBtn.style.color = isHidden ? 'var(--violet)' : '';
+    });
+
+    /* ── Bind trade defaults form ── */
+    DOM.on(DOM.$('#settings-form', _el), 'submit', _onSaveDefaults);
     DOM.on(DOM.$('#s-reset-btn',   _el), 'click',  _onReset);
     DOM.on(DOM.$('#s-save-preset-btn', _el), 'click', _onSavePreset);
   }
 
+  /* ── Load ────────────────────────────────────────────────── */
   async function load() {
     try {
-      const [cfgData, presetsData] = await Promise.all([
+      const [envData, cfgData, presetsData] = await Promise.all([
+        API.getSettings().catch(() => ({})),
         API.getLastConfig().catch(() => ({ config: null })),
         API.getPresets().catch(() => ({ presets: {} })),
       ]);
 
-      if (cfgData.config) {
-        const cfg = cfgData.config;
-        const s = (id, v) => { const el = DOM.$(id, _el); if (el && v != null) el.value = v; };
-        s('#s-exchange',   cfg.exchange);
-        s('#s-timeframe',  cfg.timeframe);
-        s('#s-wallet',     cfg.dry_run_wallet);
-        s('#s-max-trades', cfg.max_open_trades);
-        s('#s-stake',      cfg.stake_amount);
-        s('#s-data-dir',   cfg.data_directory);
-      }
+      // Populate env fields
+      _set('s-or-key',      envData.openrouter_api_key || '');
+      _set('s-ollama-url',  envData.ollama_base_url    || '');
+      _set('s-ft-path',     envData.freqtrade_path     || '');
+      _set('s-user-data',   envData.user_data_dir      || '');
+      _set('s-port',        envData.backtest_api_port  || '5000');
+      _set('s-exchange-env', envData.freqtrade_exchange || 'binance');
 
-      const saved = localStorage.getItem('4tie_settings');
-      if (saved) {
-        try {
-          const cfg = JSON.parse(saved);
-          const s = (id, v) => { const el = DOM.$(id, _el); if (el && v != null) el.value = v; };
-          s('#s-exchange',   cfg.exchange);
-          s('#s-timeframe',  cfg.timeframe);
-          s('#s-wallet',     cfg.dry_run_wallet);
-          s('#s-max-trades', cfg.max_open_trades);
-          s('#s-stake',      cfg.stake_amount);
-          s('#s-data-dir',   cfg.data_directory);
-        } catch {}
-      }
+      // Populate trade defaults (localStorage wins over last_config)
+      const saved = _loadLocalSettings();
+      const cfg   = saved || cfgData.config || {};
+      _set('s-exchange',   cfg.exchange        || 'binance');
+      _set('s-timeframe',  cfg.timeframe       || '5m');
+      _set('s-wallet',     cfg.dry_run_wallet  || 1000);
+      _set('s-max-trades', cfg.max_open_trades || 3);
+      _set('s-stake',      cfg.stake_amount    || 'unlimited');
 
       _presets = presetsData.presets || {};
       _renderPresets();
@@ -133,6 +237,65 @@ window.SettingsPage = (() => {
     }
   }
 
+  /* ── Save env ────────────────────────────────────────────── */
+  async function _onSaveEnv(e) {
+    e.preventDefault();
+    const btn    = DOM.$('#env-save-btn', _el);
+    const status = DOM.$('#env-save-status', _el);
+    btn.disabled = true;
+
+    const body = {
+      openrouter_api_key: _val('s-or-key'),
+      ollama_base_url:    _val('s-ollama-url'),
+      freqtrade_path:     _val('s-ft-path'),
+      user_data_dir:      _val('s-user-data'),
+      backtest_api_port:  _val('s-port'),
+      freqtrade_exchange: _val('s-exchange-env'),
+    };
+
+    try {
+      await API.saveSettings(body);
+      if (status) {
+        status.textContent = '✓ Saved to .env';
+        status.className = 'settings-save-status settings-save-status--ok';
+        setTimeout(() => { status.textContent = ''; status.className = 'settings-save-status'; }, 3000);
+      }
+      Toast.success('Environment settings saved to .env');
+    } catch (err) {
+      Toast.error('Failed to save: ' + err.message);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  /* ── Save trade defaults ─────────────────────────────────── */
+  function _onSaveDefaults(e) {
+    e.preventDefault();
+    const vals = {
+      exchange:        _val('s-exchange')   || 'binance',
+      timeframe:       _val('s-timeframe')  || '5m',
+      dry_run_wallet:  parseFloat(_val('s-wallet'))     || 1000,
+      max_open_trades: parseInt(_val('s-max-trades'))   || 3,
+      stake_amount:    _val('s-stake')      || 'unlimited',
+    };
+    localStorage.setItem('4tie_settings', JSON.stringify(vals));
+    Toast.success('Trade defaults saved.');
+  }
+
+  function _onReset() {
+    _set('s-exchange',   'binance');
+    _set('s-timeframe',  '5m');
+    _set('s-wallet',     1000);
+    _set('s-max-trades', 3);
+    _set('s-stake',      'unlimited');
+    Toast.info('Reset to defaults (not saved).');
+  }
+
+  function _loadLocalSettings() {
+    try { return JSON.parse(localStorage.getItem('4tie_settings') || 'null'); } catch { return null; }
+  }
+
+  /* ── Presets ─────────────────────────────────────────────── */
   function _renderPresets() {
     const el = DOM.$('#s-presets-body', _el);
     if (!el) return;
@@ -162,54 +325,28 @@ window.SettingsPage = (() => {
         </tbody>
       </table>`;
 
-    el.querySelectorAll('[data-load-preset]').forEach(btn => {
-      DOM.on(btn, 'click', () => _loadPreset(btn.dataset.loadPreset));
-    });
-    el.querySelectorAll('[data-delete-preset]').forEach(btn => {
-      DOM.on(btn, 'click', () => _deletePreset(btn.dataset.deletePreset));
-    });
-  }
-
-  function _getFormValues() {
-    return {
-      exchange:        DOM.$('#s-exchange',  _el)?.value || 'binance',
-      timeframe:       DOM.$('#s-timeframe', _el)?.value || '5m',
-      dry_run_wallet:  parseFloat(DOM.$('#s-wallet',     _el)?.value) || 1000,
-      max_open_trades: parseInt(DOM.$('#s-max-trades',  _el)?.value) || 3,
-      stake_amount:    DOM.$('#s-stake',     _el)?.value || 'unlimited',
-      data_directory:  DOM.$('#s-data-dir',  _el)?.value || '',
-    };
-  }
-
-  function _onSave(e) {
-    e.preventDefault();
-    const vals = _getFormValues();
-    localStorage.setItem('4tie_settings', JSON.stringify(vals));
-    Toast.success('Settings saved.');
-    AppState.set('stream', 'Settings saved.');
-  }
-
-  function _onReset() {
-    const defaults = { exchange: 'binance', timeframe: '5m', dry_run_wallet: 1000, max_open_trades: 3, stake_amount: 'unlimited', data_directory: '' };
-    const s = (id, v) => { const el = DOM.$(id, _el); if (el) el.value = v; };
-    s('#s-exchange',   defaults.exchange);
-    s('#s-timeframe',  defaults.timeframe);
-    s('#s-wallet',     defaults.dry_run_wallet);
-    s('#s-max-trades', defaults.max_open_trades);
-    s('#s-stake',      defaults.stake_amount);
-    s('#s-data-dir',   defaults.data_directory);
-    Toast.info('Reset to defaults (not saved).');
+    el.querySelectorAll('[data-load-preset]').forEach(btn =>
+      DOM.on(btn, 'click', () => _loadPreset(btn.dataset.loadPreset))
+    );
+    el.querySelectorAll('[data-delete-preset]').forEach(btn =>
+      DOM.on(btn, 'click', () => _deletePreset(btn.dataset.deletePreset))
+    );
   }
 
   async function _onSavePreset() {
     const name = prompt('Preset name:');
     if (!name) return;
-    const config = _getFormValues();
+    const config = {
+      exchange:        _val('s-exchange'),
+      timeframe:       _val('s-timeframe'),
+      dry_run_wallet:  parseFloat(_val('s-wallet'))   || 1000,
+      max_open_trades: parseInt(_val('s-max-trades')) || 3,
+      stake_amount:    _val('s-stake'),
+    };
     try {
       await API.savePreset({ name, config });
       Toast.success(`Preset "${name}" saved.`);
-      const presetsData = await API.getPresets();
-      _presets = presetsData.presets || {};
+      _presets = (await API.getPresets()).presets || {};
       _renderPresets();
     } catch (err) {
       Toast.error('Failed to save preset: ' + err.message);
@@ -220,13 +357,11 @@ window.SettingsPage = (() => {
     const entry = _presets[name];
     if (!entry) return;
     const cfg = entry.config || entry;
-    const s = (id, v) => { const el = DOM.$(id, _el); if (el && v != null) el.value = v; };
-    s('#s-exchange',   cfg.exchange);
-    s('#s-timeframe',  cfg.timeframe);
-    s('#s-wallet',     cfg.dry_run_wallet);
-    s('#s-max-trades', cfg.max_open_trades);
-    s('#s-stake',      cfg.stake_amount);
-    s('#s-data-dir',   cfg.data_directory);
+    _set('s-exchange',   cfg.exchange);
+    _set('s-timeframe',  cfg.timeframe);
+    _set('s-wallet',     cfg.dry_run_wallet);
+    _set('s-max-trades', cfg.max_open_trades);
+    _set('s-stake',      cfg.stake_amount);
     Toast.info(`Loaded preset "${name}".`);
   }
 
@@ -235,18 +370,19 @@ window.SettingsPage = (() => {
     try {
       await API.deletePreset(name);
       Toast.success(`Preset "${name}" deleted.`);
-      const presetsData = await API.getPresets();
-      _presets = presetsData.presets || {};
+      _presets = (await API.getPresets()).presets || {};
       _renderPresets();
     } catch (err) {
       Toast.error('Failed to delete: ' + err.message);
     }
   }
 
-  function _esc(str) {
-    const d = document.createElement('div');
-    d.textContent = String(str || '');
-    return d.innerHTML;
+  /* ── Public ──────────────────────────────────────────────── */
+  function init() {
+    _el = DOM.$('[data-view="settings"]');
+    if (!_el) return;
+    _render();
+    load();
   }
 
   function refresh() { load(); }
