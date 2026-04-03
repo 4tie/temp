@@ -193,6 +193,10 @@ window.BacktestPage = (() => {
                     <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor"><path d="M3 2l10 6-10 6V2z"/></svg>
                     Run Backtest
                   </button>
+                  <button type="button" class="btn btn--secondary" id="bt-dl-form-btn">
+                    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor"><path d="M8 12l-5-5 1.4-1.4L7 9.2V2h2v7.2l2.6-3.6L13 7l-5 5zM2 14h12v-2H2v2z"/></svg>
+                    Download Data
+                  </button>
                   <button type="button" class="btn btn--danger" id="bt-stop-btn" style="display:none">Stop</button>
                 </div>
               </form>
@@ -300,6 +304,9 @@ window.BacktestPage = (() => {
       if (dlChevron) dlChevron.style.transform = open ? '' : 'rotate(180deg)';
     });
     DOM.on(dlBtn, 'click', _onDownload);
+
+    const dlFormBtn = DOM.$('#bt-dl-form-btn', _el);
+    DOM.on(dlFormBtn, 'click', _onDownload);
 
     _loadHistory();
   }
@@ -440,27 +447,30 @@ window.BacktestPage = (() => {
 
     if (!selected.length) { Toast.warning('Select at least one pair to download.'); return; }
 
-    const btn     = DOM.$('#bt-dl-btn', _el);
-    const logEl   = DOM.$('#bt-dl-logs', _el);
-    const logWrap = DOM.$('#bt-dl-log-wrap', _el);
-    const badge   = DOM.$('#bt-dl-badge', _el);
+    const btn        = DOM.$('#bt-dl-btn', _el);
+    const formBtn    = DOM.$('#bt-dl-form-btn', _el);
+    const logEl      = DOM.$('#bt-dl-logs', _el);
+    const logWrap    = DOM.$('#bt-dl-log-wrap', _el);
+    const badge      = DOM.$('#bt-dl-badge', _el);
 
     if (btn) btn.disabled = true;
+    if (formBtn) formBtn.disabled = true;
     if (logWrap) DOM.show(logWrap);
     if (badge) { badge.textContent = 'Running'; badge.className = 'badge badge--amber'; }
 
     try {
       const res = await API.downloadData({ pairs: selected, timeframe: tf, exchange, days });
-      _pollDownload(res.job_id || res.run_id, logEl, badge, btn);
+      _pollDownload(res.job_id || res.run_id, logEl, badge, btn, formBtn);
       Toast.info('Download started…');
     } catch (err) {
       if (btn) btn.disabled = false;
+      if (formBtn) formBtn.disabled = false;
       if (badge) { badge.textContent = 'Error'; badge.className = 'badge badge--red'; }
       Toast.error('Download failed: ' + err.message);
     }
   }
 
-  function _pollDownload(jobId, logEl, badge, btn) {
+  function _pollDownload(jobId, logEl, badge, btn, formBtn) {
     if (_dlPollTimer) clearInterval(_dlPollTimer);
     _dlPollTimer = setInterval(async () => {
       try {
@@ -472,6 +482,7 @@ window.BacktestPage = (() => {
         if (data.status === 'completed' || data.status === 'failed') {
           clearInterval(_dlPollTimer);
           if (btn) btn.disabled = false;
+          if (formBtn) formBtn.disabled = false;
           if (badge) {
             badge.textContent = data.status === 'completed' ? 'Done' : 'Failed';
             badge.className   = data.status === 'completed' ? 'badge badge--green' : 'badge badge--red';
