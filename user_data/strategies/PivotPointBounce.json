@@ -1,145 +1,16 @@
 {
-  "strategy": "PivotPointBounce",
-  "settings": {
-    "timeframe": "30m",
-    "startup_candle_count": 250,
-    "minimal_roi": {
-      "0": 0.06,
-      "30": 0.03,
-      "90": 0.015,
-      "300": 0.0
-    },
-    "stoploss": -0.07,
-    "trailing_stop": true,
-    "trailing_stop_positive": 0.015,
-    "trailing_stop_positive_offset": 0.03,
-    "trailing_only_offset_is_reached": true
-  },
-  "parameters": {
-    "buy_atr_period": {
-      "type": "IntParameter",
-      "low": 10,
-      "high": 20,
-      "default": 14,
-      "space": "buy",
-      "optimize": true,
-      "value": 14
-    },
-    "buy_atr_mult": {
-      "type": "DecimalParameter",
-      "low": 0.5,
-      "high": 2.0,
-      "default": 1.0,
-      "space": "buy",
-      "optimize": true,
-      "value": 1.0
-    },
-    "buy_rsi_max": {
-      "type": "IntParameter",
-      "low": 30,
-      "high": 50,
-      "default": 40,
-      "space": "buy",
-      "optimize": true,
-      "value": 40
-    },
-    "buy_bounce_level": {
-      "type": "CategoricalParameter",
-      "categories": [
-        "s1",
-        "s2",
-        "both"
-      ],
-      "default": "both",
-      "space": "buy",
-      "optimize": true,
-      "value": "both"
-    },
-    "buy_require_macd_flip": {
-      "type": "BooleanParameter",
-      "default": true,
-      "space": "buy",
-      "optimize": true,
-      "value": true
-    },
-    "buy_rsi_rising_bars": {
-      "type": "IntParameter",
-      "low": 1,
-      "high": 3,
-      "default": 1,
-      "space": "buy",
-      "optimize": true,
-      "value": 1
-    },
-    "sell_rsi_max": {
-      "type": "IntParameter",
-      "low": 60,
-      "high": 85,
-      "default": 72,
-      "space": "sell",
-      "optimize": true,
-      "value": 72
-    },
-    "sell_target": {
-      "type": "CategoricalParameter",
-      "categories": [
-        "pp",
-        "r1"
-      ],
-      "default": "pp",
-      "space": "sell",
-      "optimize": true,
-      "value": "pp"
-    },
-    "sell_macd_exit": {
-      "type": "BooleanParameter",
-      "default": true,
-      "space": "sell",
-      "optimize": true,
-      "value": true
-    },
-    "protect_cooldown": {
-      "type": "IntParameter",
-      "low": 2,
-      "high": 24,
-      "default": 6,
-      "space": "protection",
-      "optimize": true,
-      "value": 6
-    },
-    "protect_stop_duration": {
-      "type": "IntParameter",
-      "low": 4,
-      "high": 48,
-      "default": 10,
-      "space": "protection",
-      "optimize": true,
-      "value": 10
-    },
-    "protect_stop_lookback": {
-      "type": "IntParameter",
-      "low": 12,
-      "high": 96,
-      "default": 24,
-      "space": "protection",
-      "optimize": true,
-      "value": 24
-    },
-    "protect_trade_limit": {
-      "type": "IntParameter",
-      "low": 2,
-      "high": 6,
-      "default": 4,
-      "space": "protection",
-      "optimize": true,
-      "value": 4
-    },
-    "protect_use_stop_guard": {
-      "type": "BooleanParameter",
-      "default": true,
-      "space": "protection",
-      "optimize": true,
-      "value": true
-    }
-  }
+  "buy_atr_period": 14,
+  "buy_atr_mult": 1.0,
+  "buy_rsi_max": 40,
+  "buy_bounce_level": "both",
+  "buy_require_macd_flip": true,
+  "buy_rsi_rising_bars": 1,
+  "sell_rsi_max": 72,
+  "sell_target": "pp",
+  "sell_macd_exit": true,
+  "protect_cooldown": 6,
+  "protect_stop_duration": 10,
+  "protect_stop_lookback": 24,
+  "protect_trade_limit": 4,
+  "protect_use_stop_guard": true
 }

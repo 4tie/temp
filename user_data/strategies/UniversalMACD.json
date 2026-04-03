@@ -1,51 +1,6 @@
 {
-  "strategy": "UniversalMACD",
-  "settings": {
-    "timeframe": "5m",
-    "minimal_roi": {
-      "0": 0.0213,
-      "27": 0.099,
-      "60": 0.03,
-      "164": 0
-    },
-    "stoploss": -0.0318,
-    "trailing_stop": false,
-    "trailing_stop_positive_offset": 0.0,
-    "trailing_only_offset_is_reached": false,
-    "startup_candle_count": 30
-  },
-  "parameters": {
-    "buy_umacd_max": {
-      "type": "DecimalParameter",
-      "low": -0.05,
-      "high": 0.05,
-      "default": -0.01176,
-      "space": "buy",
-      "value": -0.01176
-    },
-    "buy_umacd_min": {
-      "type": "DecimalParameter",
-      "low": -0.05,
-      "high": 0.05,
-      "default": -0.01416,
-      "space": "buy",
-      "value": -0.01416
-    },
-    "sell_umacd_max": {
-      "type": "DecimalParameter",
-      "low": -0.05,
-      "high": 0.05,
-      "default": -0.02323,
-      "space": "sell",
-      "value": -0.02323
-    },
-    "sell_umacd_min": {
-      "type": "DecimalParameter",
-      "low": -0.05,
-      "high": 0.05,
-      "default": -0.00707,
-      "space": "sell",
-      "value": -0.00707
-    }
-  }
+  "buy_umacd_max": -0.01176,
+  "buy_umacd_min": -0.01416,
+  "sell_umacd_max": -0.02323,
+  "sell_umacd_min": -0.00707
 }

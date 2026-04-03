@@ -1,17 +1,1 @@
-{
-  "strategy": "SessionScalp5mHighTradeBase",
-  "settings": {
-    "minimal_roi": {
-      "0": 0.018,
-      "20": 0.009,
-      "60": 0.0
-    },
-    "stoploss": -0.03,
-    "trailing_stop": true,
-    "trailing_stop_positive": 0.004,
-    "trailing_stop_positive_offset": 0.008,
-    "trailing_only_offset_is_reached": true,
-    "startup_candle_count": 240
-  },
-  "parameters": {}
-}
+{}

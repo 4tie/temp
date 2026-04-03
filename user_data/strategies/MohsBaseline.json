@@ -1,34 +1,4 @@
 {
-  "strategy": "MohsBaseline",
-  "settings": {
-    "timeframe": "5m",
-    "minimal_roi": {
-      "60": 0.01,
-      "30": 0.02,
-      "0": 0.04
-    },
-    "stoploss": -0.1,
-    "trailing_stop": false,
-    "process_only_new_candles": true,
-    "use_exit_signal": true,
-    "startup_candle_count": 30
-  },
-  "parameters": {
-    "buy_rsi": {
-      "type": "IntParameter",
-      "low": 10,
-      "high": 40,
-      "default": 30,
-      "space": "buy",
-      "value": 30
-    },
-    "sell_rsi": {
-      "type": "IntParameter",
-      "low": 60,
-      "high": 90,
-      "default": 70,
-      "space": "sell",
-      "value": 70
-    }
-  }
+  "buy_rsi": 30,
+  "sell_rsi": 70
 }

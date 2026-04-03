@@ -1,151 +1,17 @@
 {
-  "strategy": "IchimokuTrendRider",
-  "settings": {
-    "timeframe": "4h",
-    "startup_candle_count": 250,
-    "minimal_roi": {
-      "0": 0.12,
-      "120": 0.06,
-      "360": 0.03,
-      "720": 0.0
-    },
-    "stoploss": -0.1,
-    "trailing_stop": true,
-    "trailing_stop_positive": 0.025,
-    "trailing_stop_positive_offset": 0.05,
-    "trailing_only_offset_is_reached": true
-  },
-  "parameters": {
-    "buy_tenkan": {
-      "type": "IntParameter",
-      "low": 7,
-      "high": 12,
-      "default": 9,
-      "space": "buy",
-      "optimize": true,
-      "value": 9
-    },
-    "buy_kijun": {
-      "type": "IntParameter",
-      "low": 20,
-      "high": 30,
-      "default": 26,
-      "space": "buy",
-      "optimize": true,
-      "value": 26
-    },
-    "buy_senkou_b": {
-      "type": "IntParameter",
-      "low": 44,
-      "high": 60,
-      "default": 52,
-      "space": "buy",
-      "optimize": true,
-      "value": 52
-    },
-    "buy_rsi_min": {
-      "type": "IntParameter",
-      "low": 45,
-      "high": 60,
-      "default": 50,
-      "space": "buy",
-      "optimize": true,
-      "value": 50
-    },
-    "buy_chikou_confirm": {
-      "type": "BooleanParameter",
-      "default": true,
-      "space": "buy",
-      "optimize": true,
-      "value": true
-    },
-    "buy_vol_sma": {
-      "type": "IntParameter",
-      "low": 10,
-      "high": 30,
-      "default": 20,
-      "space": "buy",
-      "optimize": true,
-      "value": 20
-    },
-    "buy_vol_ratio": {
-      "type": "DecimalParameter",
-      "low": 0.8,
-      "high": 1.5,
-      "default": 1.0,
-      "space": "buy",
-      "optimize": true,
-      "value": 1.0
-    },
-    "sell_rsi_bear": {
-      "type": "IntParameter",
-      "low": 30,
-      "high": 50,
-      "default": 40,
-      "space": "sell",
-      "optimize": true,
-      "value": 40
-    },
-    "sell_cloud_entry": {
-      "type": "BooleanParameter",
-      "default": true,
-      "space": "sell",
-      "optimize": true,
-      "value": true
-    },
-    "sell_cross_trigger": {
-      "type": "CategoricalParameter",
-      "categories": [
-        "tenkan_kijun",
-        "none"
-      ],
-      "default": "tenkan_kijun",
-      "space": "sell",
-      "optimize": true,
-      "value": "tenkan_kijun"
-    },
-    "protect_cooldown": {
-      "type": "IntParameter",
-      "low": 2,
-      "high": 24,
-      "default": 12,
-      "space": "protection",
-      "optimize": true,
-      "value": 12
-    },
-    "protect_stop_duration": {
-      "type": "IntParameter",
-      "low": 4,
-      "high": 48,
-      "default": 24,
-      "space": "protection",
-      "optimize": true,
-      "value": 24
-    },
-    "protect_stop_lookback": {
-      "type": "IntParameter",
-      "low": 12,
-      "high": 96,
-      "default": 48,
-      "space": "protection",
-      "optimize": true,
-      "value": 48
-    },
-    "protect_trade_limit": {
-      "type": "IntParameter",
-      "low": 2,
-      "high": 6,
-      "default": 3,
-      "space": "protection",
-      "optimize": true,
-      "value": 3
-    },
-    "protect_use_stop_guard": {
-      "type": "BooleanParameter",
-      "default": true,
-      "space": "protection",
-      "optimize": true,
-      "value": true
-    }
-  }
+  "buy_tenkan": 9,
+  "buy_kijun": 26,
+  "buy_senkou_b": 52,
+  "buy_rsi_min": 50,
+  "buy_chikou_confirm": true,
+  "buy_vol_sma": 20,
+  "buy_vol_ratio": 1.0,
+  "sell_rsi_bear": 40,
+  "sell_cloud_entry": true,
+  "sell_cross_trigger": "tenkan_kijun",
+  "protect_cooldown": 12,
+  "protect_stop_duration": 24,
+  "protect_stop_lookback": 48,
+  "protect_trade_limit": 3,
+  "protect_use_stop_guard": true
 }

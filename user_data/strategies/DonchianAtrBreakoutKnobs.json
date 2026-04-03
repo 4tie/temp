@@ -1,112 +1,13 @@
 {
-  "strategy": "DonchianAtrBreakoutKnobs",
-  "settings": {
-    "minimal_roi": {
-      "0": 0.12,
-      "60": 0.06,
-      "180": 0.03,
-      "480": 0.0
-    },
-    "stoploss": -0.11,
-    "startup_candle_count": 220
-  },
-  "parameters": {
-    "buy_dc_period": {
-      "type": "IntParameter",
-      "low": 10,
-      "high": 40,
-      "default": 20,
-      "space": "buy",
-      "optimize": true,
-      "value": 20
-    },
-    "buy_atr_pct": {
-      "type": "DecimalParameter",
-      "low": 0.3,
-      "high": 3.0,
-      "default": 0.8,
-      "space": "buy",
-      "optimize": true,
-      "value": 0.8
-    },
-    "buy_rsi": {
-      "type": "IntParameter",
-      "low": 45,
-      "high": 70,
-      "default": 55,
-      "space": "buy",
-      "optimize": true,
-      "value": 55
-    },
-    "buy_use_ema_filter": {
-      "type": "BooleanParameter",
-      "default": false,
-      "space": "buy",
-      "optimize": true,
-      "value": false
-    },
-    "sell_exit_channel": {
-      "type": "CategoricalParameter",
-      "categories": [
-        "mid",
-        "lower"
-      ],
-      "default": "mid",
-      "space": "sell",
-      "optimize": true,
-      "value": "mid"
-    },
-    "sell_rsi": {
-      "type": "IntParameter",
-      "low": 30,
-      "high": 55,
-      "default": 42,
-      "space": "sell",
-      "optimize": true,
-      "value": 42
-    },
-    "protect_cooldown": {
-      "type": "IntParameter",
-      "low": 2,
-      "high": 24,
-      "default": 8,
-      "space": "protection",
-      "optimize": true,
-      "value": 8
-    },
-    "protect_stop_duration": {
-      "type": "IntParameter",
-      "low": 4,
-      "high": 48,
-      "default": 12,
-      "space": "protection",
-      "optimize": true,
-      "value": 12
-    },
-    "protect_stop_lookback": {
-      "type": "IntParameter",
-      "low": 12,
-      "high": 96,
-      "default": 24,
-      "space": "protection",
-      "optimize": true,
-      "value": 24
-    },
-    "protect_trade_limit": {
-      "type": "IntParameter",
-      "low": 2,
-      "high": 6,
-      "default": 4,
-      "space": "protection",
-      "optimize": true,
-      "value": 4
-    },
-    "protect_use_stop_guard": {
-      "type": "BooleanParameter",
-      "default": true,
-      "space": "protection",
-      "optimize": true,
-      "value": true
-    }
-  }
+  "buy_dc_period": 20,
+  "buy_atr_pct": 0.8,
+  "buy_rsi": 55,
+  "buy_use_ema_filter": false,
+  "sell_exit_channel": "mid",
+  "sell_rsi": 42,
+  "protect_cooldown": 8,
+  "protect_stop_duration": 12,
+  "protect_stop_lookback": 24,
+  "protect_trade_limit": 4,
+  "protect_use_stop_guard": true
 }

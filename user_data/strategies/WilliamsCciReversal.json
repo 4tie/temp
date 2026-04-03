@@ -1,171 +1,19 @@
 {
-  "strategy": "WilliamsCciReversal",
-  "settings": {
-    "timeframe": "1h",
-    "startup_candle_count": 250,
-    "minimal_roi": {
-      "0": 0.08,
-      "60": 0.04,
-      "180": 0.02,
-      "480": 0.0
-    },
-    "stoploss": -0.09,
-    "trailing_stop": true,
-    "trailing_stop_positive": 0.02,
-    "trailing_stop_positive_offset": 0.04,
-    "trailing_only_offset_is_reached": true
-  },
-  "parameters": {
-    "buy_willr_period": {
-      "type": "IntParameter",
-      "low": 10,
-      "high": 20,
-      "default": 14,
-      "space": "buy",
-      "optimize": true,
-      "value": 14
-    },
-    "buy_willr_oversold": {
-      "type": "IntParameter",
-      "low": -95,
-      "high": -70,
-      "default": -80,
-      "space": "buy",
-      "optimize": true,
-      "value": -80
-    },
-    "buy_cci_period": {
-      "type": "IntParameter",
-      "low": 14,
-      "high": 30,
-      "default": 20,
-      "space": "buy",
-      "optimize": true,
-      "value": 20
-    },
-    "buy_cci_oversold": {
-      "type": "IntParameter",
-      "low": -200,
-      "high": -80,
-      "default": -100,
-      "space": "buy",
-      "optimize": true,
-      "value": -100
-    },
-    "buy_stochrsi_period": {
-      "type": "IntParameter",
-      "low": 10,
-      "high": 20,
-      "default": 14,
-      "space": "buy",
-      "optimize": true,
-      "value": 14
-    },
-    "buy_stochrsi_oversold": {
-      "type": "DecimalParameter",
-      "low": 10.0,
-      "high": 30.0,
-      "default": 20.0,
-      "space": "buy",
-      "optimize": true,
-      "value": 20.0
-    },
-    "buy_ema_trend": {
-      "type": "IntParameter",
-      "low": 80,
-      "high": 150,
-      "default": 100,
-      "space": "buy",
-      "optimize": true,
-      "value": 100
-    },
-    "buy_use_ema_filter": {
-      "type": "BooleanParameter",
-      "default": true,
-      "space": "buy",
-      "optimize": true,
-      "value": true
-    },
-    "sell_willr_overbought": {
-      "type": "IntParameter",
-      "low": -40,
-      "high": -10,
-      "default": -20,
-      "space": "sell",
-      "optimize": true,
-      "value": -20
-    },
-    "sell_cci_overbought": {
-      "type": "IntParameter",
-      "low": 80,
-      "high": 200,
-      "default": 100,
-      "space": "sell",
-      "optimize": true,
-      "value": 100
-    },
-    "sell_stochrsi_overbought": {
-      "type": "DecimalParameter",
-      "low": 70.0,
-      "high": 90.0,
-      "default": 80.0,
-      "space": "sell",
-      "optimize": true,
-      "value": 80.0
-    },
-    "sell_exit_trigger": {
-      "type": "CategoricalParameter",
-      "categories": [
-        "any",
-        "two"
-      ],
-      "default": "any",
-      "space": "sell",
-      "optimize": true,
-      "value": "any"
-    },
-    "protect_cooldown": {
-      "type": "IntParameter",
-      "low": 2,
-      "high": 24,
-      "default": 8,
-      "space": "protection",
-      "optimize": true,
-      "value": 8
-    },
-    "protect_stop_duration": {
-      "type": "IntParameter",
-      "low": 4,
-      "high": 48,
-      "default": 12,
-      "space": "protection",
-      "optimize": true,
-      "value": 12
-    },
-    "protect_stop_lookback": {
-      "type": "IntParameter",
-      "low": 12,
-      "high": 96,
-      "default": 24,
-      "space": "protection",
-      "optimize": true,
-      "value": 24
-    },
-    "protect_trade_limit": {
-      "type": "IntParameter",
-      "low": 2,
-      "high": 6,
-      "default": 4,
-      "space": "protection",
-      "optimize": true,
-      "value": 4
-    },
-    "protect_use_stop_guard": {
-      "type": "BooleanParameter",
-      "default": true,
-      "space": "protection",
-      "optimize": true,
-      "value": true
-    }
-  }
+  "buy_willr_period": 14,
+  "buy_willr_oversold": -80,
+  "buy_cci_period": 20,
+  "buy_cci_oversold": -100,
+  "buy_stochrsi_period": 14,
+  "buy_stochrsi_oversold": 20.0,
+  "buy_ema_trend": 100,
+  "buy_use_ema_filter": true,
+  "sell_willr_overbought": -20,
+  "sell_cci_overbought": 100,
+  "sell_stochrsi_overbought": 80.0,
+  "sell_exit_trigger": "any",
+  "protect_cooldown": 8,
+  "protect_stop_duration": 12,
+  "protect_stop_lookback": 24,
+  "protect_trade_limit": 4,
+  "protect_use_stop_guard": true
 }

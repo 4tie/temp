@@ -1,128 +1,15 @@
 {
-  "strategy": "TripleEmaStochPullbackKnobs",
-  "settings": {
-    "minimal_roi": {
-      "0": 0.07,
-      "45": 0.035,
-      "120": 0.015,
-      "300": 0.0
-    },
-    "stoploss": -0.08,
-    "startup_candle_count": 250
-  },
-  "parameters": {
-    "buy_fast_ema": {
-      "type": "IntParameter",
-      "low": 5,
-      "high": 15,
-      "default": 9,
-      "space": "buy",
-      "optimize": true,
-      "value": 9
-    },
-    "buy_mid_ema": {
-      "type": "IntParameter",
-      "low": 20,
-      "high": 50,
-      "default": 21,
-      "space": "buy",
-      "optimize": true,
-      "value": 21
-    },
-    "buy_rsi": {
-      "type": "IntParameter",
-      "low": 20,
-      "high": 45,
-      "default": 34,
-      "space": "buy",
-      "optimize": true,
-      "value": 34
-    },
-    "buy_stoch": {
-      "type": "IntParameter",
-      "low": 8,
-      "high": 35,
-      "default": 20,
-      "space": "buy",
-      "optimize": true,
-      "value": 20
-    },
-    "buy_pullback": {
-      "type": "DecimalParameter",
-      "low": 0.975,
-      "high": 1.0,
-      "default": 0.992,
-      "space": "buy",
-      "optimize": true,
-      "value": 0.992
-    },
-    "buy_require_ema200": {
-      "type": "BooleanParameter",
-      "default": true,
-      "space": "buy",
-      "optimize": true,
-      "value": true
-    },
-    "sell_rsi": {
-      "type": "IntParameter",
-      "low": 50,
-      "high": 80,
-      "default": 62,
-      "space": "sell",
-      "optimize": true,
-      "value": 62
-    },
-    "sell_stoch": {
-      "type": "IntParameter",
-      "low": 60,
-      "high": 95,
-      "default": 80,
-      "space": "sell",
-      "optimize": true,
-      "value": 80
-    },
-    "protect_cooldown": {
-      "type": "IntParameter",
-      "low": 2,
-      "high": 24,
-      "default": 6,
-      "space": "protection",
-      "optimize": true,
-      "value": 6
-    },
-    "protect_stop_duration": {
-      "type": "IntParameter",
-      "low": 4,
-      "high": 48,
-      "default": 10,
-      "space": "protection",
-      "optimize": true,
-      "value": 10
-    },
-    "protect_stop_lookback": {
-      "type": "IntParameter",
-      "low": 12,
-      "high": 96,
-      "default": 24,
-      "space": "protection",
-      "optimize": true,
-      "value": 24
-    },
-    "protect_trade_limit": {
-      "type": "IntParameter",
-      "low": 2,
-      "high": 6,
-      "default": 4,
-      "space": "protection",
-      "optimize": true,
-      "value": 4
-    },
-    "protect_use_stop_guard": {
-      "type": "BooleanParameter",
-      "default": true,
-      "space": "protection",
-      "optimize": true,
-      "value": true
-    }
-  }
+  "buy_fast_ema": 9,
+  "buy_mid_ema": 21,
+  "buy_rsi": 34,
+  "buy_stoch": 20,
+  "buy_pullback": 0.992,
+  "buy_require_ema200": true,
+  "sell_rsi": 62,
+  "sell_stoch": 80,
+  "protect_cooldown": 6,
+  "protect_stop_duration": 10,
+  "protect_stop_lookback": 24,
+  "protect_trade_limit": 4,
+  "protect_use_stop_guard": true
 }

@@ -1,36 +1,4 @@
 {
-  "strategy": "PatternRecognition",
-  "settings": {
-    "minimal_roi": {
-      "0": 0.936,
-      "5271": 0.332,
-      "18147": 0.086,
-      "48152": 0
-    },
-    "stoploss": -0.288,
-    "trailing_stop": true,
-    "trailing_stop_positive": 0.032,
-    "trailing_stop_positive_offset": 0.084,
-    "trailing_only_offset_is_reached": true,
-    "timeframe": "1d"
-  },
-  "parameters": {
-    "buy_pr1": {
-      "type": "CategoricalParameter",
-      "categories": null,
-      "default": null,
-      "space": "buy",
-      "value": null
-    },
-    "buy_vol1": {
-      "type": "CategoricalParameter",
-      "categories": [
-        -100,
-        100
-      ],
-      "default": 0,
-      "space": "buy",
-      "value": 0
-    }
-  }
+  "buy_pr1": null,
+  "buy_vol1": 0
 }
