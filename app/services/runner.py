@@ -72,18 +72,12 @@ def start_backtest(
 def start_download(
     pairs: list[str],
     timeframe: str,
-    exchange: str,
-    days: int,
-    timerange: Optional[str] = None,
 ) -> str:
     job_id = "dl_" + datetime.utcnow().strftime("%Y%m%d_%H%M%S") + "_" + uuid.uuid4().hex[:8]
 
     cmd = build_download_data_command(
         pairs=pairs,
         timeframe=timeframe,
-        exchange=exchange,
-        days=days,
-        timerange=timerange,
     )
 
     set_status(job_id, "running")

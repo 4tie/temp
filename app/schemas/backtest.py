@@ -17,9 +17,6 @@ class BacktestRequest(BaseModel):
 class DownloadDataRequest(BaseModel):
     pairs: list[str]
     timeframe: str = "5m"
-    timerange: Optional[str] = None
-    exchange: str = "binance"
-    days: int = 30
 
 
 class PresetSaveRequest(BaseModel):

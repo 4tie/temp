@@ -97,9 +97,6 @@ async def download_data(req: DownloadDataRequest):
     job_id = start_download(
         pairs=req.pairs,
         timeframe=req.timeframe,
-        exchange=req.exchange,
-        days=req.days,
-        timerange=req.timerange,
     )
     return {"job_id": job_id, "status": "running"}
 

@@ -252,32 +252,6 @@ window.BacktestPage = (() => {
                   <button type="button" class="btn btn--danger" id="bt-stop-btn" style="display:none">Stop</button>
                 </div>
                 <div class="form form--compact" style="margin-top:var(--space-3)">
-                  <div class="form-row">
-                    <div class="form-group">
-                      <label class="form-label" for="bt-dl-exchange">DL Exchange</label>
-                      <select class="form-select" id="bt-dl-exchange">
-                        <option value="binance">Binance</option>
-                        <option value="kraken">Kraken</option>
-                        <option value="okx">OKX</option>
-                      </select>
-                    </div>
-                    <div class="form-group">
-                      <label class="form-label" for="bt-dl-timeframe">DL Timeframe</label>
-                      <select class="form-select" id="bt-dl-timeframe">
-                        <option value="1m">1m</option>
-                        <option value="5m" selected>5m</option>
-                        <option value="15m">15m</option>
-                        <option value="30m">30m</option>
-                        <option value="1h">1h</option>
-                        <option value="4h">4h</option>
-                        <option value="1d">1d</option>
-                      </select>
-                    </div>
-                    <div class="form-group">
-                      <label class="form-label" for="bt-dl-days">Days</label>
-                      <input class="form-input" id="bt-dl-days" type="number" value="365" min="1" max="1825">
-                    </div>
-                  </div>
                   <div id="bt-dl-log-wrap" style="display:none;margin-top:var(--space-3)">
                     <div class="log-panel" id="bt-dl-logs" style="max-height:160px"></div>
                   </div>
@@ -466,9 +440,7 @@ window.BacktestPage = (() => {
   let _dlPollTimer = null;
 
   async function _onDownload() {
-    const exchange = DOM.$('#bt-dl-exchange', _el)?.value || 'binance';
-    const tf       = DOM.$('#bt-dl-timeframe', _el)?.value || '5m';
-    const days     = parseInt(DOM.$('#bt-dl-days', _el)?.value) || 30;
+    const tf       = DOM.$('#bt-timeframe', _el)?.value || '5m';
     const selected = _getSelectedPairs('bt-pairs-list');
 
     if (!selected.length) { Toast.warning('Select at least one pair to download.'); return; }
@@ -481,7 +453,7 @@ window.BacktestPage = (() => {
     if (logWrap) DOM.show(logWrap);
 
     try {
-      const res = await API.downloadData({ pairs: selected, timeframe: tf, exchange, days });
+      const res = await API.downloadData({ pairs: selected, timeframe: tf });
       _pollDownload(res.job_id || res.run_id, logEl, formBtn);
       Toast.info('Download started…');
     } catch (err) {

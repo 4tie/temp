@@ -46,26 +46,13 @@ def build_backtest_command(
 def build_download_data_command(
     pairs: list[str],
     timeframe: str,
-    exchange: str,
-    days: int,
-    timerange: Optional[str] = None,
 ) -> list[str]:
     cmd = [
-        "freqtrade", "download-data",
-        "--userdir", str(BASE_DIR),
-        "--exchange", exchange,
+        "python", "-m", "freqtrade", "download-data",
+        "-c", "user_data/config.json",
         "--timeframe", timeframe,
-        "--datadir", str(DATA_DIR),
+        "--timerange", "20251001-20260321",
     ]
-
-    config_file = FREQTRADE_CONFIG_DIR / "config.json"
-    if config_file.exists():
-        cmd.extend(["--config", str(config_file)])
-
-    if timerange:
-        cmd.extend(["--timerange", timerange])
-    else:
-        cmd.extend(["--days", str(days)])
 
     if pairs:
         cmd.extend(["--pairs"] + pairs)

@@ -262,31 +262,6 @@ window.HyperoptPage = (() => {
                   <button type="button" class="btn btn--danger" id="ho-stop-btn" style="display:none">Stop</button>
                 </div>
                 <div class="form form--compact" style="margin-top:var(--space-3)">
-                  <div class="form-row">
-                    <div class="form-group">
-                      <label class="form-label" for="ho-dl-exchange">DL Exchange</label>
-                      <select class="form-select" id="ho-dl-exchange">
-                        <option value="binance">Binance</option>
-                        <option value="kraken">Kraken</option>
-                        <option value="okx">OKX</option>
-                      </select>
-                    </div>
-                    <div class="form-group">
-                      <label class="form-label" for="ho-dl-timeframe">DL Timeframe</label>
-                      <select class="form-select" id="ho-dl-timeframe">
-                        <option value="1m">1m</option>
-                        <option value="5m" selected>5m</option>
-                        <option value="15m">15m</option>
-                        <option value="1h">1h</option>
-                        <option value="4h">4h</option>
-                        <option value="1d">1d</option>
-                      </select>
-                    </div>
-                    <div class="form-group">
-                      <label class="form-label" for="ho-dl-days">Days</label>
-                      <input class="form-input" id="ho-dl-days" type="number" value="365" min="1" max="1825">
-                    </div>
-                  </div>
                   <div id="ho-dl-log-wrap" style="display:none;margin-top:var(--space-3)">
                     <div class="log-panel" id="ho-dl-logs" style="max-height:160px"></div>
                   </div>
@@ -414,9 +389,7 @@ window.HyperoptPage = (() => {
   let _dlPollTimer = null;
 
   async function _onDownload() {
-    const exchange = DOM.$('#ho-dl-exchange', _el)?.value || 'binance';
-    const tf       = DOM.$('#ho-dl-timeframe', _el)?.value || '5m';
-    const days     = parseInt(DOM.$('#ho-dl-days', _el)?.value) || 30;
+    const tf       = DOM.$('#ho-timeframe', _el)?.value || '5m';
     const selected = _getSelectedPairs('ho-pairs-list');
 
     if (!selected.length) { Toast.warning('Select at least one pair to download.'); return; }
@@ -429,7 +402,7 @@ window.HyperoptPage = (() => {
     if (logWrap) DOM.show(logWrap);
 
     try {
-      const res = await API.downloadData({ pairs: selected, timeframe: tf, exchange, days });
+      const res = await API.downloadData({ pairs: selected, timeframe: tf });
       _pollDownload(res.job_id || res.run_id, logEl, formBtn);
       Toast.info('Download started…');
     } catch (err) {
