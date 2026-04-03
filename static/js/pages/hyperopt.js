@@ -255,59 +255,43 @@ window.HyperoptPage = (() => {
                     <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor"><path d="M3 2l10 6-10 6V2z"/></svg>
                     Start Hyperopt
                   </button>
-                  <button type="button" class="btn btn--danger" id="ho-stop-btn" style="display:none">Stop</button>
-                </div>
-              </form>
-            </div>
-          </div>
-
-          <!-- Download Data card -->
-          <div class="card" style="margin-top:var(--space-4)">
-            <div class="card__header" style="cursor:pointer" id="ho-dl-toggle">
-              <span class="card__title">Download Data</span>
-              <span id="ho-dl-badge" class="badge" style="margin-left:auto"></span>
-              <svg id="ho-dl-chevron" viewBox="0 0 16 16" width="14" height="14" fill="currentColor" style="margin-left:8px;transition:transform .2s"><path d="M4 6l4 4 4-4"/></svg>
-            </div>
-            <div class="card__body" id="ho-dl-body" style="display:none">
-              <p class="text-muted text-sm" style="margin-bottom:var(--space-3)">
-                Select pairs above, set timeframe &amp; days, then download historical OHLCV data for hyperopt.
-              </p>
-              <div class="form form--compact">
-                <div class="form-row">
-                  <div class="form-group">
-                    <label class="form-label" for="ho-dl-exchange">Exchange</label>
-                    <select class="form-select" id="ho-dl-exchange">
-                      <option value="binance">Binance</option>
-                      <option value="kraken">Kraken</option>
-                      <option value="okx">OKX</option>
-                    </select>
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label" for="ho-dl-timeframe">Timeframe</label>
-                    <select class="form-select" id="ho-dl-timeframe">
-                      <option value="1m">1m</option>
-                      <option value="5m" selected>5m</option>
-                      <option value="15m">15m</option>
-                      <option value="1h">1h</option>
-                      <option value="4h">4h</option>
-                      <option value="1d">1d</option>
-                    </select>
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label" for="ho-dl-days">Days</label>
-                    <input class="form-input" id="ho-dl-days" type="number" value="365" min="1" max="1825">
-                  </div>
-                </div>
-                <div class="form-actions" style="margin-top:0">
-                  <button type="button" class="btn btn--secondary" id="ho-dl-btn">
-                    <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v8M4 7l4 5 4-5"/><path d="M2 13h12"/></svg>
+                  <button type="button" class="btn btn--secondary" id="ho-dl-form-btn">
+                    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor"><path d="M8 12l-5-5 1.4-1.4L7 9.2V2h2v7.2l2.6-3.6L13 7l-5 5zM2 14h12v-2H2v2z"/></svg>
                     Download Data
                   </button>
+                  <button type="button" class="btn btn--danger" id="ho-stop-btn" style="display:none">Stop</button>
                 </div>
-                <div id="ho-dl-log-wrap" style="display:none;margin-top:var(--space-3)">
-                  <div class="log-panel" id="ho-dl-logs" style="max-height:160px"></div>
+                <div class="form form--compact" style="margin-top:var(--space-3)">
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label class="form-label" for="ho-dl-exchange">DL Exchange</label>
+                      <select class="form-select" id="ho-dl-exchange">
+                        <option value="binance">Binance</option>
+                        <option value="kraken">Kraken</option>
+                        <option value="okx">OKX</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" for="ho-dl-timeframe">DL Timeframe</label>
+                      <select class="form-select" id="ho-dl-timeframe">
+                        <option value="1m">1m</option>
+                        <option value="5m" selected>5m</option>
+                        <option value="15m">15m</option>
+                        <option value="1h">1h</option>
+                        <option value="4h">4h</option>
+                        <option value="1d">1d</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" for="ho-dl-days">Days</label>
+                      <input class="form-input" id="ho-dl-days" type="number" value="365" min="1" max="1825">
+                    </div>
+                  </div>
+                  <div id="ho-dl-log-wrap" style="display:none;margin-top:var(--space-3)">
+                    <div class="log-panel" id="ho-dl-logs" style="max-height:160px"></div>
+                  </div>
                 </div>
-              </div>
+              </form>
             </div>
           </div>
         </div>
@@ -346,16 +330,8 @@ window.HyperoptPage = (() => {
     _setupPickerEvents('ho-pairs-list', 'ho-pairs-count', 'ho-pairs-search', 'ho-pairs-all', 'ho-pairs-none', 'ho-pairs-favs');
     _wireSaveEvents();
 
-    const dlToggle  = DOM.$('#ho-dl-toggle', _el);
-    const dlBody    = DOM.$('#ho-dl-body', _el);
-    const dlBtn     = DOM.$('#ho-dl-btn', _el);
-    const dlChevron = DOM.$('#ho-dl-chevron', _el);
-    DOM.on(dlToggle, 'click', () => {
-      const open = dlBody.style.display !== 'none';
-      dlBody.style.display = open ? 'none' : '';
-      if (dlChevron) dlChevron.style.transform = open ? '' : 'rotate(180deg)';
-    });
-    DOM.on(dlBtn, 'click', _onDownload);
+    const dlFormBtn = DOM.$('#ho-dl-form-btn', _el);
+    DOM.on(dlFormBtn, 'click', _onDownload);
   }
 
   async function _loadFormData() {
@@ -445,27 +421,24 @@ window.HyperoptPage = (() => {
 
     if (!selected.length) { Toast.warning('Select at least one pair to download.'); return; }
 
-    const btn     = DOM.$('#ho-dl-btn', _el);
+    const formBtn = DOM.$('#ho-dl-form-btn', _el);
     const logEl   = DOM.$('#ho-dl-logs', _el);
     const logWrap = DOM.$('#ho-dl-log-wrap', _el);
-    const badge   = DOM.$('#ho-dl-badge', _el);
 
-    if (btn) btn.disabled = true;
+    if (formBtn) formBtn.disabled = true;
     if (logWrap) DOM.show(logWrap);
-    if (badge) { badge.textContent = 'Running'; badge.className = 'badge badge--amber'; }
 
     try {
       const res = await API.downloadData({ pairs: selected, timeframe: tf, exchange, days });
-      _pollDownload(res.job_id || res.run_id, logEl, badge, btn);
+      _pollDownload(res.job_id || res.run_id, logEl, formBtn);
       Toast.info('Download started…');
     } catch (err) {
-      if (btn) btn.disabled = false;
-      if (badge) { badge.textContent = 'Error'; badge.className = 'badge badge--red'; }
+      if (formBtn) formBtn.disabled = false;
       Toast.error('Download failed: ' + err.message);
     }
   }
 
-  function _pollDownload(jobId, logEl, badge, btn) {
+  function _pollDownload(jobId, logEl, formBtn) {
     if (_dlPollTimer) clearInterval(_dlPollTimer);
     _dlPollTimer = setInterval(async () => {
       try {
@@ -476,8 +449,7 @@ window.HyperoptPage = (() => {
         }
         if (data.status === 'completed' || data.status === 'failed') {
           clearInterval(_dlPollTimer);
-          if (btn) btn.disabled = false;
-          if (badge) { badge.textContent = data.status === 'completed' ? 'Done' : 'Failed'; badge.className = data.status === 'completed' ? 'badge badge--green' : 'badge badge--red'; }
+          if (formBtn) formBtn.disabled = false;
           if (data.status === 'completed') {
             Toast.success('Data downloaded. Refreshing pairs…');
             await _loadPairs(DOM.$('#ho-exchange', _el)?.value || 'binance');

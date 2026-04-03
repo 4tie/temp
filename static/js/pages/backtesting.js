@@ -251,59 +251,38 @@ window.BacktestPage = (() => {
                   </button>
                   <button type="button" class="btn btn--danger" id="bt-stop-btn" style="display:none">Stop</button>
                 </div>
+                <div class="form form--compact" style="margin-top:var(--space-3)">
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label class="form-label" for="bt-dl-exchange">DL Exchange</label>
+                      <select class="form-select" id="bt-dl-exchange">
+                        <option value="binance">Binance</option>
+                        <option value="kraken">Kraken</option>
+                        <option value="okx">OKX</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" for="bt-dl-timeframe">DL Timeframe</label>
+                      <select class="form-select" id="bt-dl-timeframe">
+                        <option value="1m">1m</option>
+                        <option value="5m" selected>5m</option>
+                        <option value="15m">15m</option>
+                        <option value="30m">30m</option>
+                        <option value="1h">1h</option>
+                        <option value="4h">4h</option>
+                        <option value="1d">1d</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" for="bt-dl-days">Days</label>
+                      <input class="form-input" id="bt-dl-days" type="number" value="365" min="1" max="1825">
+                    </div>
+                  </div>
+                  <div id="bt-dl-log-wrap" style="display:none;margin-top:var(--space-3)">
+                    <div class="log-panel" id="bt-dl-logs" style="max-height:160px"></div>
+                  </div>
+                </div>
               </form>
-            </div>
-          </div>
-
-          <!-- Download Data card -->
-          <div class="card" style="margin-top:var(--space-4)">
-            <div class="card__header" style="cursor:pointer" id="bt-dl-toggle">
-              <span class="card__title">Download Data</span>
-              <span id="bt-dl-badge" class="badge" style="margin-left:auto"></span>
-              <svg id="bt-dl-chevron" viewBox="0 0 16 16" width="14" height="14" fill="currentColor" style="margin-left:8px;transition:transform .2s"><path d="M4 6l4 4 4-4"/></svg>
-            </div>
-            <div class="card__body" id="bt-dl-body" style="display:none">
-              <p class="text-muted text-sm" style="margin-bottom:var(--space-3)">
-                Fetch historical OHLCV data for your selected pairs so they can be used in backtests.
-                Select pairs above, choose timeframe and date range, then click Download.
-              </p>
-              <div class="form form--compact">
-                <div class="form-row">
-                  <div class="form-group">
-                    <label class="form-label" for="bt-dl-exchange">Exchange</label>
-                    <select class="form-select" id="bt-dl-exchange">
-                      <option value="binance">Binance</option>
-                      <option value="kraken">Kraken</option>
-                      <option value="okx">OKX</option>
-                    </select>
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label" for="bt-dl-timeframe">Timeframe</label>
-                    <select class="form-select" id="bt-dl-timeframe">
-                      <option value="1m">1m</option>
-                      <option value="5m" selected>5m</option>
-                      <option value="15m">15m</option>
-                      <option value="30m">30m</option>
-                      <option value="1h">1h</option>
-                      <option value="4h">4h</option>
-                      <option value="1d">1d</option>
-                    </select>
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label" for="bt-dl-days">Days</label>
-                    <input class="form-input" id="bt-dl-days" type="number" value="365" min="1" max="1825">
-                  </div>
-                </div>
-                <div class="form-actions" style="margin-top:0">
-                  <button type="button" class="btn btn--secondary" id="bt-dl-btn">
-                    <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v8M4 7l4 5 4-5"/><path d="M2 13h12"/></svg>
-                    Download Data
-                  </button>
-                </div>
-                <div id="bt-dl-log-wrap" style="display:none;margin-top:var(--space-3)">
-                  <div class="log-panel" id="bt-dl-logs" style="max-height:160px"></div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -346,17 +325,6 @@ window.BacktestPage = (() => {
 
     _setupPickerEvents('bt-pairs-list', 'bt-pairs-count', 'bt-pairs-search', 'bt-pairs-all', 'bt-pairs-none', 'bt-pairs-favs');
     _wireSaveEvents();
-
-    const dlToggle = DOM.$('#bt-dl-toggle', _el);
-    const dlBody   = DOM.$('#bt-dl-body', _el);
-    const dlBtn    = DOM.$('#bt-dl-btn', _el);
-    const dlChevron = DOM.$('#bt-dl-chevron', _el);
-    DOM.on(dlToggle, 'click', () => {
-      const open = dlBody.style.display !== 'none';
-      dlBody.style.display = open ? 'none' : '';
-      if (dlChevron) dlChevron.style.transform = open ? '' : 'rotate(180deg)';
-    });
-    DOM.on(dlBtn, 'click', _onDownload);
 
     const dlFormBtn = DOM.$('#bt-dl-form-btn', _el);
     DOM.on(dlFormBtn, 'click', _onDownload);
@@ -505,30 +473,24 @@ window.BacktestPage = (() => {
 
     if (!selected.length) { Toast.warning('Select at least one pair to download.'); return; }
 
-    const btn        = DOM.$('#bt-dl-btn', _el);
-    const formBtn    = DOM.$('#bt-dl-form-btn', _el);
-    const logEl      = DOM.$('#bt-dl-logs', _el);
-    const logWrap    = DOM.$('#bt-dl-log-wrap', _el);
-    const badge      = DOM.$('#bt-dl-badge', _el);
+    const formBtn = DOM.$('#bt-dl-form-btn', _el);
+    const logEl   = DOM.$('#bt-dl-logs', _el);
+    const logWrap = DOM.$('#bt-dl-log-wrap', _el);
 
-    if (btn) btn.disabled = true;
     if (formBtn) formBtn.disabled = true;
     if (logWrap) DOM.show(logWrap);
-    if (badge) { badge.textContent = 'Running'; badge.className = 'badge badge--amber'; }
 
     try {
       const res = await API.downloadData({ pairs: selected, timeframe: tf, exchange, days });
-      _pollDownload(res.job_id || res.run_id, logEl, badge, btn, formBtn);
+      _pollDownload(res.job_id || res.run_id, logEl, formBtn);
       Toast.info('Download started…');
     } catch (err) {
-      if (btn) btn.disabled = false;
       if (formBtn) formBtn.disabled = false;
-      if (badge) { badge.textContent = 'Error'; badge.className = 'badge badge--red'; }
       Toast.error('Download failed: ' + err.message);
     }
   }
 
-  function _pollDownload(jobId, logEl, badge, btn, formBtn) {
+  function _pollDownload(jobId, logEl, formBtn) {
     if (_dlPollTimer) clearInterval(_dlPollTimer);
     _dlPollTimer = setInterval(async () => {
       try {
@@ -539,12 +501,7 @@ window.BacktestPage = (() => {
         }
         if (data.status === 'completed' || data.status === 'failed') {
           clearInterval(_dlPollTimer);
-          if (btn) btn.disabled = false;
           if (formBtn) formBtn.disabled = false;
-          if (badge) {
-            badge.textContent = data.status === 'completed' ? 'Done' : 'Failed';
-            badge.className   = data.status === 'completed' ? 'badge badge--green' : 'badge badge--red';
-          }
           if (data.status === 'completed') {
             Toast.success('Data downloaded. Refreshing pairs…');
             const ex = DOM.$('#bt-exchange', _el)?.value || 'binance';
