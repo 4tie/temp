@@ -256,6 +256,7 @@ window.HyperoptPage = (() => {
               <span class="badge" id="ho-status-badge">—</span>
             </div>
             <div class="card__body">
+              <div id="ho-cmd"></div>
               <div class="progress-panel" id="ho-progress"></div>
               <div class="log-panel" id="ho-logs"></div>
             </div>
@@ -497,15 +498,49 @@ window.HyperoptPage = (() => {
     }, 3000);
   }
 
+  function _renderCommandBlock(container, cmd) {
+    if (!container || !cmd?.length) return;
+    const flat = cmd.join(' ');
+    const pretty = cmd.map((c, i) => {
+      if (i === 0) return c;
+      const token = (c.includes('/') || c.includes(' ')) ? `'${c}'` : c;
+      return (i === 1) ? token : `  ${token}`;
+    }).join(' \\\n');
+
+    container.innerHTML = `
+      <div class="cmd-block">
+        <div class="cmd-block__header">
+          <span class="cmd-block__label">Command</span>
+          <button class="cmd-block__copy">Copy</button>
+        </div>
+        <pre class="cmd-block__pre">${_esc(pretty)}</pre>
+      </div>`;
+
+    const copyBtn = container.querySelector('.cmd-block__copy');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        navigator.clipboard.writeText(flat).then(() => {
+          copyBtn.textContent = 'Copied!';
+          copyBtn.classList.add('cmd-block__copy--copied');
+          setTimeout(() => { copyBtn.textContent = 'Copy'; copyBtn.classList.remove('cmd-block__copy--copied'); }, 2000);
+        }).catch(() => { copyBtn.textContent = 'Copy failed'; setTimeout(() => { copyBtn.textContent = 'Copy'; }, 2000); });
+      });
+    }
+  }
+
   function _updateStatus(data) {
-    const badge    = DOM.$('#ho-status-badge', _el);
-    const logsEl   = DOM.$('#ho-logs', _el);
+    const badge      = DOM.$('#ho-status-badge', _el);
+    const cmdEl      = DOM.$('#ho-cmd', _el);
+    const logsEl     = DOM.$('#ho-logs', _el);
     const progressEl = DOM.$('#ho-progress', _el);
-    const resCard  = DOM.$('#ho-results-card', _el);
-    const resBody  = DOM.$('#ho-results-body', _el);
-    const applyBtn = DOM.$('#ho-apply-btn', _el);
+    const resCard    = DOM.$('#ho-results-card', _el);
+    const resBody    = DOM.$('#ho-results-body', _el);
+    const applyBtn   = DOM.$('#ho-apply-btn', _el);
 
     if (badge) { badge.className = `badge badge--${FMT.statusColor(data.status)}`; badge.textContent = FMT.statusLabel(data.status); }
+    if (cmdEl && data.meta?.command?.length && !cmdEl.querySelector('.cmd-block')) {
+      _renderCommandBlock(cmdEl, data.meta.command);
+    }
 
     if (data.progress && progressEl) {
       const p = data.progress;

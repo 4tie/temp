@@ -259,6 +259,7 @@ window.BacktestPage = (() => {
               <span class="badge" id="bt-status-badge">—</span>
             </div>
             <div class="card__body">
+              <div id="bt-cmd"></div>
               <div class="log-panel" id="bt-logs"></div>
             </div>
           </div>
@@ -551,15 +552,56 @@ window.BacktestPage = (() => {
     }, 2000);
   }
 
+  function _renderCommandBlock(container, cmd) {
+    if (!container || !cmd?.length) return;
+    const flat = cmd.join(' ');
+    const pretty = cmd.map((c, i) => {
+      if (i === 0) return c;
+      const needsQuote = c.includes('/') || c.includes(' ');
+      const token = needsQuote ? `'${c}'` : c;
+      return (i === 1) ? token : `  ${token}`;
+    }).join(' \\\n');
+
+    container.innerHTML = `
+      <div class="cmd-block">
+        <div class="cmd-block__header">
+          <span class="cmd-block__label">Command</span>
+          <button class="cmd-block__copy">Copy</button>
+        </div>
+        <pre class="cmd-block__pre">${_esc(pretty)}</pre>
+      </div>`;
+
+    const copyBtn = container.querySelector('.cmd-block__copy');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        navigator.clipboard.writeText(flat).then(() => {
+          copyBtn.textContent = 'Copied!';
+          copyBtn.classList.add('cmd-block__copy--copied');
+          setTimeout(() => {
+            copyBtn.textContent = 'Copy';
+            copyBtn.classList.remove('cmd-block__copy--copied');
+          }, 2000);
+        }).catch(() => {
+          copyBtn.textContent = 'Copy failed';
+          setTimeout(() => { copyBtn.textContent = 'Copy'; }, 2000);
+        });
+      });
+    }
+  }
+
   function _updateStatus(data) {
-    const badge = DOM.$('#bt-status-badge', _el);
-    const logs  = DOM.$('#bt-logs', _el);
+    const badge   = DOM.$('#bt-status-badge', _el);
+    const cmdEl   = DOM.$('#bt-cmd', _el);
+    const logs    = DOM.$('#bt-logs', _el);
     const resCard = DOM.$('#bt-results-card', _el);
     const resBody = DOM.$('#bt-results-body', _el);
 
     if (badge) {
       badge.className = `badge badge--${FMT.statusColor(data.status)}`;
       badge.textContent = FMT.statusLabel(data.status);
+    }
+    if (cmdEl && data.meta?.command?.length && !cmdEl.querySelector('.cmd-block')) {
+      _renderCommandBlock(cmdEl, data.meta.command);
     }
     if (logs) {
       logs.innerHTML = (data.logs || []).slice(-200).map(l => `<div class="log-line">${_esc(l)}</div>`).join('');
