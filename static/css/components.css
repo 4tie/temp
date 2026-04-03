@@ -714,10 +714,16 @@
   font-family: var(--font-mono);
   font-size: var(--text-xs);
   color: var(--text-secondary);
-  white-space: pre-wrap;
-  word-break: break-all;
+  white-space: pre;
+  overflow-x: auto;
   line-height: 1.75;
 }
+
+.cmd-token { white-space: pre; }
+.cmd-token--exec  { color: var(--violet); }
+.cmd-token--flag  { color: var(--text-secondary); }
+.cmd-token--path  { color: #f43f5e; }
+.cmd-token--value { color: var(--amber); }
 
 /* ---- Cursor helpers --------------------------------------- */
 

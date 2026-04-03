@@ -537,14 +537,21 @@ window.HyperoptPage = (() => {
     }, 3000);
   }
 
+  const _CMD_EXEC = new Set(['python','python3','-m','freqtrade','backtesting','hyperopt','download-data']);
+  function _classifyToken(tok) {
+    if (_CMD_EXEC.has(tok))                              return 'exec';
+    if (tok.startsWith('-'))                              return 'flag';
+    if (tok.includes('/') || tok.includes('user_data'))  return 'path';
+    return 'value';
+  }
+
   function _renderCommandBlock(container, cmd) {
     if (!container || !cmd?.length) return;
     const flat = cmd.join(' ');
-    const pretty = cmd.map((c, i) => {
-      if (i === 0) return c;
-      const token = (c.includes('/') || c.includes(' ')) ? `'${c}'` : c;
-      return (i === 1) ? token : `  ${token}`;
-    }).join(' \\\n');
+    const highlighted = cmd.map(tok => {
+      const type = _classifyToken(tok);
+      return `<span class="cmd-token cmd-token--${type}">${_esc(tok)}</span>`;
+    }).join(' ');
 
     container.innerHTML = `
       <div class="cmd-block">
@@ -552,7 +559,7 @@ window.HyperoptPage = (() => {
           <span class="cmd-block__label">Command</span>
           <button class="cmd-block__copy">Copy</button>
         </div>
-        <pre class="cmd-block__pre">${_esc(pretty)}</pre>
+        <pre class="cmd-block__pre">${highlighted}</pre>
       </div>`;
 
     const copyBtn = container.querySelector('.cmd-block__copy');
