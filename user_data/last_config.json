@@ -1,11 +1,13 @@
 {
-  "download": {
-    "pairs": [
-      "DOT/USDT"
-    ],
-    "timeframe": "5m",
-    "timerange": null,
-    "exchange": "binance",
-    "days": 365
-  }
+  "strategy": "A15m",
+  "pairs": [
+    "ETH/USDT"
+  ],
+  "timeframe": "5m",
+  "timerange": "20251001-20260321",
+  "dry_run_wallet": 50.0,
+  "max_open_trades": 1,
+  "stake_amount": "unlimited",
+  "strategy_params": {},
+  "exchange": "binance"
 }
