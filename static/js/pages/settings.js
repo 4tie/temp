@@ -143,18 +143,22 @@ window.SettingsPage = (() => {
     }
     el.innerHTML = `
       <table class="data-table">
-        <thead><tr><th>Name</th><th>Exchange</th><th>Timeframe</th><th></th></tr></thead>
+        <thead><tr><th>Name</th><th>Exchange</th><th>Timeframe</th><th>Saved</th><th></th></tr></thead>
         <tbody>
-          ${entries.map(([name, cfg]) => `
+          ${entries.map(([name, entry]) => {
+            const cfg = entry.config || entry;
+            return `
             <tr>
               <td class="font-semibold">${_esc(name)}</td>
               <td>${_esc(cfg.exchange || '—')}</td>
               <td>${_esc(cfg.timeframe || '—')}</td>
+              <td class="text-muted text-sm">${FMT.tsShort(entry.saved_at)}</td>
               <td>
                 <button class="btn btn--ghost btn--sm" data-load-preset="${_esc(name)}">Load</button>
                 <button class="btn btn--danger btn--sm" data-delete-preset="${_esc(name)}">Delete</button>
               </td>
-            </tr>`).join('')}
+            </tr>`;
+          }).join('')}
         </tbody>
       </table>`;
 
@@ -213,14 +217,16 @@ window.SettingsPage = (() => {
   }
 
   function _loadPreset(name) {
-    const cfg = _presets[name];
-    if (!cfg) return;
+    const entry = _presets[name];
+    if (!entry) return;
+    const cfg = entry.config || entry;
     const s = (id, v) => { const el = DOM.$(id, _el); if (el && v != null) el.value = v; };
     s('#s-exchange',   cfg.exchange);
     s('#s-timeframe',  cfg.timeframe);
     s('#s-wallet',     cfg.dry_run_wallet);
     s('#s-max-trades', cfg.max_open_trades);
     s('#s-stake',      cfg.stake_amount);
+    s('#s-data-dir',   cfg.data_directory);
     Toast.info(`Loaded preset "${name}".`);
   }
 

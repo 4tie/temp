@@ -50,6 +50,18 @@ window.ResultsPage = (() => {
     }
   }
 
+  function _flat(r) {
+    const ov = r.results?.overview || r.overview || {};
+    return {
+      ...r,
+      _profit_pct:    ov.profit_percent ?? ov.profit_total ?? null,
+      _trades:        ov.total_trades ?? null,
+      _win_rate:      ov.win_rate ?? null,
+      _max_drawdown:  ov.max_drawdown ?? null,
+      _sharpe:        ov.sharpe_ratio ?? null,
+    };
+  }
+
   function _sort(key) {
     if (_sortKey === key) _sortDir *= -1;
     else { _sortKey = key; _sortDir = -1; }
@@ -63,9 +75,14 @@ window.ResultsPage = (() => {
       DOM.setHTML(wrap, '<div class="empty-state">No completed backtest runs yet.</div>');
       return;
     }
-    const sorted = [..._runs].sort((a, b) => {
-      const va = a[_sortKey] ?? '';
-      const vb = b[_sortKey] ?? '';
+
+    const flat = _runs.map(_flat);
+    const sorted = [...flat].sort((a, b) => {
+      const va = a[_sortKey] ?? null;
+      const vb = b[_sortKey] ?? null;
+      if (va === null && vb === null) return 0;
+      if (va === null) return _sortDir;
+      if (vb === null) return -_sortDir;
       return typeof va === 'number'
         ? (va - vb) * _sortDir
         : String(va).localeCompare(String(vb)) * _sortDir;
@@ -76,35 +93,29 @@ window.ResultsPage = (() => {
     DOM.setHTML(wrap, `
       <table class="data-table data-table--hoverable">
         <thead><tr>
-          ${th('run_id',      'Run ID')}
-          ${th('strategy',   'Strategy')}
-          ${th('started_at', 'Date')}
-          <th>Profit %</th>
-          <th>Trades</th>
-          <th>Win Rate</th>
-          <th>Drawdown</th>
-          <th>Sharpe</th>
+          ${th('run_id',        'Run ID')}
+          ${th('strategy',     'Strategy')}
+          ${th('started_at',   'Date')}
+          ${th('_profit_pct',  'Profit %')}
+          ${th('_trades',      'Trades')}
+          ${th('_win_rate',    'Win Rate')}
+          ${th('_max_drawdown','Drawdown')}
+          ${th('_sharpe',      'Sharpe')}
           <th></th>
         </tr></thead>
         <tbody>
           ${sorted.map(r => {
-            const ov = r.results?.overview || r.overview || {};
-            const profitPct = ov.profit_percent ?? ov.profit_total ?? null;
-            const trades = ov.total_trades ?? '—';
-            const winRate = ov.win_rate != null ? FMT.pct(ov.win_rate * 100, 1, false) : '—';
-            const dd = ov.max_drawdown != null ? FMT.pct(Math.abs(ov.max_drawdown * 100), 1, false) : '—';
-            const sharpe = ov.sharpe_ratio != null ? FMT.number(ov.sharpe_ratio, 2) : '—';
-            const color = profitPct > 0 ? 'green' : profitPct < 0 ? 'red' : 'muted';
+            const color = r._profit_pct > 0 ? 'green' : r._profit_pct < 0 ? 'red' : 'muted';
             return `
               <tr class="cursor-pointer" data-run-id="${r.run_id || ''}">
                 <td class="font-mono text-sm">${FMT.truncate(r.run_id || '—', 18)}</td>
                 <td>${r.strategy || '—'}</td>
                 <td class="text-muted text-sm">${FMT.tsShort(r.started_at)}</td>
-                <td class="text-${color} font-semibold">${profitPct != null ? FMT.pct(profitPct * 100) : '—'}</td>
-                <td>${trades}</td>
-                <td>${winRate}</td>
-                <td class="text-red">${dd}</td>
-                <td class="text-secondary">${sharpe}</td>
+                <td class="text-${color} font-semibold">${r._profit_pct != null ? FMT.pct(r._profit_pct * 100) : '—'}</td>
+                <td>${r._trades ?? '—'}</td>
+                <td>${r._win_rate != null ? FMT.pct(r._win_rate * 100, 1, false) : '—'}</td>
+                <td class="text-red">${r._max_drawdown != null ? FMT.pct(Math.abs(r._max_drawdown * 100), 1, false) : '—'}</td>
+                <td class="text-secondary">${r._sharpe != null ? FMT.number(r._sharpe, 2) : '—'}</td>
                 <td><button class="btn btn--ghost btn--sm" data-detail-btn data-run-id="${r.run_id || ''}">View</button></td>
               </tr>`;
           }).join('')}
