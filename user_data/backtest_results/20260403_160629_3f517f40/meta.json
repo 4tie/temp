@@ -1,0 +1,35 @@
+{
+  "run_id": "20260403_160629_3f517f40",
+  "strategy": "MultiMa",
+  "pairs": [
+    "ETH/USDT"
+  ],
+  "timeframe": "5m",
+  "timerange": "20251001-20260321",
+  "dry_run_wallet": 86.0,
+  "max_open_trades": 1,
+  "stake_amount": "unlimited",
+  "exchange": "binance",
+  "strategy_params": {},
+  "command": [
+    "python",
+    "-m",
+    "freqtrade",
+    "backtesting",
+    "-c",
+    "user_data/config.json",
+    "--timeframe",
+    "5m",
+    "--export",
+    "trades",
+    "--export-filename",
+    "user_data/backtest_results/MultiMa/result.json",
+    "--timerange",
+    "20251001-20260321",
+    "--pairs",
+    "ETH/USDT"
+  ],
+  "status": "failed",
+  "started_at": "2026-04-03T16:06:29.246538",
+  "completed_at": "2026-04-03T16:06:32.152066"
+}
