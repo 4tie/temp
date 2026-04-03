@@ -24,28 +24,33 @@ def start_backtest(
     pairs: list[str],
     timeframe: str,
     timerange: Optional[str],
-    dry_run_wallet: float,
-    max_open_trades: int,
-    stake_amount: str,
     exchange: str,
     strategy_params: dict[str, Any],
 ) -> str:
     run_id = datetime.utcnow().strftime("%Y%m%d_%H%M%S") + "_" + uuid.uuid4().hex[:8]
-    run_dir = get_run_dir(run_id)
+    run_dir = BACKTEST_RESULTS_DIR / strategy
+    run_dir.mkdir(parents=True, exist_ok=True)
 
     cmd = build_backtest_command(
         strategy=strategy,
         pairs=pairs,
         timeframe=timeframe,
         timerange=timerange,
-        dry_run_wallet=dry_run_wallet,
-        max_open_trades=max_open_trades,
-        stake_amount=stake_amount,
-        exchange=exchange,
         strategy_params=strategy_params,
     )
 
-    cmd = [c.replace("{run_id}", run_id) for c in cmd]
+    config_file = BACKTEST_RESULTS_DIR.parent / "config.json"
+    dry_run_wallet = None
+    max_open_trades = None
+    stake_amount = None
+    if config_file.exists():
+        try:
+            cfg = json.loads(config_file.read_text())
+            dry_run_wallet = cfg.get("dry_run_wallet")
+            max_open_trades = cfg.get("max_open_trades")
+            stake_amount = cfg.get("stake_amount")
+        except Exception:
+            pass
 
     meta = {
         "run_id": run_id,

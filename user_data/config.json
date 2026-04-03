@@ -35,9 +35,8 @@
     "pair_whitelist": [
       "ETH/USDT",
       "OP/USDT",
-      "DOGE/USDT", 
-      "DOT/USDT"    
-        
+      "DOGE/USDT",
+      "DOT/USDT"
     ],
     "pair_blacklist": [],
     "ccxt_config": {
@@ -57,14 +56,14 @@
     {
       "method": "StaticPairList",
       "pair_whitelist": [
-      "ETH/USDT",
-      "ADA/USDT",
-      "PEOPLE/USDT",
-      "WIF/USDT",
-      "ETC/USDT",
-      "OP/USDT",
-      "DOGE/USDT", 
-      "DOT/USDT"    
+        "ETH/USDT",
+        "ADA/USDT",
+        "PEOPLE/USDT",
+        "WIF/USDT",
+        "ETC/USDT",
+        "OP/USDT",
+        "DOGE/USDT",
+        "DOT/USDT"
       ],
       "pair_blacklist": []
     }

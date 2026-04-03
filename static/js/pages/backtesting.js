@@ -98,6 +98,7 @@ window.BacktestPage = (() => {
       const row = e.target.closest('.pairs-row');
       if (row) row.classList.toggle('pairs-row--checked', e.target.checked);
       _updateCount(listId, countId);
+      _refreshCommandPreview();
     });
 
     list.addEventListener('click', e => {
@@ -133,11 +134,13 @@ window.BacktestPage = (() => {
       list.querySelectorAll('.pairs-row__check').forEach(c => { c.checked = true; c.closest('.pairs-row').classList.add('pairs-row--checked'); });
       _updateCount(listId, countId);
       _saveForm();
+      _refreshCommandPreview();
     });
     if (noneBtn) noneBtn.addEventListener('click', () => {
       list.querySelectorAll('.pairs-row__check').forEach(c => { c.checked = false; c.closest('.pairs-row').classList.remove('pairs-row--checked'); });
       _updateCount(listId, countId);
       _saveForm();
+      _refreshCommandPreview();
     });
     if (favsBtn) favsBtn.addEventListener('click', () => {
       const favs = _getFavs();
@@ -148,11 +151,85 @@ window.BacktestPage = (() => {
       });
       _updateCount(listId, countId);
       _saveForm();
+      _refreshCommandPreview();
     });
   }
 
   function _getSelectedPairs(listId) {
     return [...document.querySelectorAll(`#${listId} .pairs-row__check:checked`)].map(c => c.value);
+  }
+
+  /* ── Live command preview ── */
+  function _buildLiveCommand() {
+    const get = id => { const el = DOM.$(`#${id}`, _el); return el ? el.value : ''; };
+    const strategy  = get('bt-strategy')  || '';
+    const timeframe = get('bt-timeframe') || '5m';
+    const timerange = get('bt-timerange') || '';
+    const pairs     = _getSelectedPairs('bt-pairs-list');
+
+    const cmd = [
+      'python', '-m', 'freqtrade', 'backtesting',
+      '-c', 'user_data/config.json',
+      '--timeframe', timeframe,
+      '--export', 'trades',
+      '--export-filename', `user_data/backtest_results/${strategy || '<strategy>'}/result.json`,
+    ];
+
+    if (timerange) cmd.push('--timerange', timerange);
+    if (pairs.length) cmd.push('--pairs', ...pairs);
+
+    return cmd;
+  }
+
+  function _refreshCommandPreview() {
+    const cmdEl = DOM.$('#bt-cmd-preview', _el);
+    if (!cmdEl) return;
+    const cmd = _buildLiveCommand();
+    _renderCommandBlock(cmdEl, cmd);
+  }
+
+  function _wirePreviewEvents() {
+    const liveIds = ['bt-strategy', 'bt-timeframe', 'bt-timerange'];
+    liveIds.forEach(id => {
+      const el = DOM.$(`#${id}`, _el);
+      if (el) {
+        el.addEventListener('change', _refreshCommandPreview);
+        el.addEventListener('input', _refreshCommandPreview);
+      }
+    });
+  }
+
+  /* ── Live config sync for 4 fields ── */
+  let _savedIndicatorTimer = null;
+  function _showSaved(fieldId) {
+    const el = DOM.$(`#${fieldId}-saved`, _el);
+    if (!el) return;
+    el.textContent = 'Saved';
+    el.style.opacity = '1';
+    clearTimeout(_savedIndicatorTimer);
+    _savedIndicatorTimer = setTimeout(() => { el.style.opacity = '0'; }, 2000);
+  }
+
+  function _wireConfigSyncEvents() {
+    const configFields = [
+      { id: 'bt-strategy',   key: 'strategy' },
+      { id: 'bt-wallet',     key: 'dry_run_wallet' },
+      { id: 'bt-max-trades', key: 'max_open_trades' },
+      { id: 'bt-stake',      key: 'stake_amount' },
+    ];
+    configFields.forEach(({ id, key }) => {
+      const el = DOM.$(`#${id}`, _el);
+      if (!el) return;
+      el.addEventListener('change', async () => {
+        let value = el.value;
+        if (key === 'dry_run_wallet') value = parseFloat(value) || 1000;
+        if (key === 'max_open_trades') value = parseInt(value) || 3;
+        try {
+          await API.patchConfig({ [key]: value });
+          _showSaved(id);
+        } catch {}
+      });
+    });
   }
 
   function init() {
@@ -176,7 +253,7 @@ window.BacktestPage = (() => {
             <div class="card__body">
               <form id="bt-form" class="form">
                 <div class="form-group">
-                  <label class="form-label" for="bt-strategy">Strategy</label>
+                  <label class="form-label" for="bt-strategy">Strategy <span id="bt-strategy-saved" style="font-size:var(--text-xs);color:var(--color-green);opacity:0;transition:opacity 0.5s;margin-left:6px"></span></label>
                   <select class="form-select" id="bt-strategy" name="strategy" required>
                     <option value="">Loading strategies…</option>
                   </select>
@@ -228,18 +305,19 @@ window.BacktestPage = (() => {
                 </div>
                 <div class="form-row">
                   <div class="form-group">
-                    <label class="form-label" for="bt-wallet">Starting Wallet</label>
+                    <label class="form-label" for="bt-wallet">Starting Wallet <span id="bt-wallet-saved" style="font-size:var(--text-xs);color:var(--color-green);opacity:0;transition:opacity 0.5s;margin-left:6px"></span></label>
                     <input class="form-input" id="bt-wallet" name="dry_run_wallet" type="number" value="1000" min="1">
                   </div>
                   <div class="form-group">
-                    <label class="form-label" for="bt-max-trades">Max Open Trades</label>
+                    <label class="form-label" for="bt-max-trades">Max Open Trades <span id="bt-max-trades-saved" style="font-size:var(--text-xs);color:var(--color-green);opacity:0;transition:opacity 0.5s;margin-left:6px"></span></label>
                     <input class="form-input" id="bt-max-trades" name="max_open_trades" type="number" value="3" min="1">
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="form-label" for="bt-stake">Stake Amount</label>
+                  <label class="form-label" for="bt-stake">Stake Amount <span id="bt-stake-saved" style="font-size:var(--text-xs);color:var(--color-green);opacity:0;transition:opacity 0.5s;margin-left:6px"></span></label>
                   <input class="form-input" id="bt-stake" name="stake_amount" type="text" value="unlimited">
                 </div>
+                <div id="bt-cmd-preview"></div>
                 <div class="form-actions">
                   <button type="submit" class="btn btn--primary" id="bt-run-btn">
                     <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor"><path d="M3 2l10 6-10 6V2z"/></svg>
@@ -299,6 +377,8 @@ window.BacktestPage = (() => {
 
     _setupPickerEvents('bt-pairs-list', 'bt-pairs-count', 'bt-pairs-search', 'bt-pairs-all', 'bt-pairs-none', 'bt-pairs-favs');
     _wireSaveEvents();
+    _wirePreviewEvents();
+    _wireConfigSyncEvents();
 
     const dlFormBtn = DOM.$('#bt-dl-form-btn', _el);
     DOM.on(dlFormBtn, 'click', _onDownload);
@@ -358,9 +438,10 @@ window.BacktestPage = (() => {
 
   async function _loadFormData() {
     try {
-      const [strats, lastCfg] = await Promise.all([
+      const [strats, lastCfg, configJson] = await Promise.all([
         API.getStrategies().catch(() => ({ strategies: [] })),
         API.getLastConfig().catch(() => ({ config: null })),
+        API.getConfig().catch(() => null),
       ]);
 
       const select = DOM.$('#bt-strategy', _el);
@@ -380,12 +461,26 @@ window.BacktestPage = (() => {
         _applyLastConfig(lastCfg.config);
       }
 
+      if (configJson) {
+        _applyConfigJson(configJson);
+      }
+
       const exVal     = DOM.$('#bt-exchange', _el).value || 'binance';
       const preSelected = saved?.pairs?.length ? saved.pairs : (lastCfg.config?.pairs || null);
       await _loadPairs(exVal, preSelected);
+
+      _refreshCommandPreview();
     } catch (err) {
       Toast.warning('Could not load form data: ' + err.message);
     }
+  }
+
+  function _applyConfigJson(cfg) {
+    const set = (id, v) => { const el = DOM.$(`#${id}`, _el); if (el && v != null) el.value = v; };
+    if (cfg.strategy     != null) set('bt-strategy',   cfg.strategy);
+    if (cfg.dry_run_wallet != null) set('bt-wallet',   cfg.dry_run_wallet);
+    if (cfg.max_open_trades != null) set('bt-max-trades', cfg.max_open_trades);
+    if (cfg.stake_amount != null) set('bt-stake',      cfg.stake_amount);
   }
 
   async function _loadPairs(exchange, preSelected = null) {
@@ -431,6 +526,8 @@ window.BacktestPage = (() => {
           hint.style.color = 'var(--color-amber)';
         }
       }
+
+      _refreshCommandPreview();
     } catch {
       listEl.innerHTML = '<div class="pairs-picker__empty">Failed to load pairs</div>';
     }
@@ -506,14 +603,11 @@ window.BacktestPage = (() => {
     if (!selectedPairs.length) { Toast.warning('Select at least one pair.'); return; }
 
     const body = {
-      strategy:       fd.get('strategy'),
-      pairs:          selectedPairs,
-      timeframe:      fd.get('timeframe') || '5m',
-      timerange:      fd.get('timerange') || null,
-      dry_run_wallet: parseFloat(fd.get('dry_run_wallet')) || 1000,
-      max_open_trades: parseInt(fd.get('max_open_trades')) || 3,
-      stake_amount:   fd.get('stake_amount') || 'unlimited',
-      exchange:       fd.get('exchange') || 'binance',
+      strategy:        fd.get('strategy'),
+      pairs:           selectedPairs,
+      timeframe:       fd.get('timeframe') || '5m',
+      timerange:       fd.get('timerange') || null,
+      exchange:        fd.get('exchange') || 'binance',
     };
 
     _setRunning(true);

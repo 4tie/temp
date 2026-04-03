@@ -24,9 +24,10 @@ window.API = (() => {
     return res.json();
   }
 
-  const get  = (path)        => request('GET',    path);
-  const post = (path, body)  => request('POST',   path, body);
-  const del  = (path)        => request('DELETE', path);
+  const get   = (path)        => request('GET',    path);
+  const post  = (path, body)  => request('POST',   path, body);
+  const del   = (path)        => request('DELETE', path);
+  const patch = (path, body)  => request('PATCH',  path, body);
 
   /* ---- Health ------------------------------------------------ */
   const health = () => get('/healthz');
@@ -41,6 +42,10 @@ window.API = (() => {
     if (timeframe) url += `&timeframe=${encodeURIComponent(timeframe)}`;
     return get(url);
   };
+
+  /* ---- Config ----------------------------------------------- */
+  const getConfig       = ()        => get('/config');
+  const patchConfig     = (body)    => patch('/config', body);
 
   /* ---- Backtest runs ---------------------------------------- */
   const getRuns         = ()        => get('/runs');
@@ -72,10 +77,11 @@ window.API = (() => {
   const compareRuns    = (body)      => post('/compare', body);
 
   return {
-    request, get, post, del,
+    request, get, post, del, patch,
     health,
     getStrategies, getStrategyParams,
     getPairs,
+    getConfig, patchConfig,
     getRuns, getRun, startBacktest, deleteRun, getLastConfig,
     downloadData, getDownload, dataCoverage,
     getHyperoptRuns, getHyperoptRun, startHyperopt, deleteHyperoptRun,

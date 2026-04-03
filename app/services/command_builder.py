@@ -1,5 +1,5 @@
 from typing import Any, Optional
-from app.core.config import STRATEGIES_DIR, DATA_DIR, FREQTRADE_CONFIG_DIR, BACKTEST_RESULTS_DIR, HYPEROPT_RESULTS_DIR, BASE_DIR
+from app.core.config import STRATEGIES_DIR, DATA_DIR, FREQTRADE_CONFIG_DIR, HYPEROPT_RESULTS_DIR, BASE_DIR
 
 
 def build_backtest_command(
@@ -7,29 +7,15 @@ def build_backtest_command(
     pairs: list[str],
     timeframe: str,
     timerange: Optional[str],
-    dry_run_wallet: float,
-    max_open_trades: int,
-    stake_amount: str,
-    exchange: str,
     strategy_params: dict[str, Any],
 ) -> list[str]:
     cmd = [
-        "freqtrade", "backtesting",
-        "--userdir", str(BASE_DIR),
-        "--strategy", strategy,
+        "python", "-m", "freqtrade", "backtesting",
+        "-c", "user_data/config.json",
         "--timeframe", timeframe,
-        "--dry-run-wallet", str(dry_run_wallet),
-        "--max-open-trades", str(max_open_trades),
-        "--stake-amount", stake_amount,
-        "--datadir", str(DATA_DIR),
-        "--strategy-path", str(STRATEGIES_DIR),
         "--export", "trades",
-        "--export-filename", str(BACKTEST_RESULTS_DIR / "{run_id}" / "result.json"),
+        "--export-filename", f"user_data/backtest_results/{strategy}/result.json",
     ]
-
-    config_file = FREQTRADE_CONFIG_DIR / "config.json"
-    if config_file.exists():
-        cmd.extend(["--config", str(config_file)])
 
     if timerange:
         cmd.extend(["--timerange", timerange])

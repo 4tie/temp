@@ -7,11 +7,17 @@ class BacktestRequest(BaseModel):
     pairs: list[str]
     timeframe: str = "5m"
     timerange: Optional[str] = None
-    dry_run_wallet: float = 1000.0
-    max_open_trades: int = 3
-    stake_amount: str = "unlimited"
     strategy_params: dict[str, Any] = Field(default_factory=dict)
     exchange: str = "binance"
+
+
+class ConfigPatchRequest(BaseModel):
+    strategy: Optional[str] = None
+    max_open_trades: Optional[int] = None
+    dry_run_wallet: Optional[float] = None
+    stake_amount: Optional[str] = None
+    timeframe: Optional[str] = None
+    exchange: Optional[str] = None
 
 
 class DownloadDataRequest(BaseModel):

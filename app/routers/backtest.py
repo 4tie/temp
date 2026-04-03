@@ -1,9 +1,12 @@
+import json
 import re
+import tempfile
+import os
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Path, Query
 
-from app.schemas.backtest import BacktestRequest, DownloadDataRequest, DataCoverageRequest
+from app.schemas.backtest import BacktestRequest, DownloadDataRequest, DataCoverageRequest, ConfigPatchRequest
 from app.services.runner import start_backtest, start_download
 from app.services.storage import (
     load_run_meta, load_run_results, list_runs, delete_run,
@@ -13,8 +16,34 @@ from app.services.data_coverage import check_data_coverage
 from app.services.ohlcv_loader import load_ohlcv
 from app.services.indicator_calculator import calculate_indicators
 from app.core.processes import get_status, get_logs
+from app.core.config import BASE_DIR
 
 router = APIRouter(tags=["backtest"])
+
+_CONFIG_FILE = BASE_DIR / "config.json"
+
+
+def _read_config_json() -> dict:
+    if _CONFIG_FILE.exists():
+        try:
+            return json.loads(_CONFIG_FILE.read_text())
+        except Exception:
+            pass
+    return {}
+
+
+def _write_config_json(cfg: dict) -> None:
+    tmp_fd, tmp_path = tempfile.mkstemp(dir=_CONFIG_FILE.parent, suffix=".tmp")
+    try:
+        with os.fdopen(tmp_fd, "w") as f:
+            json.dump(cfg, f, indent=2)
+        os.replace(tmp_path, _CONFIG_FILE)
+    except Exception:
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+        raise
 
 _SAFE_ID_RE = re.compile(r"^[A-Za-z0-9_\-]+$")
 
@@ -23,6 +52,48 @@ def _checked_id(value: str) -> str:
     if not value or not _SAFE_ID_RE.match(value):
         raise HTTPException(status_code=400, detail="Invalid run/job ID")
     return value
+
+
+@router.get("/config")
+async def get_config():
+    cfg = _read_config_json()
+    exchange_name = cfg.get("exchange", {})
+    if isinstance(exchange_name, dict):
+        exchange_name = exchange_name.get("name", "binance")
+    return {
+        "strategy": cfg.get("strategy"),
+        "max_open_trades": cfg.get("max_open_trades"),
+        "dry_run_wallet": cfg.get("dry_run_wallet"),
+        "stake_amount": cfg.get("stake_amount"),
+        "timeframe": cfg.get("timeframe"),
+        "exchange": exchange_name,
+    }
+
+
+@router.patch("/config")
+async def patch_config(req: ConfigPatchRequest):
+    cfg = _read_config_json()
+    updates = req.model_dump(exclude_none=True)
+    for field, value in updates.items():
+        if field == "exchange":
+            if isinstance(cfg.get("exchange"), dict):
+                cfg["exchange"]["name"] = value
+            else:
+                cfg["exchange"] = value
+        else:
+            cfg[field] = value
+    _write_config_json(cfg)
+    exchange_name = cfg.get("exchange", {})
+    if isinstance(exchange_name, dict):
+        exchange_name = exchange_name.get("name", "binance")
+    return {
+        "strategy": cfg.get("strategy"),
+        "max_open_trades": cfg.get("max_open_trades"),
+        "dry_run_wallet": cfg.get("dry_run_wallet"),
+        "stake_amount": cfg.get("stake_amount"),
+        "timeframe": cfg.get("timeframe"),
+        "exchange": exchange_name,
+    }
 
 
 @router.post("/run")
@@ -34,9 +105,6 @@ async def run_backtest(req: BacktestRequest):
         pairs=req.pairs,
         timeframe=req.timeframe,
         timerange=req.timerange,
-        dry_run_wallet=req.dry_run_wallet,
-        max_open_trades=req.max_open_trades,
-        stake_amount=req.stake_amount,
         exchange=req.exchange,
         strategy_params=req.strategy_params,
     )
