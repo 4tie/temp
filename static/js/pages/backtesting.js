@@ -8,6 +8,101 @@ window.BacktestPage = (() => {
   let _pollTimer = null;
   let _currentRunId = null;
 
+  /* ── Favourites ── */
+  const _FAV_KEY = '4tie_fav_pairs';
+  function _getFavs() { try { return new Set(JSON.parse(localStorage.getItem(_FAV_KEY) || '[]')); } catch { return new Set(); } }
+  function _saveFavs(s) { localStorage.setItem(_FAV_KEY, JSON.stringify([...s])); }
+
+  /* ── Picker helpers ── */
+  function _updateCount(listId, countId) {
+    const checked = document.querySelectorAll(`#${listId} .pairs-row__check:checked`).length;
+    const el = document.getElementById(countId);
+    if (el) el.textContent = `${checked} selected`;
+  }
+
+  function _renderGroup(label, pairs, localSet, configSet, favs, checked = new Set()) {
+    if (!pairs.length) return '';
+    const dot = localSet.has(pairs[0]) ? '<span style="color:var(--color-green)">⬤</span>' : configSet.has(pairs[0]) ? '<span style="color:var(--violet)">⬤</span>' : '';
+    return `<div class="pairs-picker__group-label">${dot} ${_esc(label)}</div>` +
+      pairs.map(p => {
+        const isFav  = favs.has(p);
+        const isCk   = checked.has(p);
+        const isLocal = localSet.has(p);
+        const isCfg  = configSet.has(p);
+        const tag = isLocal ? '<span class="pairs-row__tag pairs-row__tag--local">Data</span>'
+                  : isCfg   ? '<span class="pairs-row__tag pairs-row__tag--config">Config</span>'
+                  : '';
+        return `<div class="pairs-row${isCk ? ' pairs-row--checked' : ''}" data-pair="${_esc(p)}">
+          <button type="button" class="pairs-row__fav${isFav ? ' pairs-row__fav--active' : ''}" data-fav="${_esc(p)}" title="Favourite">♥</button>
+          <input type="checkbox" class="pairs-row__check" value="${_esc(p)}"${isCk ? ' checked' : ''}>
+          <span class="pairs-row__name">${_esc(p)}</span>${tag}
+        </div>`;
+      }).join('');
+  }
+
+  function _setupPickerEvents(listId, countId, searchId, allBtnId, noneBtnId, favsBtnId) {
+    const list = document.getElementById(listId);
+    if (!list) return;
+
+    list.addEventListener('change', e => {
+      if (!e.target.classList.contains('pairs-row__check')) return;
+      const row = e.target.closest('.pairs-row');
+      if (row) row.classList.toggle('pairs-row--checked', e.target.checked);
+      _updateCount(listId, countId);
+    });
+
+    list.addEventListener('click', e => {
+      const favBtn = e.target.closest('.pairs-row__fav');
+      if (!favBtn) return;
+      e.preventDefault();
+      const pair = favBtn.dataset.fav;
+      const favs = _getFavs();
+      if (favs.has(pair)) favs.delete(pair); else favs.add(pair);
+      _saveFavs(favs);
+      favBtn.classList.toggle('pairs-row__fav--active', favs.has(pair));
+    });
+
+    const searchEl = document.getElementById(searchId);
+    if (searchEl) {
+      searchEl.addEventListener('input', () => {
+        const q = searchEl.value.trim().toLowerCase();
+        list.querySelectorAll('.pairs-row').forEach(row => {
+          row.style.display = (!q || row.dataset.pair.toLowerCase().includes(q)) ? '' : 'none';
+        });
+        list.querySelectorAll('.pairs-picker__group-label').forEach(gl => {
+          const next = gl.nextElementSibling;
+          gl.style.display = (!next || next.style.display !== 'none') ? '' : 'none';
+        });
+      });
+    }
+
+    const allBtn  = document.getElementById(allBtnId);
+    const noneBtn = document.getElementById(noneBtnId);
+    const favsBtn = document.getElementById(favsBtnId);
+
+    if (allBtn) allBtn.addEventListener('click', () => {
+      list.querySelectorAll('.pairs-row__check').forEach(c => { c.checked = true; c.closest('.pairs-row').classList.add('pairs-row--checked'); });
+      _updateCount(listId, countId);
+    });
+    if (noneBtn) noneBtn.addEventListener('click', () => {
+      list.querySelectorAll('.pairs-row__check').forEach(c => { c.checked = false; c.closest('.pairs-row').classList.remove('pairs-row--checked'); });
+      _updateCount(listId, countId);
+    });
+    if (favsBtn) favsBtn.addEventListener('click', () => {
+      const favs = _getFavs();
+      list.querySelectorAll('.pairs-row__check').forEach(c => {
+        const isFav = favs.has(c.value);
+        c.checked = isFav;
+        c.closest('.pairs-row').classList.toggle('pairs-row--checked', isFav);
+      });
+      _updateCount(listId, countId);
+    });
+  }
+
+  function _getSelectedPairs(listId) {
+    return [...document.querySelectorAll(`#${listId} .pairs-row__check:checked`)].map(c => c.value);
+  }
+
   function init() {
     _el = DOM.$('[data-view="backtesting"]');
     if (!_el) return;
@@ -44,12 +139,21 @@ window.BacktestPage = (() => {
                   </select>
                 </div>
                 <div class="form-group">
-                  <label class="form-label" for="bt-pairs">
-                    Pairs <span class="form-hint">(hold Ctrl/Cmd for multiple)</span>
-                  </label>
-                  <select class="form-select form-select--multi" id="bt-pairs" name="pairs" multiple size="6" required>
-                    <option value="">Loading…</option>
-                  </select>
+                  <label class="form-label">Pairs</label>
+                  <div class="pairs-picker" id="bt-pairs-picker">
+                    <div class="pairs-picker__toolbar">
+                      <input class="form-input pairs-picker__search" id="bt-pairs-search" type="text" placeholder="Search pairs…" autocomplete="off">
+                      <div class="pairs-picker__actions">
+                        <button type="button" class="pairs-picker__action" id="bt-pairs-all">All</button>
+                        <button type="button" class="pairs-picker__action" id="bt-pairs-none">Clear</button>
+                        <button type="button" class="pairs-picker__action" id="bt-pairs-favs">★ Favs</button>
+                      </div>
+                      <span class="pairs-picker__count" id="bt-pairs-count">0 selected</span>
+                    </div>
+                    <div class="pairs-picker__list" id="bt-pairs-list">
+                      <div class="pairs-picker__empty">Loading…</div>
+                    </div>
+                  </div>
                   <div id="bt-pairs-hint" class="form-hint" style="margin-top:4px"></div>
                 </div>
                 <div class="form-row">
@@ -183,6 +287,8 @@ window.BacktestPage = (() => {
     DOM.on(stopBtn,  'click',  _onStop);
     DOM.on(delBtn,   'click',  _onDeleteRun);
 
+    _setupPickerEvents('bt-pairs-list', 'bt-pairs-count', 'bt-pairs-search', 'bt-pairs-all', 'bt-pairs-none', 'bt-pairs-favs');
+
     const dlToggle = DOM.$('#bt-dl-toggle', _el);
     const dlBody   = DOM.$('#bt-dl-body', _el);
     const dlBtn    = DOM.$('#bt-dl-btn', _el);
@@ -266,46 +372,46 @@ window.BacktestPage = (() => {
 
       if (lastCfg.config) _applyLastConfig(lastCfg.config);
 
-      const exVal = DOM.$('#bt-exchange', _el).value || 'binance';
-      await _loadPairs(exVal);
+      const exVal    = DOM.$('#bt-exchange', _el).value || 'binance';
+      const lastPairs = lastCfg.config?.pairs || null;
+      await _loadPairs(exVal, lastPairs);
     } catch (err) {
       Toast.warning('Could not load form data: ' + err.message);
     }
   }
 
-  async function _loadPairs(exchange) {
-    const sel = DOM.$('#bt-pairs', _el);
-    if (!sel) return;
-    sel.innerHTML = '<option value="">Loading…</option>';
+  async function _loadPairs(exchange, preSelected = null) {
+    const listEl = DOM.$('#bt-pairs-list', _el);
+    if (!listEl) return;
+    listEl.innerHTML = '<div class="pairs-picker__empty">Loading…</div>';
     try {
-      const data = await API.getPairs(exchange);
+      const data    = await API.getPairs(exchange);
       const local   = data.local_pairs   || [];
       const config  = data.config_pairs  || [];
       const popular = data.popular_pairs || [];
-      const all     = data.pairs         || [];
 
-      if (!all.length) {
-        sel.innerHTML = '<option value="">No pairs found</option>';
-        return;
-      }
+      const localSet  = new Set(local);
+      const configSet = new Set(config);
+      const favs      = _getFavs();
+      const selected  = preSelected ? new Set(preSelected) : new Set();
+
+      const favLocal   = local.filter(p => favs.has(p));
+      const favConfig  = config.filter(p => favs.has(p));
+      const favPopular = popular.filter(p => favs.has(p));
+      const allFavs    = [...favLocal, ...favConfig, ...favPopular];
+
+      const nonFavLocal   = local.filter(p => !favs.has(p));
+      const nonFavConfig  = config.filter(p => !favs.has(p));
+      const nonFavPopular = popular.filter(p => !favs.has(p));
 
       let html = '';
-      if (local.length) {
-        html += `<optgroup label="⬤ Downloaded Data">` +
-          local.map(p => `<option value="${_esc(p)}">${_esc(p)}</option>`).join('') +
-          `</optgroup>`;
-      }
-      if (config.length) {
-        html += `<optgroup label="⬤ From Config">` +
-          config.map(p => `<option value="${_esc(p)}">${_esc(p)}</option>`).join('') +
-          `</optgroup>`;
-      }
-      if (popular.length) {
-        html += `<optgroup label="Popular Pairs">` +
-          popular.map(p => `<option value="${_esc(p)}">${_esc(p)}</option>`).join('') +
-          `</optgroup>`;
-      }
-      sel.innerHTML = html;
+      if (allFavs.length)      html += _renderGroup('Favourites',       allFavs,      localSet, configSet, favs, selected);
+      if (nonFavLocal.length)  html += _renderGroup('Downloaded Data',  nonFavLocal,  localSet, configSet, favs, selected);
+      if (nonFavConfig.length) html += _renderGroup('From Config',      nonFavConfig, localSet, configSet, favs, selected);
+      if (nonFavPopular.length) html += _renderGroup('Popular Pairs',   nonFavPopular,localSet, configSet, favs, selected);
+
+      listEl.innerHTML = html || '<div class="pairs-picker__empty">No pairs found</div>';
+      _updateCount('bt-pairs-list', 'bt-pairs-count');
 
       const hint = DOM.$('#bt-pairs-hint', _el);
       if (hint) {
@@ -313,12 +419,12 @@ window.BacktestPage = (() => {
           hint.textContent = `${local.length} pair(s) with downloaded data`;
           hint.style.color = 'var(--color-green)';
         } else {
-          hint.textContent = 'No local data — select pairs and use Download Data to fetch history';
+          hint.textContent = 'No local data — select pairs then use Download Data';
           hint.style.color = 'var(--color-amber)';
         }
       }
     } catch {
-      sel.innerHTML = '<option value="">Failed to load pairs</option>';
+      listEl.innerHTML = '<div class="pairs-picker__empty">Failed to load pairs</div>';
     }
   }
 
@@ -329,8 +435,7 @@ window.BacktestPage = (() => {
     const exchange = DOM.$('#bt-dl-exchange', _el)?.value || 'binance';
     const tf       = DOM.$('#bt-dl-timeframe', _el)?.value || '5m';
     const days     = parseInt(DOM.$('#bt-dl-days', _el)?.value) || 30;
-    const pairsSel = DOM.$('#bt-pairs', _el);
-    const selected = [...(pairsSel?.selectedOptions || [])].map(o => o.value).filter(Boolean);
+    const selected = _getSelectedPairs('bt-pairs-list');
 
     if (!selected.length) { Toast.warning('Select at least one pair to download.'); return; }
 
@@ -397,8 +502,7 @@ window.BacktestPage = (() => {
     e.preventDefault();
     const form = e.target;
     const fd   = new FormData(form);
-    const pairsEl  = DOM.$('#bt-pairs', _el);
-    const selectedPairs = [...(pairsEl?.selectedOptions || [])].map(o => o.value).filter(Boolean);
+    const selectedPairs = _getSelectedPairs('bt-pairs-list');
 
     if (!selectedPairs.length) { Toast.warning('Select at least one pair.'); return; }
 

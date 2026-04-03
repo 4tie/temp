@@ -1,13 +1,11 @@
 {
-  "strategy": "MultiMa",
-  "pairs": [
-    "ARB/USDT"
-  ],
-  "timeframe": "5m",
-  "timerange": null,
-  "dry_run_wallet": 1000.0,
-  "max_open_trades": 3,
-  "stake_amount": "unlimited",
-  "strategy_params": {},
-  "exchange": "binance"
+  "download": {
+    "pairs": [
+      "DOT/USDT"
+    ],
+    "timeframe": "5m",
+    "timerange": null,
+    "exchange": "binance",
+    "days": 365
+  }
 }
