@@ -48,14 +48,35 @@ def _ensure_valid_strategy_json(strategy: str, run_id: str) -> None:
         data = json.loads(raw)
         if not isinstance(data, dict):
             raise ValueError("not a dict")
-        for v in data.values():
-            if not isinstance(v, _JSON_SCALAR_TYPES):
-                raise ValueError(f"non-scalar value: {type(v).__name__}")
+        # Support legacy flat format: migrate to nested {"strategy_name": ..., "params": {"buy": {}, "sell": {}}}
+        if "params" not in data:
+            nested: dict = {"buy": {}, "sell": {}}
+            for k, v in data.items():
+                if not isinstance(v, _JSON_SCALAR_TYPES):
+                    raise ValueError(f"non-scalar value: {type(v).__name__}")
+                space = "sell" if k.startswith("sell_") else "buy"
+                nested[space][k] = v
+            data = {"strategy_name": strategy, "params": nested}
+            json_path.write_text(json.dumps(data, indent=2))
+            append_log(run_id, f"INFO: {strategy}.json migrated to nested params format.")
+            return
+        if "strategy_name" not in data:
+            data["strategy_name"] = strategy
+            json_path.write_text(json.dumps(data, indent=2))
+        params = data["params"]
+        if not isinstance(params, dict):
+            raise ValueError("params is not a dict")
+        for space_vals in params.values():
+            if not isinstance(space_vals, dict):
+                raise ValueError("space values must be a dict")
+            for v in space_vals.values():
+                if not isinstance(v, _JSON_SCALAR_TYPES):
+                    raise ValueError(f"non-scalar value: {type(v).__name__}")
     except Exception as exc:
-        json_path.write_text("{}")
+        json_path.write_text(json.dumps({"strategy_name": strategy, "params": {}}, indent=2))
         append_log(
             run_id,
-            f"WARNING: {strategy}.json was invalid ({exc}); reset to {{}} so FreqTrade uses class defaults.",
+            f"WARNING: {strategy}.json was invalid ({exc}); reset so FreqTrade uses class defaults.",
         )
 
 
@@ -64,7 +85,6 @@ def start_backtest(
     pairs: list[str],
     timeframe: str,
     timerange: Optional[str],
-    exchange: str,
     strategy_params: dict[str, Any],
 ) -> str:
     run_id = datetime.utcnow().strftime("%Y%m%d_%H%M%S") + "_" + uuid.uuid4().hex[:8]
@@ -103,7 +123,6 @@ def start_backtest(
         "dry_run_wallet": dry_run_wallet,
         "max_open_trades": max_open_trades,
         "stake_amount": stake_amount,
-        "exchange": exchange,
         "strategy_params": strategy_params,
         "command": cmd,
         "status": "running",

@@ -1,6 +1,13 @@
 {
-  "buy_umacd_max": -0.01176,
-  "buy_umacd_min": -0.01416,
-  "sell_umacd_max": -0.02323,
-  "sell_umacd_min": -0.00707
+  "params": {
+    "buy": {
+      "buy_umacd_max": -0.01176,
+      "buy_umacd_min": -0.01416
+    },
+    "sell": {
+      "sell_umacd_max": -0.02323,
+      "sell_umacd_min": -0.00707
+    }
+  },
+  "strategy_name": "UniversalMACD"
 }

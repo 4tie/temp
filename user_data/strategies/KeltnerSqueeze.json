@@ -1,18 +1,27 @@
 {
-  "buy_bb_period": 20,
-  "buy_bb_std": 2.0,
-  "buy_kc_period": 20,
-  "buy_kc_atr_mult": 1.5,
-  "buy_adx_min": 20.0,
-  "buy_mom_period": 12,
-  "buy_require_vol_confirm": true,
-  "buy_vol_ratio": 1.3,
-  "sell_adx_min": 15.0,
-  "sell_mom_exit": true,
-  "sell_kc_band": "upper",
-  "protect_cooldown": 6,
-  "protect_stop_duration": 10,
-  "protect_stop_lookback": 24,
-  "protect_trade_limit": 4,
-  "protect_use_stop_guard": true
+  "params": {
+    "buy": {
+      "buy_bb_period": 20,
+      "buy_bb_std": 2.0,
+      "buy_kc_period": 20,
+      "buy_kc_atr_mult": 1.5,
+      "buy_adx_min": 20.0,
+      "buy_mom_period": 12,
+      "buy_require_vol_confirm": true,
+      "buy_vol_ratio": 1.3
+    },
+    "sell": {
+      "sell_adx_min": 15.0,
+      "sell_mom_exit": true,
+      "sell_kc_band": "upper"
+    },
+    "protection": {
+      "protect_cooldown": 6,
+      "protect_stop_duration": 10,
+      "protect_stop_lookback": 24,
+      "protect_trade_limit": 4,
+      "protect_use_stop_guard": true
+    }
+  },
+  "strategy_name": "KeltnerSqueeze"
 }

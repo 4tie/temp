@@ -1,13 +1,22 @@
 {
-  "buy_dc_period": 20,
-  "buy_atr_pct": 0.8,
-  "buy_rsi": 55,
-  "buy_use_ema_filter": false,
-  "sell_exit_channel": "mid",
-  "sell_rsi": 42,
-  "protect_cooldown": 8,
-  "protect_stop_duration": 12,
-  "protect_stop_lookback": 24,
-  "protect_trade_limit": 4,
-  "protect_use_stop_guard": true
+  "params": {
+    "buy": {
+      "buy_dc_period": 20,
+      "buy_atr_pct": 0.8,
+      "buy_rsi": 55,
+      "buy_use_ema_filter": false
+    },
+    "sell": {
+      "sell_exit_channel": "mid",
+      "sell_rsi": 42
+    },
+    "protection": {
+      "protect_cooldown": 8,
+      "protect_stop_duration": 12,
+      "protect_stop_lookback": 24,
+      "protect_trade_limit": 4,
+      "protect_use_stop_guard": true
+    }
+  },
+  "strategy_name": "DonchianAtrBreakoutKnobs"
 }

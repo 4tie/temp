@@ -1,4 +1,9 @@
 {
-  "buy_pr1": null,
-  "buy_vol1": 0
+  "params": {
+    "buy": {
+      "buy_pr1": null,
+      "buy_vol1": 0
+    }
+  },
+  "strategy_name": "PatternRecognition"
 }

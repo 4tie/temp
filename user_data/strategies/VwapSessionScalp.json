@@ -1,16 +1,25 @@
 {
-  "buy_ema_trend": 50,
-  "buy_vol_sma": 20,
-  "buy_vol_ratio": 1.5,
-  "buy_rsi_min": 40,
-  "buy_rsi_max": 60,
-  "buy_require_cross": true,
-  "sell_rsi": 72,
-  "sell_below_vwap": true,
-  "sell_exit_mode": "vwap_or_rsi",
-  "protect_cooldown": 4,
-  "protect_stop_duration": 8,
-  "protect_stop_lookback": 24,
-  "protect_trade_limit": 3,
-  "protect_use_stop_guard": true
+  "params": {
+    "buy": {
+      "buy_ema_trend": 50,
+      "buy_vol_sma": 20,
+      "buy_vol_ratio": 1.5,
+      "buy_rsi_min": 40,
+      "buy_rsi_max": 60,
+      "buy_require_cross": true
+    },
+    "sell": {
+      "sell_rsi": 72,
+      "sell_below_vwap": true,
+      "sell_exit_mode": "vwap_or_rsi"
+    },
+    "protection": {
+      "protect_cooldown": 4,
+      "protect_stop_duration": 8,
+      "protect_stop_lookback": 24,
+      "protect_trade_limit": 3,
+      "protect_use_stop_guard": true
+    }
+  },
+  "strategy_name": "VwapSessionScalp"
 }

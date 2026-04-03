@@ -6,8 +6,8 @@
   "stake_amount": "unlimited",
   "tradable_balance_ratio": 1,
   "fiat_display_currency": "USD",
-  "dry_run": true,
-  "dry_run_wallet": 86.0,
+  "dry_run": false,
+  "dry_run_wallet": 50.0,
   "trading_mode": "spot",
   "timeframe": "5m",
   "cancel_open_orders_on_exit": true,
@@ -28,15 +28,12 @@
     "order_book_top": 1
   },
   "exchange": {
-    "name": "binanceus",
-    "key": "",
-    "secret": "",
+    "name": "binance",
+    "key": "eEOAuqGlu3ePqN3biRpZAHywLYck43E2wO3FSR4Qh2Brv9ZMBkr2JpT67sXOXIj9",
+    "secret": "ln1Wm0ttQhF4aueNdoHs5iHtdK5OFrnQJkgiMyO2jGoRkUVYY6al8Jg0M88cOBUH",
     "method": "StaticPairList",
     "pair_whitelist": [
-      "ETH/USDT",
-      "OP/USDT",
-      "DOGE/USDT",
-      "DOT/USDT"
+      "ETH/USDT"
     ],
     "pair_blacklist": [],
     "ccxt_config": {

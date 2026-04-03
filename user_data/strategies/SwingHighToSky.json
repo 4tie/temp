@@ -1,10 +1,17 @@
 {
-  "buy_cci": -175,
-  "buy_cciTime": 72,
-  "buy_rsi": 90,
-  "buy_rsiTime": 36,
-  "sell_cci": -106,
-  "sell_cciTime": 66,
-  "sell_rsi": 88,
-  "sell_rsiTime": 45
+  "params": {
+    "buy": {
+      "buy_cci": -175,
+      "buy_cciTime": 72,
+      "buy_rsi": 90,
+      "buy_rsiTime": 36
+    },
+    "sell": {
+      "sell_cci": -106,
+      "sell_cciTime": 66,
+      "sell_rsi": 88,
+      "sell_rsiTime": 45
+    }
+  },
+  "strategy_name": "SwingHighToSky"
 }

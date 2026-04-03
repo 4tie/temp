@@ -1,15 +1,24 @@
 {
-  "buy_fast_ema": 9,
-  "buy_mid_ema": 21,
-  "buy_rsi": 34,
-  "buy_stoch": 20,
-  "buy_pullback": 0.992,
-  "buy_require_ema200": true,
-  "sell_rsi": 62,
-  "sell_stoch": 80,
-  "protect_cooldown": 6,
-  "protect_stop_duration": 10,
-  "protect_stop_lookback": 24,
-  "protect_trade_limit": 4,
-  "protect_use_stop_guard": true
+  "params": {
+    "buy": {
+      "buy_fast_ema": 9,
+      "buy_mid_ema": 21,
+      "buy_rsi": 34,
+      "buy_stoch": 20,
+      "buy_pullback": 0.992,
+      "buy_require_ema200": true
+    },
+    "sell": {
+      "sell_rsi": 62,
+      "sell_stoch": 80
+    },
+    "protection": {
+      "protect_cooldown": 6,
+      "protect_stop_duration": 10,
+      "protect_stop_lookback": 24,
+      "protect_trade_limit": 4,
+      "protect_use_stop_guard": true
+    }
+  },
+  "strategy_name": "TripleEmaStochPullbackKnobs"
 }

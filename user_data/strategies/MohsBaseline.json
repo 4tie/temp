@@ -1,4 +1,11 @@
 {
-  "buy_rsi": 30,
-  "sell_rsi": 70
+  "params": {
+    "buy": {
+      "buy_rsi": 30
+    },
+    "sell": {
+      "sell_rsi": 70
+    }
+  },
+  "strategy_name": "Mohsline"
 }

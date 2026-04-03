@@ -1,15 +1,24 @@
 {
-  "buy_macd_fast": 12,
-  "buy_macd_slow": 26,
-  "buy_macd_signal": 9,
-  "buy_adx": 22.0,
-  "buy_rsi": 52,
-  "buy_use_ema_filter": true,
-  "sell_rsi": 72,
-  "sell_on_cross": true,
-  "protect_cooldown": 8,
-  "protect_stop_duration": 12,
-  "protect_stop_lookback": 24,
-  "protect_trade_limit": 4,
-  "protect_use_stop_guard": true
+  "params": {
+    "buy": {
+      "buy_macd_fast": 12,
+      "buy_macd_slow": 26,
+      "buy_macd_signal": 9,
+      "buy_adx": 22.0,
+      "buy_rsi": 52,
+      "buy_use_ema_filter": true
+    },
+    "sell": {
+      "sell_rsi": 72,
+      "sell_on_cross": true
+    },
+    "protection": {
+      "protect_cooldown": 8,
+      "protect_stop_duration": 12,
+      "protect_stop_lookback": 24,
+      "protect_trade_limit": 4,
+      "protect_use_stop_guard": true
+    }
+  },
+  "strategy_name": "MacdAdxMomentumKnobs"
 }

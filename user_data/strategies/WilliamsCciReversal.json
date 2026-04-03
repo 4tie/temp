@@ -1,19 +1,28 @@
 {
-  "buy_willr_period": 14,
-  "buy_willr_oversold": -80,
-  "buy_cci_period": 20,
-  "buy_cci_oversold": -100,
-  "buy_stochrsi_period": 14,
-  "buy_stochrsi_oversold": 20.0,
-  "buy_ema_trend": 100,
-  "buy_use_ema_filter": true,
-  "sell_willr_overbought": -20,
-  "sell_cci_overbought": 100,
-  "sell_stochrsi_overbought": 80.0,
-  "sell_exit_trigger": "any",
-  "protect_cooldown": 8,
-  "protect_stop_duration": 12,
-  "protect_stop_lookback": 24,
-  "protect_trade_limit": 4,
-  "protect_use_stop_guard": true
+  "params": {
+    "buy": {
+      "buy_willr_period": 14,
+      "buy_willr_oversold": -80,
+      "buy_cci_period": 20,
+      "buy_cci_oversold": -100,
+      "buy_stochrsi_period": 14,
+      "buy_stochrsi_oversold": 20.0,
+      "buy_ema_trend": 100,
+      "buy_use_ema_filter": true
+    },
+    "sell": {
+      "sell_willr_overbought": -20,
+      "sell_cci_overbought": 100,
+      "sell_stochrsi_overbought": 80.0,
+      "sell_exit_trigger": "any"
+    },
+    "protection": {
+      "protect_cooldown": 8,
+      "protect_stop_duration": 12,
+      "protect_stop_lookback": 24,
+      "protect_trade_limit": 4,
+      "protect_use_stop_guard": true
+    }
+  },
+  "strategy_name": "WilliamsCciReversal"
 }

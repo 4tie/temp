@@ -57,16 +57,12 @@ def _checked_id(value: str) -> str:
 @router.get("/config")
 async def get_config():
     cfg = _read_config_json()
-    exchange_name = cfg.get("exchange", {})
-    if isinstance(exchange_name, dict):
-        exchange_name = exchange_name.get("name", "binance")
     return {
         "strategy": cfg.get("strategy"),
         "max_open_trades": cfg.get("max_open_trades"),
         "dry_run_wallet": cfg.get("dry_run_wallet"),
         "stake_amount": cfg.get("stake_amount"),
         "timeframe": cfg.get("timeframe"),
-        "exchange": exchange_name,
     }
 
 
@@ -75,24 +71,14 @@ async def patch_config(req: ConfigPatchRequest):
     cfg = _read_config_json()
     updates = req.model_dump(exclude_none=True)
     for field, value in updates.items():
-        if field == "exchange":
-            if isinstance(cfg.get("exchange"), dict):
-                cfg["exchange"]["name"] = value
-            else:
-                cfg["exchange"] = value
-        else:
-            cfg[field] = value
+        cfg[field] = value
     _write_config_json(cfg)
-    exchange_name = cfg.get("exchange", {})
-    if isinstance(exchange_name, dict):
-        exchange_name = exchange_name.get("name", "binance")
     return {
         "strategy": cfg.get("strategy"),
         "max_open_trades": cfg.get("max_open_trades"),
         "dry_run_wallet": cfg.get("dry_run_wallet"),
         "stake_amount": cfg.get("stake_amount"),
         "timeframe": cfg.get("timeframe"),
-        "exchange": exchange_name,
     }
 
 
@@ -105,7 +91,6 @@ async def run_backtest(req: BacktestRequest):
         pairs=req.pairs,
         timeframe=req.timeframe,
         timerange=req.timerange,
-        exchange=req.exchange,
         strategy_params=req.strategy_params,
     )
     return {"run_id": run_id, "status": "running"}
@@ -183,10 +168,14 @@ async def get_download_status(job_id: str):
 
 @router.post("/data-coverage")
 async def data_coverage(req: DataCoverageRequest):
+    cfg = _read_config_json()
+    exchange_name = cfg.get("exchange", {})
+    if isinstance(exchange_name, dict):
+        exchange_name = exchange_name.get("name", "binance")
     coverage = check_data_coverage(
         pairs=req.pairs,
         timeframe=req.timeframe,
-        exchange=req.exchange,
+        exchange=exchange_name,
     )
     return {"coverage": coverage}
 

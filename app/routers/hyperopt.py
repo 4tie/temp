@@ -47,6 +47,12 @@ def _checked_id(value: str) -> str:
 
 @router.post("/run")
 async def run_hyperopt(req: HyperoptRequest):
+    from app.routers.backtest import _read_config_json
+    cfg = _read_config_json()
+    exchange_name = cfg.get("exchange", {})
+    if isinstance(exchange_name, dict):
+        exchange_name = exchange_name.get("name", "binance")
+    
     run_id = start_hyperopt(
         strategy=req.strategy,
         pairs=req.pairs,
@@ -61,7 +67,7 @@ async def run_hyperopt(req: HyperoptRequest):
         dry_run_wallet=req.dry_run_wallet,
         max_open_trades=req.max_open_trades,
         stake_amount=req.stake_amount,
-        exchange=req.exchange,
+        exchange=exchange_name,
         random_state=req.random_state,
     )
     return {"run_id": run_id, "status": "running"}

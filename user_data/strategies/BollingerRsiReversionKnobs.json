@@ -1,14 +1,23 @@
 {
-  "buy_bb_window": 20,
-  "buy_bb_std": 2.0,
-  "buy_rsi": 30,
-  "buy_mfi": 24,
-  "buy_use_trend_filter": true,
-  "sell_rsi": 60,
-  "sell_band": "mid",
-  "protect_cooldown": 6,
-  "protect_stop_duration": 10,
-  "protect_stop_lookback": 24,
-  "protect_trade_limit": 4,
-  "protect_use_stop_guard": true
+  "params": {
+    "buy": {
+      "buy_bb_window": 20,
+      "buy_bb_std": 2.0,
+      "buy_rsi": 30,
+      "buy_mfi": 24,
+      "buy_use_trend_filter": true
+    },
+    "sell": {
+      "sell_rsi": 60,
+      "sell_band": "mid"
+    },
+    "protection": {
+      "protect_cooldown": 6,
+      "protect_stop_duration": 10,
+      "protect_stop_lookback": 24,
+      "protect_trade_limit": 4,
+      "protect_use_stop_guard": true
+    }
+  },
+  "strategy_name": "BollingerRsiReversionKnobs"
 }

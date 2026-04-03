@@ -1,10 +1,17 @@
 {
-  "buy_fast_key": "ma_fast",
-  "buy_horizontal_push": 0,
-  "buy_slow_key": "ma_slow",
-  "buy_vertical_push": 1,
-  "sell_fast_key": "ma_fast",
-  "sell_horizontal_push": 0,
-  "sell_slow_key": "ma_slow",
-  "sell_vertical_push": 1
+  "params": {
+    "buy": {
+      "buy_fast_key": "ma_fast",
+      "buy_horizontal_push": 0,
+      "buy_slow_key": "ma_slow",
+      "buy_vertical_push": 1
+    },
+    "sell": {
+      "sell_fast_key": "ma_fast",
+      "sell_horizontal_push": 0,
+      "sell_slow_key": "ma_slow",
+      "sell_vertical_push": 1
+    }
+  },
+  "strategy_name": "Diamond"
 }

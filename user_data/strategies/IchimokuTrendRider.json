@@ -1,17 +1,26 @@
 {
-  "buy_tenkan": 9,
-  "buy_kijun": 26,
-  "buy_senkou_b": 52,
-  "buy_rsi_min": 50,
-  "buy_chikou_confirm": true,
-  "buy_vol_sma": 20,
-  "buy_vol_ratio": 1.0,
-  "sell_rsi_bear": 40,
-  "sell_cloud_entry": true,
-  "sell_cross_trigger": "tenkan_kijun",
-  "protect_cooldown": 12,
-  "protect_stop_duration": 24,
-  "protect_stop_lookback": 48,
-  "protect_trade_limit": 3,
-  "protect_use_stop_guard": true
+  "params": {
+    "buy": {
+      "buy_tenkan": 9,
+      "buy_kijun": 26,
+      "buy_senkou_b": 52,
+      "buy_rsi_min": 50,
+      "buy_chikou_confirm": true,
+      "buy_vol_sma": 20,
+      "buy_vol_ratio": 1.0
+    },
+    "sell": {
+      "sell_rsi_bear": 40,
+      "sell_cloud_entry": true,
+      "sell_cross_trigger": "tenkan_kijun"
+    },
+    "protection": {
+      "protect_cooldown": 12,
+      "protect_stop_duration": 24,
+      "protect_stop_lookback": 48,
+      "protect_trade_limit": 3,
+      "protect_use_stop_guard": true
+    }
+  },
+  "strategy_name": "IchimokuTrendRider"
 }

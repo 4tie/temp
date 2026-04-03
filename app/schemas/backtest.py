@@ -8,7 +8,6 @@ class BacktestRequest(BaseModel):
     timeframe: str = "5m"
     timerange: Optional[str] = None
     strategy_params: dict[str, Any] = Field(default_factory=dict)
-    exchange: str = "binance"
 
 
 class ConfigPatchRequest(BaseModel):
@@ -17,7 +16,6 @@ class ConfigPatchRequest(BaseModel):
     dry_run_wallet: Optional[float] = None
     stake_amount: Optional[str] = None
     timeframe: Optional[str] = None
-    exchange: Optional[str] = None
 
 
 class DownloadDataRequest(BaseModel):
@@ -69,7 +67,6 @@ class HyperoptRequest(BaseModel):
     dry_run_wallet: float = 1000.0
     max_open_trades: int = 3
     stake_amount: str = "unlimited"
-    exchange: str = "binance"
     random_state: Optional[int] = None
 
 
@@ -82,4 +79,3 @@ class ApplyParamsRequest(BaseModel):
 class DataCoverageRequest(BaseModel):
     pairs: list[str]
     timeframe: str = "5m"
-    exchange: str = "binance"

@@ -1,15 +1,24 @@
 {
-  "buy_fast_ema": 9,
-  "buy_slow_ema": 50,
-  "buy_rsi_floor": 52,
-  "buy_adx": 22.0,
-  "buy_pullback": 0.995,
-  "buy_trigger": "pullback",
-  "sell_rsi": 70,
-  "sell_cross_under": true,
-  "protect_cooldown": 8,
-  "protect_stop_duration": 12,
-  "protect_stop_lookback": 24,
-  "protect_trade_limit": 4,
-  "protect_use_stop_guard": true
+  "params": {
+    "buy": {
+      "buy_fast_ema": 9,
+      "buy_slow_ema": 50,
+      "buy_rsi_floor": 52,
+      "buy_adx": 22.0,
+      "buy_pullback": 0.995,
+      "buy_trigger": "pullback"
+    },
+    "sell": {
+      "sell_rsi": 70,
+      "sell_cross_under": true
+    },
+    "protection": {
+      "protect_cooldown": 8,
+      "protect_stop_duration": 12,
+      "protect_stop_lookback": 24,
+      "protect_trade_limit": 4,
+      "protect_use_stop_guard": true
+    }
+  },
+  "strategy_name": "EmaRsiTrendKnobs"
 }

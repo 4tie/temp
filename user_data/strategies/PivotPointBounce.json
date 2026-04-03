@@ -1,16 +1,25 @@
 {
-  "buy_atr_period": 14,
-  "buy_atr_mult": 1.0,
-  "buy_rsi_max": 40,
-  "buy_bounce_level": "both",
-  "buy_require_macd_flip": true,
-  "buy_rsi_rising_bars": 1,
-  "sell_rsi_max": 72,
-  "sell_target": "pp",
-  "sell_macd_exit": true,
-  "protect_cooldown": 6,
-  "protect_stop_duration": 10,
-  "protect_stop_lookback": 24,
-  "protect_trade_limit": 4,
-  "protect_use_stop_guard": true
+  "params": {
+    "buy": {
+      "buy_atr_period": 14,
+      "buy_atr_mult": 1.0,
+      "buy_rsi_max": 40,
+      "buy_bounce_level": "both",
+      "buy_require_macd_flip": true,
+      "buy_rsi_rising_bars": 1
+    },
+    "sell": {
+      "sell_rsi_max": 72,
+      "sell_target": "pp",
+      "sell_macd_exit": true
+    },
+    "protection": {
+      "protect_cooldown": 6,
+      "protect_stop_duration": 10,
+      "protect_stop_lookback": 24,
+      "protect_trade_limit": 4,
+      "protect_use_stop_guard": true
+    }
+  },
+  "strategy_name": "PivotPointBounce"
 }

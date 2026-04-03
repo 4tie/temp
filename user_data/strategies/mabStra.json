@@ -1,12 +1,19 @@
 {
-  "buy_mojo_ma_timeframe": 7,
-  "buy_fast_ma_timeframe": 14,
-  "buy_slow_ma_timeframe": 28,
-  "buy_div_max": 2.25446,
-  "buy_div_min": 0.29497,
-  "sell_mojo_ma_timeframe": 7,
-  "sell_fast_ma_timeframe": 14,
-  "sell_slow_ma_timeframe": 28,
-  "sell_div_max": 1.54593,
-  "sell_div_min": 2.81436
+  "params": {
+    "buy": {
+      "buy_mojo_ma_timeframe": 7,
+      "buy_fast_ma_timeframe": 14,
+      "buy_slow_ma_timeframe": 28,
+      "buy_div_max": 2.25446,
+      "buy_div_min": 0.29497
+    },
+    "sell": {
+      "sell_mojo_ma_timeframe": 7,
+      "sell_fast_ma_timeframe": 14,
+      "sell_slow_ma_timeframe": 28,
+      "sell_div_max": 1.54593,
+      "sell_div_min": 2.81436
+    }
+  },
+  "strategy_name": "mabStra"
 }
