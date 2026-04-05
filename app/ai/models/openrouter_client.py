@@ -18,6 +18,9 @@ _MODELS_CACHE: list[dict] = []
 _MODELS_CACHE_TS: float = 0.0
 _MODELS_CACHE_TTL = 300
 
+_DEFAULT_HTTP_REFERER = os.environ.get("OPENROUTER_HTTP_REFERER", "https://4tie.local").strip() or "https://4tie.local"
+_DEFAULT_APP_TITLE = os.environ.get("OPENROUTER_APP_TITLE", "4tie").strip() or "4tie"
+
 # V2 implementation: single-attempt calls with multi-key support.
 def get_api_keys() -> list[str]:
     raw = os.environ.get("OPENROUTER_API_KEYS", "").strip()
@@ -52,9 +55,41 @@ def _headers_for(api_key: str) -> dict:
     return {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
-        "HTTP-Referer": "",
-        "X-Title": "4tie",
+        "HTTP-Referer": _DEFAULT_HTTP_REFERER,
+        "X-Title": _DEFAULT_APP_TITLE,
     }
+
+
+def _extract_error_detail(resp: httpx.Response | None) -> str:
+    if resp is None:
+        return ""
+    try:
+        payload = resp.json()
+        if isinstance(payload, dict):
+            err = payload.get("error")
+            if isinstance(err, dict):
+                msg = err.get("message") or err.get("code")
+                if msg:
+                    return str(msg)
+            if payload.get("message"):
+                return str(payload.get("message"))
+        text = resp.text.strip()
+        return text[:300]
+    except Exception:
+        return ""
+
+
+def _raise_with_detail(exc: httpx.HTTPStatusError, context: str) -> None:
+    status = exc.response.status_code if exc.response is not None else "unknown"
+    detail = _extract_error_detail(exc.response)
+    retry_after = ""
+    if exc.response is not None:
+        ra = exc.response.headers.get("Retry-After")
+        if ra:
+            retry_after = f" retry_after={ra}s"
+    if detail:
+        raise RuntimeError(f"{context} failed (status={status}{retry_after}): {detail}") from exc
+    raise RuntimeError(f"{context} failed (status={status}{retry_after})") from exc
 
 
 async def list_models() -> list[dict]:
@@ -69,26 +104,32 @@ async def list_models() -> list[dict]:
 
     try:
         async with httpx.AsyncClient(timeout=10) as client:
-            resp = await client.get(f"{_BASE_URL}/models", headers=_headers_for(keys[0]))
-            resp.raise_for_status()
-            data = resp.json().get("data", [])
-            free = [
-                model for model in data
-                if model.get("id", "").endswith(":free")
-                or str(model.get("pricing", {}).get("prompt", "1")) == "0"
-            ]
-            _MODELS_CACHE = free
-            _MODELS_CACHE_TS = now
-            return free
-    except httpx.HTTPStatusError as exc:
-        status = exc.response.status_code if exc.response is not None else None
-        if status in (401, 403):
+            for key in keys:
+                try:
+                    resp = await client.get(f"{_BASE_URL}/models", headers=_headers_for(key))
+                    resp.raise_for_status()
+                    data = resp.json().get("data", [])
+                    free = [
+                        model for model in data
+                        if model.get("id", "").endswith(":free")
+                        or str(model.get("pricing", {}).get("prompt", "1")) == "0"
+                    ]
+                    _MODELS_CACHE = free
+                    _MODELS_CACHE_TS = now
+                    return free
+                except httpx.HTTPStatusError as exc:
+                    status = exc.response.status_code if exc.response is not None else None
+                    if status in (401, 403):
+                        logger.warning("OpenRouter model list auth failed for one key: %s", exc)
+                        continue
+                    if status == 429:
+                        logger.warning("OpenRouter model list rate-limited for one key: %s", exc)
+                        continue
+                    logger.warning("OpenRouter model list failed for one key: %s", exc)
+                    continue
             _MODELS_CACHE = []
             _MODELS_CACHE_TS = 0.0
-            logger.warning("OpenRouter model list auth failed: %s", exc)
             return []
-        logger.warning("OpenRouter model list failed: %s", exc)
-        return _MODELS_CACHE or []
     except Exception as exc:
         logger.warning("OpenRouter model list failed: %s", exc)
         return _MODELS_CACHE or []
@@ -97,7 +138,8 @@ async def list_models() -> list[dict]:
 async def chat_complete(messages: list[dict], model: str, *, api_key: str | None = None) -> str:
     model = ensure_free_model(model)
     validate_free_model(model)
-    selected_key = api_key or (get_api_keys()[0] if get_api_keys() else "")
+    keys = get_api_keys()
+    selected_key = api_key or (keys[0] if keys else "")
     if not selected_key:
         raise RuntimeError("OPENROUTER_API_KEY(S) not set")
 
@@ -106,13 +148,16 @@ async def chat_complete(messages: list[dict], model: str, *, api_key: str | None
         "messages": messages,
     }
     async with httpx.AsyncClient(timeout=60) as client:
-        resp = await client.post(
-            f"{_BASE_URL}/chat/completions",
-            headers=_headers_for(selected_key),
-            json=payload,
-        )
-        resp.raise_for_status()
-        return resp.json()["choices"][0]["message"]["content"]
+        try:
+            resp = await client.post(
+                f"{_BASE_URL}/chat/completions",
+                headers=_headers_for(selected_key),
+                json=payload,
+            )
+            resp.raise_for_status()
+            return resp.json()["choices"][0]["message"]["content"]
+        except httpx.HTTPStatusError as exc:
+            _raise_with_detail(exc, "OpenRouter chat_complete")
 
 
 async def stream_chat(
@@ -123,7 +168,8 @@ async def stream_chat(
 ) -> AsyncGenerator[dict, None]:
     model = ensure_free_model(model)
     validate_free_model(model)
-    selected_key = api_key or (get_api_keys()[0] if get_api_keys() else "")
+    keys = get_api_keys()
+    selected_key = api_key or (keys[0] if keys else "")
     if not selected_key:
         raise RuntimeError("OPENROUTER_API_KEY(S) not set")
 
@@ -134,26 +180,29 @@ async def stream_chat(
     }
 
     async with httpx.AsyncClient(timeout=httpx.Timeout(120.0, connect=10.0)) as client:
-        async with client.stream(
-            "POST",
-            f"{_BASE_URL}/chat/completions",
-            headers=_headers_for(selected_key),
-            json=payload,
-        ) as resp:
-            resp.raise_for_status()
-            async for line in resp.aiter_lines():
-                if not line or not line.startswith("data: "):
-                    continue
-                raw = line[6:].strip()
-                if raw == "[DONE]":
-                    yield {"done": True}
-                    return
-                try:
-                    import json
-                    chunk = json.loads(raw)
-                    delta = chunk["choices"][0]["delta"].get("content", "")
-                    if delta:
-                        yield {"delta": delta, "done": False}
-                except Exception:
-                    continue
+        try:
+            async with client.stream(
+                "POST",
+                f"{_BASE_URL}/chat/completions",
+                headers=_headers_for(selected_key),
+                json=payload,
+            ) as resp:
+                resp.raise_for_status()
+                async for line in resp.aiter_lines():
+                    if not line or not line.startswith("data: "):
+                        continue
+                    raw = line[6:].strip()
+                    if raw == "[DONE]":
+                        yield {"done": True}
+                        return
+                    try:
+                        import json
+                        chunk = json.loads(raw)
+                        delta = chunk["choices"][0]["delta"].get("content", "")
+                        if delta:
+                            yield {"delta": delta, "done": False}
+                    except Exception:
+                        continue
+        except httpx.HTTPStatusError as exc:
+            _raise_with_detail(exc, "OpenRouter stream_chat")
     yield {"done": True}
