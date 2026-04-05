@@ -19,6 +19,7 @@ from typing import Any, AsyncGenerator
 
 from ...core.storage import write_json, _ensure
 import app.ai.models.provider_dispatch as _dispatch
+from app.ai.model_metrics_store import record_observation
 from ..models.registry import fetch_free_models, get_model_for_role
 from .classifier import (
     classify, Classification, PipelineType, ComplexityLevel,
@@ -30,6 +31,9 @@ from ..prompts.trading import (
     CODE_GEN_SYSTEM_PROMPT,
     CODE_EXPLAINER_SYSTEM_PROMPT,
     CODE_AWARE_ADVISOR_SYSTEM_PROMPT,
+    TOOL_CALLER_SYSTEM_PROMPT,
+    STRUCTURED_OUTPUT_SYSTEM_PROMPT,
+    JUDGE_SYSTEM_PROMPT_TEMPLATE,
     GOAL_DIRECTIVES,
 )
 
@@ -347,7 +351,7 @@ def _step_from_output(
     if not fallback_reason and provider_attempts:
         fallback_reason = provider_attempts[-1].get("error")
 
-    return PipelineStep(
+    step = PipelineStep(
         role=role,
         model_id=actual_model,
         provider=actual_provider,
@@ -364,6 +368,18 @@ def _step_from_output(
         output_full=output_text,
         provider_attempts=provider_attempts,
     )
+    rate_limited = False
+    if step.fallback_reason and "429" in str(step.fallback_reason):
+        rate_limited = True
+    success = not str(output_text).startswith("[Error:")
+    record_observation(
+        role=role,
+        model_id=actual_model,
+        success=success,
+        latency_ms=step.duration_ms,
+        rate_limited=rate_limited,
+    )
+    return step
 
 
 def _trace_for_step(event_type: str, step: PipelineStep, extra: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -448,28 +464,7 @@ def _step_start_event(role: str, requested_model_id: str, selection_reason: str,
 
 def _judge_system_prompt(goal_id: str | None) -> str:
     goal_guidance = GOAL_DIRECTIVES.get(goal_id or "", GOAL_DIRECTIVES.get("balanced", ""))
-    return f"""{goal_guidance}
-
-You are the final judge in a multi-model trading strategy debate.
-You will receive two analyst arguments:
-- Analyst A makes the strongest upside case aligned to the user's goal.
-- Analyst B stress-tests that thesis with downside, fragility, and risk concerns.
-
-Write the final user-facing verdict in markdown with exactly these sections:
-## Agreement Points
-- bullet list of where both analysts overlap
-
-## Disagreement Points
-- bullet list of the important disagreements that remain
-
-## Final Recommendation
-2-4 short paragraphs that resolve the disagreement and give the clearest next action.
-
-Rules:
-- Explicitly reference both Analyst A and Analyst B.
-- Stay grounded in the supplied context and avoid inventing data.
-- Be decisive, practical, and goal-aware.
-"""
+    return JUDGE_SYSTEM_PROMPT_TEMPLATE.format(goal_directive=goal_guidance)
 
 
 def _analyst_messages(
@@ -845,7 +840,7 @@ Use both perspectives and resolve the disagreement explicitly."""},
 
     elif pipeline == PipelineType.tool:
         tool_msgs = [
-            {"role": "system", "content": "You are a tool-calling assistant for a trading platform. Analyze the request and describe what tools/actions should be executed, with specific parameters and expected outcomes."},
+            {"role": "system", "content": TOOL_CALLER_SYSTEM_PROMPT},
             {"role": "user", "content": f"{task_text}\n\n--- CONTEXT ---\n{context}"},
         ]
         tool_model, tool_reason = get_model_for_role("tool_caller", models, role_overrides)
@@ -906,7 +901,7 @@ Use both perspectives and resolve the disagreement explicitly."""},
 
     else:
         structured_msgs = [
-            {"role": "system", "content": "You are a structured data generator. Return ONLY valid JSON - no markdown, no explanation, no text outside the JSON object."},
+            {"role": "system", "content": STRUCTURED_OUTPUT_SYSTEM_PROMPT},
             {"role": "user", "content": f"{task_text}\n\n--- CONTEXT ---\n{context}"},
         ]
         structured_model, structured_reason = get_model_for_role("structured_output", models, role_overrides)

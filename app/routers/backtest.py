@@ -3,6 +3,7 @@ import re
 import tempfile
 import os
 from typing import Optional
+from pathlib import Path as SysPath
 
 from fastapi import APIRouter, HTTPException, Path, Query
 
@@ -16,7 +17,7 @@ from app.services.data_coverage import check_data_coverage
 from app.services.ohlcv_loader import load_ohlcv
 from app.services.indicator_calculator import calculate_indicators
 from app.core.processes import get_status, get_logs
-from app.core.config import BASE_DIR
+from app.core.config import BASE_DIR, STRATEGIES_DIR
 
 router = APIRouter(tags=["backtest"])
 
@@ -67,6 +68,26 @@ def _resolve_exchange_name(explicit_exchange: Optional[str] = None) -> str:
         return exchange_name
 
     return "binance"
+
+
+def _is_default_strategy_path(strategy_path: Optional[str]) -> bool:
+    if not strategy_path:
+        return True
+    try:
+        return SysPath(strategy_path).resolve() == STRATEGIES_DIR.resolve()
+    except Exception:
+        return False
+
+
+def _write_strategy_sidecar(strategy: str, params: dict) -> None:
+    space_map: dict[str, dict] = {}
+    for key, value in params.items():
+        if not isinstance(key, str):
+            continue
+        space = "sell" if key.startswith("sell_") else "buy"
+        space_map.setdefault(space, {})[key] = value
+    target = STRATEGIES_DIR / f"{strategy}.json"
+    target.write_text(json.dumps({"strategy_name": strategy, "params": space_map}, indent=2), encoding="utf-8")
 
 
 def _validate_selected_pair_data(
@@ -240,6 +261,80 @@ async def get_run_raw(run_id: str):
         "status": effective_status,
         "meta": meta,
         **payload,
+    }
+
+
+@router.post("/runs/{run_id}/apply-config")
+async def apply_run_config(run_id: str):
+    _checked_id(run_id)
+    meta = load_run_meta(run_id)
+    if not meta:
+        raise HTTPException(status_code=404, detail="Run not found")
+
+    cfg = _read_config_json()
+    applied: list[str] = []
+    skipped: list[str] = []
+    warnings: list[str] = []
+
+    strategy = meta.get("strategy_class") or meta.get("base_strategy") or meta.get("strategy")
+    if strategy:
+        cfg["strategy"] = strategy
+        applied.append("strategy")
+    else:
+        skipped.append("strategy")
+        warnings.append("Strategy is missing in run metadata.")
+
+    for field in ("timeframe", "dry_run_wallet", "max_open_trades", "stake_amount"):
+        value = meta.get(field)
+        if value is None:
+            skipped.append(field)
+            continue
+        cfg[field] = value
+        applied.append(field)
+
+    _write_config_json(cfg)
+
+    last_config_payload = {
+        "strategy": strategy,
+        "strategy_label": meta.get("strategy"),
+        "strategy_base": meta.get("strategy_base") or meta.get("base_strategy") or strategy,
+        "strategy_version": meta.get("strategy_version"),
+        "strategy_version_path": meta.get("strategy_version_path"),
+        "strategy_path": meta.get("strategy_path"),
+        "pairs": meta.get("pairs") or [],
+        "timeframe": meta.get("timeframe"),
+        "timerange": meta.get("timerange"),
+        "exchange": meta.get("exchange"),
+        "dry_run_wallet": meta.get("dry_run_wallet"),
+        "max_open_trades": meta.get("max_open_trades"),
+        "stake_amount": meta.get("stake_amount"),
+        "strategy_params": meta.get("strategy_params") or {},
+    }
+    save_last_config(last_config_payload)
+    applied.append("last_config")
+
+    strategy_params = meta.get("strategy_params") or {}
+    if isinstance(strategy_params, dict) and strategy_params:
+        if strategy and _is_default_strategy_path(meta.get("strategy_path")):
+            try:
+                _write_strategy_sidecar(strategy, strategy_params)
+                applied.append("strategy_params")
+            except Exception as exc:
+                warnings.append(f"Failed to write {strategy}.json sidecar: {exc}")
+        elif meta.get("strategy_path"):
+            skipped.append("strategy_params")
+            warnings.append("Skipped strategy params write because run used external strategy_path.")
+        else:
+            skipped.append("strategy_params")
+            warnings.append("Skipped strategy params write because strategy class is missing.")
+    else:
+        skipped.append("strategy_params")
+
+    return {
+        "run_id": run_id,
+        "applied": sorted(set(applied)),
+        "skipped": sorted(set(skipped)),
+        "warnings": warnings,
     }
 
 

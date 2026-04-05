@@ -20,7 +20,7 @@ _ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
 
 # Keys we expose to the frontend (order preserved in UI)
 _KEYS: list[tuple[str, str]] = [
-    ("OPENROUTER_API_KEY",  "openrouter_api_key"),
+    ("OPENROUTER_API_KEYS", "openrouter_api_keys"),
     ("OLLAMA_BASE_URL",     "ollama_base_url"),
     ("FREQTRADE_PATH",      "freqtrade_path"),
     ("USER_DATA_DIR",       "user_data_dir"),
@@ -28,16 +28,49 @@ _KEYS: list[tuple[str, str]] = [
     ("FREQTRADE_EXCHANGE",  "freqtrade_exchange"),
 ]
 
-_SECRET_KEYS = {"OPENROUTER_API_KEY"}
+_SECRET_KEYS = {"OPENROUTER_API_KEY", "OPENROUTER_API_KEYS"}
 
 
 class SettingsSaveRequest(BaseModel):
+    # New primary field: accepts comma/newline-separated OpenRouter keys.
+    openrouter_api_keys: Optional[str] = None
+    # Backward-compatible alias: single key input.
     openrouter_api_key: Optional[str] = None
     ollama_base_url:    Optional[str] = None
     freqtrade_path:     Optional[str] = None
     user_data_dir:      Optional[str] = None
     backtest_api_port:  Optional[str] = None
     freqtrade_exchange: Optional[str] = None
+
+
+def _mask_secret(raw: str) -> str:
+    value = (raw or "").strip()
+    if not value:
+        return ""
+    keys = [k.strip() for k in value.split(",") if k.strip()]
+    if not keys:
+        return ""
+    masked = [("•" * max(0, len(k) - 4)) + k[-4:] for k in keys]
+    return ", ".join(masked)
+
+
+def _is_masked_secret_input(value: str) -> bool:
+    if not value:
+        return False
+    compact = re.sub(r"[\s,]", "", value)
+    return bool(compact) and set(compact) == {"•"}
+
+
+def _normalize_openrouter_keys(raw: str) -> str:
+    parts = [p.strip() for p in re.split(r"[\n,]+", raw or "") if p.strip()]
+    unique: list[str] = []
+    seen: set[str] = set()
+    for key in parts:
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(key)
+    return ",".join(unique)
 
 
 def _read_env_file() -> dict[str, str]:
@@ -100,11 +133,15 @@ async def get_settings():
     result: dict[str, str] = {}
     for env_key, field_name in _KEYS:
         raw = env.get(env_key, os.environ.get(env_key, ""))
+        if env_key == "OPENROUTER_API_KEYS" and not raw:
+            raw = env.get("OPENROUTER_API_KEY", os.environ.get("OPENROUTER_API_KEY", ""))
         if env_key in _SECRET_KEYS and raw:
-            # Mask all but last 4 chars
-            result[field_name] = "•" * max(0, len(raw) - 4) + raw[-4:]
+            result[field_name] = _mask_secret(raw)
         else:
             result[field_name] = raw
+
+    # Backward-compatible alias for older frontend code.
+    result["openrouter_api_key"] = result.get("openrouter_api_keys", "")
     return result
 
 
@@ -114,12 +151,27 @@ async def save_settings(req: SettingsSaveRequest):
 
     field_to_env = {field: env_key for env_key, field in _KEYS}
 
+    openrouter_value = req.openrouter_api_keys
+    if openrouter_value is None and req.openrouter_api_key is not None:
+        openrouter_value = req.openrouter_api_key
+    if openrouter_value is not None:
+        # If secret value is masked bullets only, skip (unchanged).
+        if not _is_masked_secret_input(openrouter_value):
+            normalized = _normalize_openrouter_keys(openrouter_value)
+            env["OPENROUTER_API_KEYS"] = normalized
+            # Keep single-key env var synced for compatibility with older codepaths.
+            first_key = normalized.split(",", 1)[0] if normalized else ""
+            env["OPENROUTER_API_KEY"] = first_key
+
     for field_name, env_key in field_to_env.items():
         value = getattr(req, field_name, None)
         if value is None:
             continue
         # If the field is a secret and the value is all bullets, skip (unchanged)
-        if env_key in _SECRET_KEYS and value and set(value) == {"•"}:
+        if env_key in _SECRET_KEYS and _is_masked_secret_input(value):
+            continue
+        if env_key == "OPENROUTER_API_KEYS":
+            # Handled above (also syncs OPENROUTER_API_KEY)
             continue
         env[env_key] = value.strip() if value else ""
 

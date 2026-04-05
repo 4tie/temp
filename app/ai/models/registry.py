@@ -4,58 +4,12 @@ AI Model Registry — fetches free models from OpenRouter + Ollama, assigns role
 from __future__ import annotations
 
 import logging
+import os
+
+from app.ai.model_router import select_model_for_role
+from app.ai.model_routing_policy import LOW_RISK_ROLES, ROLE_CANDIDATES
 
 logger = logging.getLogger(__name__)
-
-ROLE_PREFERENCES: dict[str, list[str]] = {
-    "classifier": [
-        "meta-llama/llama-3.2-1b-instruct:free",
-        "meta-llama/llama-3.2-3b-instruct:free",
-        "google/gemma-2-2b-it:free",
-        "mistralai/mistral-7b-instruct:free",
-    ],
-    "reasoner": [
-        "meta-llama/llama-3.3-70b-instruct:free",
-        "deepseek/deepseek-r1:free",
-        "meta-llama/llama-3.1-70b-instruct:free",
-        "mistralai/mixtral-8x7b-instruct:free",
-        "meta-llama/llama-3.2-11b-vision-instruct:free",
-    ],
-    "code_gen": [
-        "deepseek/deepseek-r1:free",
-        "meta-llama/llama-3.3-70b-instruct:free",
-        "meta-llama/llama-3.1-70b-instruct:free",
-        "mistralai/mixtral-8x7b-instruct:free",
-    ],
-    "analyst_a": [
-        "meta-llama/llama-3.3-70b-instruct:free",
-        "meta-llama/llama-3.1-70b-instruct:free",
-        "mistralai/mixtral-8x7b-instruct:free",
-    ],
-    "analyst_b": [
-        "deepseek/deepseek-r1:free",
-        "google/gemini-2.0-flash-exp:free",
-        "meta-llama/llama-3.3-70b-instruct:free",
-    ],
-    "judge": [
-        "meta-llama/llama-3.3-70b-instruct:free",
-        "deepseek/deepseek-r1:free",
-        "meta-llama/llama-3.1-70b-instruct:free",
-    ],
-    "composer": [
-        "meta-llama/llama-3.3-70b-instruct:free",
-        "meta-llama/llama-3.1-70b-instruct:free",
-        "mistralai/mixtral-8x7b-instruct:free",
-    ],
-    "explainer": [
-        "meta-llama/llama-3.3-70b-instruct:free",
-        "meta-llama/llama-3.1-70b-instruct:free",
-        "mistralai/mixtral-8x7b-instruct:free",
-        "meta-llama/llama-3.2-3b-instruct:free",
-    ],
-}
-
-_FALLBACK_MODEL = "meta-llama/llama-3.2-1b-instruct:free"
 
 
 async def fetch_free_models(provider: str = "openrouter") -> list[dict]:
@@ -101,18 +55,48 @@ def get_model_for_role(
     models: list[dict],
     overrides: dict[str, str] | None = None,
 ) -> tuple[str, str]:
+    mode = str(os.environ.get("MODEL_ROUTER_MODE", "log_only")).strip().lower()
+    if mode not in {"legacy", "log_only", "low_risk", "all"}:
+        mode = "all"
+
+    legacy_model, legacy_reason = _legacy_select_model(role=role, models=models, overrides=overrides)
+    proposed = select_model_for_role(role=role, models=models, overrides=overrides)
+
+    if mode == "legacy":
+        return legacy_model, f"{legacy_reason}|mode=legacy"
+    if mode == "log_only":
+        logger.info(
+            "model_router_compare role=%s chosen=%s proposed=%s legacy=%s reason=%s proposed_reason=%s",
+            role,
+            legacy_model,
+            proposed.model_id,
+            legacy_model,
+            legacy_reason,
+            proposed.reason,
+        )
+        return legacy_model, f"{legacy_reason}|mode=log_only|proposed={proposed.model_id}"
+    if mode == "low_risk" and role not in LOW_RISK_ROLES:
+        return legacy_model, f"{legacy_reason}|mode=low_risk"
+    return proposed.model_id, f"{proposed.reason}|mode={mode}|fallbacks={','.join(proposed.fallback_chain)}"
+
+
+def _legacy_select_model(
+    role: str,
+    models: list[dict],
+    overrides: dict[str, str] | None = None,
+) -> tuple[str, str]:
     if overrides and role in overrides:
         return overrides[role], f"override:{role}"
 
-    available_ids = {m["id"] for m in models}
-    preferences = ROLE_PREFERENCES.get(role, ROLE_PREFERENCES.get("explainer", []))
+    available_ids = {m["id"] for m in models if m.get("id")}
+    preferences = ROLE_CANDIDATES.get(role, ROLE_CANDIDATES.get("explainer", []))
 
     for preferred in preferences:
         if preferred in available_ids:
-            return preferred, f"preferred:{role}"
+            return preferred, f"legacy:preferred:{role}"
 
     if available_ids:
-        chosen = next(iter(available_ids))
-        return chosen, f"fallback:first-available"
+        chosen = sorted(available_ids)[0]
+        return chosen, "legacy:fallback:first-available"
 
-    return _FALLBACK_MODEL, "fallback:hardcoded"
+    return "meta-llama/llama-3.2-1b-instruct:free", "legacy:fallback:hardcoded"

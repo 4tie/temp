@@ -83,12 +83,18 @@ window.DashboardPage = (() => {
           ${rows.map(r => `
             <tr>
               <td class="font-mono text-sm">${FMT.truncate(r.run_id || r.id || '—', 20)}</td>
-              <td>${r.strategy || '—'}</td>
+              <td>${_displayStrategy(r)}</td>
               <td><span class="badge badge--${FMT.statusColor(r.status)}">${FMT.statusLabel(r.status)}</span></td>
               <td class="text-muted text-sm">${FMT.ts(r.started_at)}</td>
             </tr>`).join('')}
         </tbody>
       </table>`);
+  }
+
+  function _displayStrategy(run) {
+    const base = run.display_strategy || run.strategy || '—';
+    const version = run.display_version || run.strategy_version || null;
+    return version ? `${base} · ${version}` : base;
   }
 
   function refresh() { load(); }

@@ -5,13 +5,44 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 import shutil
+from concurrent.futures import ThreadPoolExecutor
 
 from app.services import storage
 
 FIXTURE_ZIP = Path(__file__).resolve().parents[1] / "user_data" / "backtest_results" / "backtest-result-2026-04-04_00-30-17.zip"
+if not FIXTURE_ZIP.exists():
+    FIXTURE_ZIP = next(
+        iter(sorted((Path(__file__).resolve().parents[1] / "user_data" / "backtest_results").rglob("backtest-result-*.zip"))),
+        None,
+    )
 
 
 class StorageTests(unittest.TestCase):
+    def test_allocate_strategy_version_dir_increments_versions(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base_dir = Path(tmpdir)
+            with patch.object(storage, "BACKTEST_RESULTS_DIR", base_dir):
+                v1, p1 = storage.allocate_strategy_version_dir("MultiMa")
+                v2, p2 = storage.allocate_strategy_version_dir("MultiMa")
+
+        self.assertEqual(v1, "v1")
+        self.assertEqual(v2, "v2")
+        self.assertEqual(p1.name, "v1")
+        self.assertEqual(p2.name, "v2")
+
+    def test_allocate_strategy_version_dir_is_unique_across_threads(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base_dir = Path(tmpdir)
+            with patch.object(storage, "BACKTEST_RESULTS_DIR", base_dir):
+                def _alloc() -> str:
+                    v, _ = storage.allocate_strategy_version_dir("MultiMa")
+                    return v
+
+                with ThreadPoolExecutor(max_workers=5) as pool:
+                    labels = sorted(pool.map(lambda _: _alloc(), range(5)))
+
+        self.assertEqual(labels, ["v1", "v2", "v3", "v4", "v5"])
+
     def test_list_runs_filters_artifacts_and_returns_compact_overview(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             base_dir = Path(tmpdir)
@@ -58,6 +89,8 @@ class StorageTests(unittest.TestCase):
         self.assertAlmostEqual(runs[0]["overview"]["max_drawdown"], 0.08, places=6)
 
     def test_load_run_results_rehydrates_from_local_artifact(self) -> None:
+        if not FIXTURE_ZIP:
+            self.skipTest("No backtest zip fixture found in user_data/backtest_results.")
         with tempfile.TemporaryDirectory() as tmpdir:
             base_dir = Path(tmpdir)
             run_id = "20260404_111111_deadbeef"

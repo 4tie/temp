@@ -4,7 +4,7 @@
     "ETH/USDT"
   ],
   "timeframe": "5m",
-  "timerange": "20250102-20260321",
+  "timerange": "20251101-20260405",
   "exchange": "binance",
   "strategy_path": null,
   "strategy_label": null,
@@ -25,7 +25,7 @@
     "--backtest-directory",
     "user_data/backtest_results/MultiMa",
     "--timerange",
-    "20250102-20260321",
+    "20251101-20260405",
     "--pairs",
     "ETH/USDT"
   ]

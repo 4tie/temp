@@ -155,6 +155,12 @@ def check_data_coverage(
     start_day, end_day = _parse_timerange(timerange)
     expected_per_day, skip_reason = _expected_candles_per_day(timeframe)
     requested_daily_validation = start_day is not None and end_day is not None
+    today_utc = datetime.now(timezone.utc).date()
+    partial_current_day_allowed = bool(
+        requested_daily_validation
+        and expected_per_day is not None
+        and end_day == today_utc
+    )
 
     for pair in pairs:
         file_path, file_size = _find_pair_file(pair, timeframe, exchange)
@@ -180,8 +186,16 @@ def check_data_coverage(
                     day_counts = _build_daily_counts(timestamps_ms, start_day, end_day)
                     for day in _iter_days(start_day, end_day):
                         actual = day_counts.get(day, 0)
+                        is_in_progress_end_day = (
+                            partial_current_day_allowed
+                            and day == end_day.isoformat()
+                        )
                         if actual == 0:
                             missing_days.append(day)
+                        elif is_in_progress_end_day:
+                            # End day may still be in progress (e.g. 226/288 on 5m).
+                            # Treat partial candle count as acceptable for "today".
+                            continue
                         elif actual != expected_per_day:
                             incomplete_days.append({
                                 "date": day,
@@ -205,6 +219,7 @@ def check_data_coverage(
             "missing_days": missing_days,
             "incomplete_days": incomplete_days,
             "daily_validation_skip_reason": daily_skip_reason,
+            "partial_current_day_allowed": partial_current_day_allowed,
         })
 
     return coverage

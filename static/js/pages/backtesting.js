@@ -1430,7 +1430,13 @@ window.BacktestPage = (() => {
     try {
       const tf = DOM.$('#bt-timeframe', _el)?.value || '5m';
       const timerange = DOM.$('#bt-timerange', _el)?.value || null;
-      const res = await API.downloadData({ pairs: selected, timeframe: tf, timerange, command_override: commandOverride });
+      const expandedTimerange = _expandDownloadTimerange(timerange);
+      const res = await API.downloadData({
+        pairs: selected,
+        timeframe: tf,
+        timerange: expandedTimerange,
+        command_override: commandOverride,
+      });
       _pollDownload(res.job_id || res.run_id, logEl, formBtn);
       Toast.info('Download started…');
     } catch (err) {
@@ -1502,15 +1508,37 @@ window.BacktestPage = (() => {
     throw new Error('Download timed out.');
   }
 
+  function _expandDownloadTimerange(timerange) {
+    const value = String(timerange || '').trim();
+    const match = value.match(/^(\d{8})-(\d{8})$/);
+    if (!match) return timerange || null;
+
+    const startStr = match[1];
+    const endStr = match[2];
+    const start = Date.parse(`${startStr.slice(0, 4)}-${startStr.slice(4, 6)}-${startStr.slice(6, 8)}T00:00:00Z`);
+    const end = Date.parse(`${endStr.slice(0, 4)}-${endStr.slice(4, 6)}-${endStr.slice(6, 8)}T00:00:00Z`);
+    if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) {
+      return timerange || null;
+    }
+
+    const BUFFER_DAYS = 2;
+    const bufferedStart = new Date(start - (BUFFER_DAYS * 86400000));
+    const y = bufferedStart.getUTCFullYear();
+    const m = String(bufferedStart.getUTCMonth() + 1).padStart(2, '0');
+    const d = String(bufferedStart.getUTCDate()).padStart(2, '0');
+    return `${y}${m}${d}-${endStr}`;
+  }
+
   async function _ensureCoverageWithAutoDownload({ pairs, timeframe, exchange, timerange }) {
     let coverage = await _validateSelectedPairData({ pairs, timeframe, exchange, timerange });
     if (coverage.ok) return true;
 
+    const expandedTimerange = _expandDownloadTimerange(timerange);
     Toast.info(`Missing/incomplete data detected for ${coverage.missingPairs.join(', ')}. Auto-downloading now…`);
     const res = await API.downloadData({
       pairs,
       timeframe,
-      timerange: timerange || null,
+      timerange: expandedTimerange,
     });
     const jobId = res.job_id || res.run_id;
     await _waitForDownloadCompletion(jobId);

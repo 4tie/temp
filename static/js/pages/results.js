@@ -11,6 +11,8 @@ window.ResultsPage = (() => {
   let _pollTimer = null;
   let _loading = false;
   let _lastLoadedAt = null;
+  let _latestRunIdSeen = null;
+  let _autoOpenedRunId = null;
 
   function init() {
     _el = DOM.$('[data-view="results"]');
@@ -58,6 +60,7 @@ window.ResultsPage = (() => {
       _lastLoadedAt = new Date();
       _renderMeta();
       _renderTable();
+      _autoShowLatestRun();
     } catch (err) {
       if (!silent) {
         Toast.error('Failed to load results: ' + err.message);
@@ -92,6 +95,12 @@ window.ResultsPage = (() => {
     };
   }
 
+  function _displayStrategy(run) {
+    const base = run.display_strategy || run.strategy || '—';
+    const version = run.display_version || run.strategy_version || null;
+    return version ? `${base} · ${version}` : base;
+  }
+
   function _sort(key) {
     if (_sortKey === key) _sortDir *= -1;
     else { _sortKey = key; _sortDir = -1; }
@@ -124,7 +133,7 @@ window.ResultsPage = (() => {
       <table class="data-table data-table--hoverable">
         <thead><tr>
           ${th('run_id',        'Run ID')}
-          ${th('strategy',     'Strategy')}
+          ${th('strategy',     'Strategy / Version')}
           ${th('started_at',   'Date')}
           ${th('_profit_pct',  'Profit %')}
           ${th('_trades',      'Trades')}
@@ -142,14 +151,20 @@ window.ResultsPage = (() => {
             return `
               <tr class="cursor-pointer" data-run-id="${r.run_id || ''}">
                 <td class="font-mono text-sm">${FMT.truncate(r.run_id || '—', 18)}</td>
-                <td>${r.strategy || '—'}</td>
+                <td>
+                  <div>${_esc(_displayStrategy(r))}</div>
+                  <div class="text-muted text-xs">${_esc(r.strategy_class || r.base_strategy || r.strategy || '—')}</div>
+                </td>
                 <td class="text-muted text-sm">${FMT.tsShort(r.started_at)}</td>
                 <td class="text-${profitTone} font-semibold">${r._profit_pct != null ? FMT.pct(r._profit_pct) : '—'}</td>
                 <td>${r._trades ?? '—'}</td>
                 <td class="text-${winRateTone} font-medium">${r._win_rate != null ? FMT.pct(r._win_rate, 1, false) : '—'}</td>
                 <td class="text-${drawdownTone} font-medium">${r._max_drawdown != null ? FMT.pct(r._max_drawdown, 1, false) : '—'}</td>
                 <td class="text-${sharpeTone} font-medium">${r._sharpe != null ? FMT.number(r._sharpe, 2) : '—'}</td>
-                <td><button class="btn btn--ghost btn--sm" data-detail-btn data-run-id="${r.run_id || ''}">View</button></td>
+                <td>
+                  <button class="btn btn--ghost btn--sm" data-detail-btn data-run-id="${r.run_id || ''}">View</button>
+                  <button class="btn btn--secondary btn--sm" data-apply-btn data-run-id="${r.run_id || ''}">Apply Config</button>
+                </td>
               </tr>`;
           }).join('')}
         </tbody>
@@ -164,6 +179,12 @@ window.ResultsPage = (() => {
         _showDetail(btn.dataset.runId);
       });
     });
+    wrap.querySelectorAll('[data-apply-btn]').forEach(btn => {
+      DOM.on(btn, 'click', async (e) => {
+        e.stopPropagation();
+        await _applyConfig(btn.dataset.runId);
+      });
+    });
     wrap.querySelectorAll('tr[data-run-id]').forEach(row => {
       DOM.on(row, 'click', () => _showDetail(row.dataset.runId));
     });
@@ -176,6 +197,59 @@ window.ResultsPage = (() => {
     } catch (err) {
       Toast.error('Could not load run detail: ' + err.message);
     }
+  }
+
+  function _runTimestamp(run) {
+    const candidates = [run?.completed_at, run?.started_at, run?.created_at];
+    for (const value of candidates) {
+      const ts = Date.parse(value || '');
+      if (Number.isFinite(ts)) return ts;
+    }
+    return 0;
+  }
+
+  function _latestCompletedRunId() {
+    if (!_runs.length) return null;
+    const latest = [..._runs].sort((a, b) => {
+      const delta = _runTimestamp(b) - _runTimestamp(a);
+      if (delta !== 0) return delta;
+      return String(b.run_id || '').localeCompare(String(a.run_id || ''));
+    })[0];
+    return latest?.run_id || null;
+  }
+
+  function _autoShowLatestRun() {
+    const latestRunId = _latestCompletedRunId();
+    if (!latestRunId) return;
+
+    const hasNewLatest = latestRunId !== _latestRunIdSeen;
+    _latestRunIdSeen = latestRunId;
+
+    if (AppState.get('activePage') !== 'results') return;
+    if (!hasNewLatest && _autoOpenedRunId) return;
+
+    _autoOpenedRunId = latestRunId;
+    _showDetail(latestRunId);
+  }
+
+  async function _applyConfig(runId) {
+    if (!runId) return;
+    try {
+      const res = await API.applyRunConfig(runId);
+      if (res.warnings?.length) {
+        Toast.warning(`Config applied with warnings: ${res.warnings.join(' | ')}`);
+      } else {
+        Toast.success('Run config applied.');
+      }
+    } catch (err) {
+      Toast.error('Failed to apply run config: ' + err.message);
+    }
+  }
+
+  function _esc(str) {
+    const d = document.createElement('div');
+    d.textContent = String(str || '');
+    return d.innerHTML;
   }
 
   function _startPolling() {

@@ -44,6 +44,9 @@ window.App = (() => {
     const view = DOM.$(`[data-view="${page}"]`);
     if (view) view.classList.add('active');
 
+    const pageContent = DOM.$('[data-page-content]');
+    if (pageContent) pageContent.scrollTop = 0;
+
     const title = DOM.$('[data-page-title]');
     if (title) title.textContent = PAGE_TITLES[page] || page;
 

@@ -291,6 +291,35 @@
   color: var(--red);
 }
 
+.ai-loop-btn {
+  background: rgba(139, 92, 246, 0.15);
+  border: 1px solid rgba(139, 92, 246, 0.35);
+  color: #c4b5fd;
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ai-loop-btn:hover:not(:disabled) {
+  color: #e9d5ff;
+  border-color: rgba(139, 92, 246, 0.55);
+}
+
+.ai-loop-btn.active {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.45);
+  color: #fca5a5;
+}
+
+.ai-loop-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .ai-inject-btn {
   display: flex;
   align-items: center;
@@ -400,6 +429,117 @@
   color: var(--text-primary);
   border: 1px solid var(--border);
   border-bottom-left-radius: var(--radius-xs);
+}
+
+/* ---- Thinking trace container ------------------------------ */
+
+.ai-thinking {
+  background: linear-gradient(180deg, var(--surface-2) 0%, var(--surface-1) 100%);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.ai-thinking__toggle {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: var(--text-xs);
+  text-align: left;
+}
+
+.ai-thinking__toggle:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.ai-thinking__title {
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+}
+
+.ai-thinking__summary {
+  color: var(--text-muted);
+  justify-self: end;
+}
+
+.ai-thinking__chevron {
+  color: var(--text-muted);
+  transition: transform 0.16s ease;
+}
+
+.ai-thinking.open .ai-thinking__chevron {
+  transform: rotate(0deg);
+}
+
+.ai-thinking:not(.open) .ai-thinking__chevron {
+  transform: rotate(-90deg);
+}
+
+.ai-thinking__body {
+  border-top: 1px solid var(--border-subtle);
+  display: none;
+}
+
+.ai-thinking.open .ai-thinking__body {
+  display: block;
+}
+
+.ai-thinking__list {
+  display: flex;
+  flex-direction: column;
+}
+
+.ai-thinking-item {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.ai-thinking-item:last-child {
+  border-bottom: none;
+}
+
+.ai-thinking-item__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.ai-thinking-item__title {
+  font-size: var(--text-xs);
+  color: var(--text-primary);
+  font-weight: var(--font-medium);
+}
+
+.ai-thinking-item__meta {
+  font-size: 10px;
+  color: var(--text-muted);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  padding: 1px 6px;
+}
+
+.ai-thinking-item__chip {
+  font-size: 10px;
+  color: var(--amber);
+  border: 1px solid var(--amber-ring);
+  background: var(--amber-bg);
+  border-radius: var(--radius-full);
+  padding: 1px 6px;
+}
+
+.ai-thinking-item__preview {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.45;
 }
 
 /* ---- Pipeline badge --------------------------------------- */
@@ -524,7 +664,13 @@
   font-family: var(--font-mono);
 }
 
-.cmd-block__copy {
+.cmd-block__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cmd-block__action {
   background: none;
   border: none;
   color: var(--text-muted);
@@ -534,8 +680,12 @@
   transition: color 0.15s;
 }
 
-.cmd-block__copy:hover {
+.cmd-block__action:hover {
   color: var(--text-primary);
+}
+
+.cmd-block__action--apply {
+  color: #86efac;
 }
 
 .cmd-block pre {

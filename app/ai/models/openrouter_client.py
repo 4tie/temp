@@ -52,7 +52,7 @@ def _headers_for(api_key: str) -> dict:
     return {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://replit.com",
+        "HTTP-Referer": "",
         "X-Title": "4tie",
     }
 

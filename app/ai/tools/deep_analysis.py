@@ -2084,10 +2084,9 @@ def _call_openrouter_narrative(
     overfitting: dict, n_trades: int,
 ) -> dict | None:
     import asyncio
-    from ..models.openrouter_client import _api_key
+    from ..models.openrouter_client import has_api_keys
 
-    api_key = _api_key()
-    if not api_key:
+    if not has_api_keys():
         return None
 
     system_prompt = """You are an elite quantitative trading analyst. Your job is to diagnose exactly why a trading strategy produced these backtest results — not just name the symptoms, but trace the causal chain from symptoms to root cause in the strategy's logic, parameters, and market fit.

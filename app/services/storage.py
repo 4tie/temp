@@ -2,6 +2,7 @@ import json
 import os
 import re
 import shutil
+import threading
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
@@ -11,6 +12,9 @@ from app.services.result_normalizer import normalize_backtest_result
 from app.services.result_parser import parse_backtest_results, load_backtest_result_payload
 
 _SAFE_ID_RE = re.compile(r"^[A-Za-z0-9_\-]+$")
+_SAFE_FOLDER_RE = re.compile(r"[^A-Za-z0-9_\-]+")
+_VERSION_RE = re.compile(r"^v(\d+)$")
+_VERSION_ALLOC_LOCK = threading.Lock()
 
 
 def _validate_id(value: str) -> str:
@@ -141,6 +145,8 @@ def list_runs() -> list[dict[str, Any]]:
         if meta:
             meta = dict(meta)
             meta["run_id"] = d.name
+            meta.setdefault("display_strategy", meta.get("strategy"))
+            meta.setdefault("display_version", meta.get("strategy_version"))
             has_results_file = (d / "parsed_results.json").exists()
             has_local_artifact = _run_dir_has_local_artifact(d)
 
@@ -169,6 +175,32 @@ def get_run_dir(run_id: str) -> Path:
     d = BACKTEST_RESULTS_DIR / run_id
     d.mkdir(parents=True, exist_ok=True)
     return d
+
+
+def allocate_strategy_version_dir(strategy_base: str) -> tuple[str, Path]:
+    strategy_folder = _safe_strategy_folder(strategy_base)
+    strategy_dir = BACKTEST_RESULTS_DIR / strategy_folder
+    strategy_dir.mkdir(parents=True, exist_ok=True)
+
+    with _VERSION_ALLOC_LOCK:
+        latest = 0
+        for child in strategy_dir.iterdir():
+            if not child.is_dir():
+                continue
+            match = _VERSION_RE.match(child.name)
+            if not match:
+                continue
+            latest = max(latest, int(match.group(1)))
+
+        next_version = latest + 1
+        while True:
+            label = f"v{next_version}"
+            version_dir = strategy_dir / label
+            try:
+                version_dir.mkdir(parents=False, exist_ok=False)
+                return label, version_dir
+            except FileExistsError:
+                next_version += 1
 
 
 def load_presets() -> dict[str, Any]:
@@ -250,3 +282,9 @@ def _results_need_rehydrate(results: dict[str, Any]) -> bool:
     if not raw_artifact.get("available"):
         return True
     return False
+
+
+def _safe_strategy_folder(strategy_base: str) -> str:
+    value = _SAFE_FOLDER_RE.sub("_", str(strategy_base or "").strip())
+    value = value.strip("._")
+    return value or "strategy"

@@ -5,7 +5,7 @@ from app.core.config import STRATEGIES_DIR, DATA_DIR, FREQTRADE_CONFIG_DIR, HYPE
 
 
 _TIMERANGE_RE = re.compile(r"^(\d{8})-(\d{8})$")
-_DEFAULT_DOWNLOAD_START = "20251001"
+_DEFAULT_DOWNLOAD_START = "20240101"
 
 
 def _today_yyyymmdd() -> str:
@@ -67,6 +67,7 @@ def build_download_data_command(
         "-c", "user_data/config.json",
         "--timeframes", timeframe,
         "--timerange", _effective_download_timerange(timerange),
+        "--prepend",
     ]
 
     if pairs:

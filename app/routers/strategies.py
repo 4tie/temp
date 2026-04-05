@@ -1,5 +1,8 @@
 import json
 import re
+import ast
+import os
+import tempfile
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel
@@ -57,6 +60,24 @@ class ParamUpdate(BaseModel):
     parameters: dict[str, Any]
 
 
+class SourceUpdate(BaseModel):
+    source: str
+
+
+def _atomic_write_utf8(path, content: str) -> int:
+    encoded = content.encode("utf-8")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp_path = tempfile.mkstemp(prefix=f"{path.name}.", suffix=".tmp", dir=str(path.parent))
+    try:
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(encoded)
+        os.replace(tmp_path, path)
+    finally:
+        if os.path.exists(tmp_path):
+            os.unlink(tmp_path)
+    return len(encoded)
+
+
 @router.get("")
 async def get_strategies():
     strategies = list_strategies()
@@ -89,3 +110,22 @@ async def get_source(strategy_name: str):
     if not path.exists():
         raise HTTPException(status_code=404, detail="Strategy source not found")
     return path.read_text(encoding="utf-8")
+
+
+@router.post("/{strategy_name}/source")
+async def save_source(strategy_name: str, body: SourceUpdate):
+    _checked_strategy(strategy_name)
+    path = STRATEGIES_DIR / f"{strategy_name}.py"
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="Strategy source not found")
+
+    try:
+        ast.parse(body.source, filename=f"{strategy_name}.py")
+    except SyntaxError as exc:
+        line = exc.lineno or 0
+        col = exc.offset or 0
+        detail = f"Python syntax error at line {line}, column {col}: {exc.msg}"
+        raise HTTPException(status_code=400, detail=detail)
+
+    bytes_written = _atomic_write_utf8(path, body.source)
+    return {"ok": True, "strategy": strategy_name, "bytes_written": bytes_written}

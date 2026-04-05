@@ -86,6 +86,8 @@ window.ResultExplorer = (() => {
     const detail = _state.detail || {};
     const results = detail.results || {};
     const meta = detail.meta || {};
+    const displayStrategy = meta.display_strategy || meta.strategy || results.display_strategy || results.strategy_name || 'Run';
+    const displayVersion = meta.display_version || meta.strategy_version || results.display_version || null;
     const summary = results.summary || {};
     const profitPct = FMT.resultProfitPercent(summary);
     const winRate = FMT.resultWinRate(summary.winRate ?? summary.win_rate);
@@ -97,7 +99,7 @@ window.ResultExplorer = (() => {
 
     DOM.setText(
       _title,
-      `${meta.strategy || results.strategy_name || 'Run'} · ${FMT.truncate(_state.runId, 30)}`
+      `${displayVersion ? `${displayStrategy} · ${displayVersion}` : displayStrategy} · ${FMT.truncate(_state.runId, 30)}`
     );
 
     DOM.setHTML(
@@ -106,11 +108,15 @@ window.ResultExplorer = (() => {
         <div class="result-explorer" data-tab-group>
           <div class="result-explorer__hero">
             <div class="result-explorer__hero-main">
-              <div class="result-explorer__hero-title">${_esc(meta.strategy || results.strategy_name || 'Backtest')}</div>
+              <div class="result-explorer__hero-title">${_esc(displayVersion ? `${displayStrategy} · ${displayVersion}` : displayStrategy)}</div>
               <div class="result-explorer__hero-meta">
                 <span>${_esc(meta.timeframe || summary.timeframe || '—')}</span>
                 <span>${_esc(meta.exchange || '—')}</span>
                 <span>${_esc(meta.timerange || results.run_metadata?.timerange || '—')}</span>
+                <span>${_esc(_state.runId || '—')}</span>
+              </div>
+              <div style="margin-top:8px">
+                <button class="btn btn--secondary btn--sm" data-action="apply-config">Apply Run Config</button>
               </div>
             </div>
             <div class="result-explorer__hero-stats">
@@ -130,6 +136,7 @@ window.ResultExplorer = (() => {
             ${_tabButton('tags', 'Tags & Exits')}
             ${_tabButton('periods', 'Periods')}
             ${_tabButton('diagnostics', 'Diagnostics')}
+            ${_tabButton('warnings', 'Data Integrity Warnings')}
             ${_tabButton('raw', 'Raw')}
           </div>
 
@@ -140,6 +147,7 @@ window.ResultExplorer = (() => {
           <section class="tab-panel" data-tab-panel="tags">${_renderTagsTab(results)}</section>
           <section class="tab-panel" data-tab-panel="periods">${_renderPeriodsTab(results)}</section>
           <section class="tab-panel" data-tab-panel="diagnostics">${_renderDiagnosticsTab(detail)}</section>
+          <section class="tab-panel" data-tab-panel="warnings">${_renderWarningsTab(detail)}</section>
           <section class="tab-panel" data-tab-panel="raw">${_renderRawTab()}</section>
         </div>
       `
@@ -151,6 +159,16 @@ window.ResultExplorer = (() => {
   }
 
   function _bind() {
+    const tabsWrap = _body.querySelector('.result-explorer__tabs');
+    if (tabsWrap) {
+      DOM.on(tabsWrap, 'wheel', (event) => {
+        // Make mouse-wheel usable for the horizontal tab strip.
+        if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+        event.preventDefault();
+        tabsWrap.scrollLeft += event.deltaY;
+      }, { passive: false });
+    }
+
     _body.querySelectorAll('[data-tab]').forEach((el) => {
       DOM.on(el, 'click', () => {
         _state.activeTab = el.dataset.tab || 'overview';
@@ -200,6 +218,22 @@ window.ResultExplorer = (() => {
         }
       });
     }
+
+    const applyConfig = _body.querySelector('[data-action="apply-config"]');
+    if (applyConfig) {
+      DOM.on(applyConfig, 'click', async () => {
+        try {
+          const res = await API.applyRunConfig(_state.runId);
+          if (res.warnings?.length) {
+            Toast.warning(`Config applied with warnings: ${res.warnings.join(' | ')}`);
+          } else {
+            Toast.success('Run config applied.');
+          }
+        } catch (err) {
+          Toast.error('Failed to apply run config: ' + err.message);
+        }
+      });
+    }
   }
 
   function _renderOverviewTab(detail) {
@@ -210,10 +244,6 @@ window.ResultExplorer = (() => {
     const risk = results.risk_metrics || {};
     const run = results.run_metadata || {};
     const config = results.config_snapshot || {};
-    const diagnostics = results.diagnostics || {};
-    const integrityWarnings = (diagnostics.integrity_warnings || diagnostics.warnings || [])
-      .filter((warning) => String(warning || '').toLowerCase().includes('missing metric') || String(warning || '').toLowerCase().includes('corrected metric mismatch'));
-
     const performance = [
       ['Total Profit %', _formatPct(FMT.resultProfitPercent(summary), 2), FMT.toneProfit(FMT.resultProfitPercent(summary))],
       ['Profit (abs)', FMT.currency(summary.totalProfit), FMT.toneProfit(summary.totalProfit)],
@@ -259,7 +289,8 @@ window.ResultExplorer = (() => {
 
     const runtime = [
       ['Run ID', _esc(_state.runId)],
-      ['Strategy', _esc(meta.strategy || run.strategy_name || '—')],
+      ['Strategy', _esc(meta.display_strategy || meta.strategy || run.strategy_name || '—')],
+      ['Strategy Version', _esc(meta.display_version || meta.strategy_version || results.display_version || '—')],
       ['Strategy Class', _esc(meta.strategy_class || '—')],
       ['Exchange', _esc(meta.exchange || '—')],
       ['Timeframe', _esc(run.timeframe || meta.timeframe || '—')],
@@ -292,14 +323,6 @@ window.ResultExplorer = (() => {
     ];
 
     return `
-      ${integrityWarnings.length ? `
-        <div class="result-explorer__section">
-          <div class="section-heading">Data Integrity Warnings</div>
-          <div class="result-explorer__list">
-            ${integrityWarnings.map((warning) => `<div class="result-explorer__list-item">${_esc(warning)}</div>`).join('')}
-          </div>
-        </div>
-      ` : ''}
       <div class="result-explorer__section">
         <div class="section-heading">Performance</div>
         <div class="detail-grid">${performance.map(([k, v, t]) => _detailItem(k, v, t)).join('')}</div>
@@ -319,6 +342,28 @@ window.ResultExplorer = (() => {
       <div class="result-explorer__section">
         <div class="section-heading">Strategy Runtime Settings</div>
         <div class="detail-grid">${behavior.map(([k, v]) => _detailItem(k, v)).join('')}</div>
+      </div>
+    `;
+  }
+
+  function _renderWarningsTab(detail) {
+    const diagnostics = (detail?.results || {}).diagnostics || {};
+    const allWarnings = diagnostics.integrity_warnings || diagnostics.warnings || [];
+    const warnings = allWarnings.filter((warning) => {
+      const text = String(warning || '').toLowerCase();
+      return text.includes('missing metric') || text.includes('corrected metric mismatch');
+    });
+
+    if (!warnings.length) {
+      return '<div class="empty-state">No data integrity warnings for this run.</div>';
+    }
+
+    return `
+      <div class="result-explorer__section">
+        <div class="section-heading">Data Integrity Warnings</div>
+        <div class="result-explorer__list">
+          ${warnings.map((warning) => `<div class="result-explorer__list-item">${_esc(warning)}</div>`).join('')}
+        </div>
       </div>
     `;
   }
@@ -799,6 +844,13 @@ window.ResultExplorer = (() => {
       panel.classList.toggle('tab-panel--active', active);
       panel.hidden = !active;
     });
+    _scrollTabIntoView(id);
+  }
+
+  function _scrollTabIntoView(id) {
+    const tab = _body.querySelector(`[data-tab="${id}"]`);
+    if (!tab || typeof tab.scrollIntoView !== 'function') return;
+    tab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
   }
 
   function _formatPct(value, decimals = 2, showSign = true) {

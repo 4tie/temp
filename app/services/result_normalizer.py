@@ -733,7 +733,19 @@ def _collect_integrity_warnings(
     if starting and ending is not None:
         derived_total_pct = ((ending - starting) / starting) * 100.0
         raw_total_pct = _to_float(summary.get("totalProfitPct"))
-        original_total_pct = _to_float(_coalesce(raw_summary.get("totalProfitPct"), raw_summary.get("profit_total_pct")))
+        original_total_pct = _coerce_profit_pct(
+            _coalesce(raw_summary.get("totalProfitPct"), raw_summary.get("profit_total_pct")),
+            ratio_value=_coalesce(
+                raw_balance.get("profit_total"),
+                result.get("overview", {}).get("profit_total"),
+            ),
+            abs_value=_coalesce(
+                raw_balance.get("profit_total_abs"),
+                result.get("overview", {}).get("profit_total_abs"),
+            ),
+            starting_balance=starting,
+            final_balance=ending,
+        )
         if raw_total_pct is None:
             summary["totalProfitPct"] = derived_total_pct
         else:
@@ -772,7 +784,12 @@ def _collect_integrity_warnings(
             pct_key = f"profit_total_{side}_pct"
             abs_value = _to_float(balance_metrics.get(abs_key))
             pct_value = _to_float(balance_metrics.get(pct_key))
-            original_pct = _to_float(raw_balance.get(pct_key))
+            original_pct = _coerce_profit_pct(
+                raw_balance.get(pct_key),
+                ratio_value=raw_balance.get(f"profit_total_{side}"),
+                abs_value=raw_balance.get(abs_key),
+                starting_balance=starting,
+            )
             if abs_value is None:
                 continue
             derived_pct = (abs_value / starting) * 100.0

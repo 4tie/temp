@@ -23,6 +23,77 @@ window.SettingsPage = (() => {
     if (el && v != null) el.value = v;
   }
 
+  function _splitApiKeys(raw) {
+    return String(raw || '')
+      .split(/[\n,]+/g)
+      .map(s => s.trim())
+      .filter(Boolean);
+  }
+
+  function _getApiRows() {
+    return Array.from(DOM.$$('#s-or-list .settings-api-row', _el) || []);
+  }
+
+  function _collectApiKeysRaw() {
+    const values = _getApiRows()
+      .map(row => (DOM.$('.settings-api-input', row) || {}).value || '')
+      .map(v => v.trim())
+      .filter(Boolean);
+    return values.join('\n');
+  }
+
+  function _updateApiKeyMeta() {
+    const count = _getApiRows()
+      .map(row => (DOM.$('.settings-api-input', row) || {}).value || '')
+      .map(v => v.trim())
+      .filter(Boolean).length;
+    const counter = DOM.$('#s-or-count', _el);
+    if (counter) counter.textContent = `${count} key${count === 1 ? '' : 's'}`;
+  }
+
+  function _addApiKeyRow(value = '') {
+    const list = DOM.$('#s-or-list', _el);
+    if (!list) return;
+    const row = document.createElement('div');
+    row.className = 'settings-api-row';
+    row.innerHTML = `
+      <input class="form-input settings-api-input" type="password" autocomplete="off" placeholder="sk-or-..." spellcheck="false">
+      <button type="button" class="settings-api-btn" data-action="toggle" title="Show/hide key">Show</button>
+      <button type="button" class="settings-api-btn settings-api-btn--danger" data-action="remove" title="Remove key">Remove</button>
+    `;
+
+    const input = DOM.$('.settings-api-input', row);
+    input.value = value || '';
+    DOM.on(input, 'input', _updateApiKeyMeta);
+
+    DOM.on(DOM.$('[data-action="toggle"]', row), 'click', (e) => {
+      const hidden = input.type === 'password';
+      input.type = hidden ? 'text' : 'password';
+      e.currentTarget.textContent = hidden ? 'Hide' : 'Show';
+    });
+
+    DOM.on(DOM.$('[data-action="remove"]', row), 'click', () => {
+      row.remove();
+      if (!_getApiRows().length) _addApiKeyRow('');
+      _updateApiKeyMeta();
+    });
+
+    list.appendChild(row);
+    _updateApiKeyMeta();
+  }
+
+  function _setApiKeys(raw) {
+    const list = DOM.$('#s-or-list', _el);
+    if (!list) return;
+    list.innerHTML = '';
+    const keys = _splitApiKeys(raw);
+    if (!keys.length) {
+      _addApiKeyRow('');
+      return;
+    }
+    keys.forEach(key => _addApiKeyRow(key));
+  }
+
   /* ── Render ──────────────────────────────────────────────── */
   function _render() {
     DOM.setHTML(_el, `
@@ -45,63 +116,94 @@ window.SettingsPage = (() => {
               <div class="settings-section-label">AI Providers</div>
 
               <div class="form-group">
-                <label class="form-label" for="s-or-key">
-                  OpenRouter API Key
+                <label class="form-label" for="s-or-list">
+                  OpenRouter API Keys
                   <a class="settings-link" href="https://openrouter.ai/keys" target="_blank" rel="noopener">Get key ↗</a>
                 </label>
-                <div class="settings-secret-wrap">
-                  <input class="form-input settings-secret-input" id="s-or-key"
-                    type="password" autocomplete="off" placeholder="sk-or-…" spellcheck="false">
-                  <button type="button" class="settings-reveal-btn" id="s-or-key-reveal" title="Show/hide">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                  </button>
+                <div class="settings-api-box">
+                  <div class="settings-api-toolbar">
+                    <span class="settings-api-count" id="s-or-count">0 keys</span>
+                    <div class="settings-api-actions">
+                      <button type="button" class="settings-api-btn" id="s-or-add">+ Add key</button>
+                      <button type="button" class="settings-api-btn settings-api-btn--danger" id="s-or-clear">Clear</button>
+                    </div>
+                  </div>
+                  <div class="settings-api-list" id="s-or-list"></div>
                 </div>
-                <span class="form-hint">Required for OpenRouter AI pipeline. Leave blank to use Ollama only.</span>
+                <span class="form-hint">Add one key per row. If values are masked, updating this list replaces the saved keys.</span>
               </div>
 
-              <div class="form-group">
-                <label class="form-label" for="s-ollama-url">Ollama Base URL</label>
-                <input class="form-input" id="s-ollama-url" type="text"
-                  placeholder="http://localhost:11434" spellcheck="false">
-                <span class="form-hint">Host and port of your Ollama server. Default: <code class="settings-code">http://localhost:11434</code></span>
+              <div class="settings-input-panel">
+                <div class="settings-input-panel__toolbar">
+                  <span class="settings-api-count">Ollama</span>
+                </div>
+                <div class="settings-input-panel__body">
+                  <div class="form-group">
+                    <label class="form-label" for="s-ollama-url">Ollama Base URL</label>
+                    <input class="form-input" id="s-ollama-url" type="text"
+                      placeholder="http://localhost:11434" spellcheck="false">
+                    <span class="form-hint">Host and port of your Ollama server. Default: <code class="settings-code">http://localhost:11434</code></span>
+                  </div>
+                </div>
               </div>
 
               <div class="settings-section-label" style="margin-top:var(--space-4)">FreqTrade</div>
 
-              <div class="form-group">
-                <label class="form-label" for="s-ft-path">FreqTrade Executable Path</label>
-                <input class="form-input" id="s-ft-path" type="text"
-                  placeholder="/home/user/.local/bin/freqtrade" spellcheck="false">
-                <span class="form-hint">Absolute path to the <code class="settings-code">freqtrade</code> binary. Leave blank to use system PATH.</span>
+              <div class="settings-input-panel">
+                <div class="settings-input-panel__toolbar">
+                  <span class="settings-api-count">Runtime</span>
+                </div>
+                <div class="settings-input-panel__body">
+                  <div class="form-group">
+                    <label class="form-label" for="s-ft-path">FreqTrade Executable Path</label>
+                    <input class="form-input" id="s-ft-path" type="text"
+                      placeholder="/home/user/.local/bin/freqtrade" spellcheck="false">
+                    <span class="form-hint">Absolute path to the <code class="settings-code">freqtrade</code> binary. Leave blank to use system PATH.</span>
+                  </div>
+                </div>
               </div>
 
               <div class="settings-section-label" style="margin-top:var(--space-4)">Data Directories</div>
 
-              <div class="form-group">
-                <label class="form-label" for="s-user-data">user_data Directory</label>
-                <input class="form-input" id="s-user-data" type="text"
-                  placeholder="./user_data" spellcheck="false">
-                <span class="form-hint">Root of all FreqTrade data. Contains <code class="settings-code">backtest_results/</code>, <code class="settings-code">strategies/</code>, <code class="settings-code">data/</code>.</span>
+              <div class="settings-input-panel">
+                <div class="settings-input-panel__toolbar">
+                  <span class="settings-api-count">Paths</span>
+                </div>
+                <div class="settings-input-panel__body">
+                  <div class="form-group">
+                    <label class="form-label" for="s-user-data">user_data Directory</label>
+                    <input class="form-input" id="s-user-data" type="text"
+                      placeholder="./user_data" spellcheck="false">
+                    <span class="form-hint">Root of all FreqTrade data. Contains <code class="settings-code">backtest_results/</code>, <code class="settings-code">strategies/</code>, <code class="settings-code">data/</code>.</span>
+                  </div>
+                </div>
               </div>
 
               <div class="settings-section-label" style="margin-top:var(--space-4)">Server</div>
 
-              <div class="form-row">
-                <div class="form-group">
-                  <label class="form-label" for="s-port">API Port</label>
-                  <input class="form-input" id="s-port" type="number" min="1024" max="65535" placeholder="5000">
-                  <span class="form-hint">Requires server restart.</span>
+              <div class="settings-input-panel">
+                <div class="settings-input-panel__toolbar">
+                  <span class="settings-api-count">Server Defaults</span>
                 </div>
-                <div class="form-group">
-                  <label class="form-label" for="s-exchange-env">Default Exchange</label>
-                  <select class="form-select" id="s-exchange-env">
-                    <option value="binance">Binance</option>
-                    <option value="binanceus">Binance US</option>
-                    <option value="kraken">Kraken</option>
-                    <option value="okx">OKX</option>
-                    <option value="bybit">Bybit</option>
-                    <option value="ftx">FTX</option>
-                  </select>
+                <div class="settings-input-panel__body">
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label class="form-label" for="s-port">API Port</label>
+                      <input class="form-input" id="s-port" type="number" min="1024" max="65535" placeholder="5000">
+                      <span class="form-hint">Requires server restart.</span>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" for="s-exchange-env">Default Exchange</label>
+                      <select class="form-select" id="s-exchange-env">
+                        <option value="binance">Binance</option>
+                        <option value="binanceus">Binance US</option>
+                        <option value="kraken">Kraken</option>
+                        <option value="okx">OKX</option>
+                        <option value="bybit">Bybit</option>
+                        <option value="ftx">FTX</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -125,45 +227,61 @@ window.SettingsPage = (() => {
           </div>
           <div class="card__body">
             <form id="settings-form" class="form">
-              <div class="form-row">
-                <div class="form-group">
-                  <label class="form-label" for="s-exchange">Exchange</label>
-                  <select class="form-select" id="s-exchange" name="exchange">
-                    <option value="binance">Binance</option>
-                    <option value="binanceus">Binance US</option>
-                    <option value="kraken">Kraken</option>
-                    <option value="okx">OKX</option>
-                    <option value="bybit">Bybit</option>
-                    <option value="ftx">FTX</option>
-                  </select>
+              <div class="settings-section-label">Market Defaults</div>
+              <div class="settings-input-panel">
+                <div class="settings-input-panel__toolbar">
+                  <span class="settings-api-count">Exchange &amp; Timeframe</span>
                 </div>
-                <div class="form-group">
-                  <label class="form-label" for="s-timeframe">Default Timeframe</label>
-                  <select class="form-select" id="s-timeframe" name="timeframe">
-                    <option value="1m">1m</option>
-                    <option value="5m" selected>5m</option>
-                    <option value="15m">15m</option>
-                    <option value="30m">30m</option>
-                    <option value="1h">1h</option>
-                    <option value="4h">4h</option>
-                    <option value="1d">1d</option>
-                  </select>
-                </div>
-              </div>
-              <div class="form-row">
-                <div class="form-group">
-                  <label class="form-label" for="s-wallet">Starting Wallet ($)</label>
-                  <input class="form-input" id="s-wallet" name="dry_run_wallet" type="number" value="1000" min="1">
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="s-max-trades">Max Open Trades</label>
-                  <input class="form-input" id="s-max-trades" name="max_open_trades" type="number" value="3" min="1">
+                <div class="settings-input-panel__body">
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label class="form-label" for="s-exchange">Exchange</label>
+                      <select class="form-select" id="s-exchange" name="exchange">
+                        <option value="binance">Binance</option>
+                        <option value="binanceus">Binance US</option>
+                        <option value="kraken">Kraken</option>
+                        <option value="okx">OKX</option>
+                        <option value="bybit">Bybit</option>
+                        <option value="ftx">FTX</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" for="s-timeframe">Default Timeframe</label>
+                      <select class="form-select" id="s-timeframe" name="timeframe">
+                        <option value="1m">1m</option>
+                        <option value="5m" selected>5m</option>
+                        <option value="15m">15m</option>
+                        <option value="30m">30m</option>
+                        <option value="1h">1h</option>
+                        <option value="4h">4h</option>
+                        <option value="1d">1d</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div class="form-group">
-                <label class="form-label" for="s-stake">Stake Amount</label>
-                <input class="form-input" id="s-stake" name="stake_amount" type="text" value="unlimited">
-                <span class="form-hint">Use "unlimited" to distribute wallet evenly.</span>
+              <div class="settings-section-label" style="margin-top:var(--space-4)">Risk &amp; Capital</div>
+              <div class="settings-input-panel">
+                <div class="settings-input-panel__toolbar">
+                  <span class="settings-api-count">Wallet &amp; Positioning</span>
+                </div>
+                <div class="settings-input-panel__body">
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label class="form-label" for="s-wallet">Starting Wallet ($)</label>
+                      <input class="form-input" id="s-wallet" name="dry_run_wallet" type="number" value="1000" min="1">
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" for="s-max-trades">Max Open Trades</label>
+                      <input class="form-input" id="s-max-trades" name="max_open_trades" type="number" value="3" min="1">
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="s-stake">Stake Amount</label>
+                    <input class="form-input" id="s-stake" name="stake_amount" type="text" value="unlimited">
+                    <span class="form-hint">Use "unlimited" to distribute wallet evenly.</span>
+                  </div>
+                </div>
               </div>
               <div class="form-actions">
                 <button type="submit" class="btn btn--primary">Save Defaults</button>
@@ -189,14 +307,8 @@ window.SettingsPage = (() => {
 
     /* ── Bind env form ── */
     DOM.on(DOM.$('#env-form', _el), 'submit', _onSaveEnv);
-
-    const revealBtn = DOM.$('#s-or-key-reveal', _el);
-    const keyInput  = DOM.$('#s-or-key', _el);
-    DOM.on(revealBtn, 'click', () => {
-      const isHidden = keyInput.type === 'password';
-      keyInput.type = isHidden ? 'text' : 'password';
-      revealBtn.style.color = isHidden ? 'var(--violet)' : '';
-    });
+    DOM.on(DOM.$('#s-or-add', _el), 'click', () => _addApiKeyRow(''));
+    DOM.on(DOM.$('#s-or-clear', _el), 'click', () => _setApiKeys(''));
 
     /* ── Bind trade defaults form ── */
     DOM.on(DOM.$('#settings-form', _el), 'submit', _onSaveDefaults);
@@ -214,7 +326,7 @@ window.SettingsPage = (() => {
       ]);
 
       // Populate env fields
-      _set('s-or-key',      envData.openrouter_api_key || '');
+      _setApiKeys(envData.openrouter_api_keys || envData.openrouter_api_key || '');
       _set('s-ollama-url',  envData.ollama_base_url    || '');
       _set('s-ft-path',     envData.freqtrade_path     || '');
       _set('s-user-data',   envData.user_data_dir      || '');
@@ -245,7 +357,7 @@ window.SettingsPage = (() => {
     btn.disabled = true;
 
     const body = {
-      openrouter_api_key: _val('s-or-key'),
+      openrouter_api_keys: _collectApiKeysRaw(),
       ollama_base_url:    _val('s-ollama-url'),
       freqtrade_path:     _val('s-ft-path'),
       user_data_dir:      _val('s-user-data'),
@@ -305,6 +417,7 @@ window.SettingsPage = (() => {
       return;
     }
     el.innerHTML = `
+      <div class="settings-table-wrap">
       <table class="data-table">
         <thead><tr><th>Name</th><th>Exchange</th><th>Timeframe</th><th>Saved</th><th></th></tr></thead>
         <tbody>
@@ -323,7 +436,8 @@ window.SettingsPage = (() => {
             </tr>`;
           }).join('')}
         </tbody>
-      </table>`;
+      </table>
+      </div>`;
 
     el.querySelectorAll('[data-load-preset]').forEach(btn =>
       DOM.on(btn, 'click', () => _loadPreset(btn.dataset.loadPreset))

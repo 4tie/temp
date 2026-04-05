@@ -179,6 +179,27 @@ class ResultNormalizerTests(unittest.TestCase):
         self.assertTrue(any("Corrected metric mismatch: summary.avgProfitPct" in warning for warning in warnings))
         self.assertTrue(any("Corrected metric mismatch: balance.profit_total_short_pct" in warning for warning in warnings))
 
+    def test_ratio_form_long_pct_does_not_emit_false_mismatch_warning(self) -> None:
+        raw = {
+            "balance_metrics": {
+                "starting_balance": 50.0,
+                "final_balance": 50.41,
+                "profit_total_long_abs": 0.41,
+                "profit_total_long": 0.0082,
+                "profit_total_long_pct": 0.0082,
+                "profit_total_short_abs": 0.0,
+                "profit_total_short": 0.0,
+            },
+            "run_metadata": {"trade_count_short": 0},
+            "summary_metrics": {"profit_mean_pct": 0.02},
+            "diagnostics": {},
+        }
+
+        normalized = normalize_backtest_result(raw)
+        self.assertAlmostEqual(normalized["balance_metrics"]["profit_total_long_pct"], 0.82, places=2)
+        warnings = normalized["diagnostics"]["warnings"]
+        self.assertFalse(any("balance.profit_total_long_pct recalculated" in warning for warning in warnings))
+
 
 if __name__ == "__main__":
     unittest.main()

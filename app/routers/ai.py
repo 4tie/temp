@@ -15,6 +15,7 @@ from pydantic import BaseModel
 
 from app.ai.models.openrouter_client import (
     list_models as fetch_openrouter_models,
+    get_api_keys as get_openrouter_api_keys,
     stream_chat,
     chat_complete,
 )
@@ -42,7 +43,7 @@ router = APIRouter(prefix="/ai", tags=["ai"])
 @router.get("/providers")
 async def get_providers():
     """Return provider status + available models."""
-    openrouter_key = os.environ.get("OPENROUTER_API_KEY")
+    openrouter_keys = get_openrouter_api_keys()
     ollama_online = await check_ollama_status()
     ollama_models = []
     openrouter_models = []
@@ -51,7 +52,7 @@ async def get_providers():
         raw = await fetch_ollama_models()
         ollama_models = [{"id": m["name"], "name": m["name"]} for m in raw]
 
-    if openrouter_key:
+    if openrouter_keys:
         raw = await fetch_openrouter_models()
         openrouter_models = [
             {"id": m["id"], "name": m.get("name", m["id"])}
@@ -65,7 +66,7 @@ async def get_providers():
                 "models": ollama_models,
             },
             "openrouter": {
-                "available": bool(openrouter_key),
+                "available": bool(openrouter_keys),
                 "models": openrouter_models,
             },
         }

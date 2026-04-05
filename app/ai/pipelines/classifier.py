@@ -13,6 +13,7 @@ from pydantic import BaseModel
 
 from ..models.provider_dispatch import chat_complete, get_last_dispatch_meta
 from ..models.registry import fetch_free_models, get_model_for_role
+from ..prompts.trading import CLASSIFIER_SYSTEM_PROMPT
 
 logger = logging.getLogger(__name__)
 
@@ -54,35 +55,6 @@ class Classification(BaseModel):
     classifier_duration_ms: int = 0
     classifier_fallback_used: bool = False
     classifier_fallback_reason: str | None = None
-
-
-CLASSIFIER_SYSTEM_PROMPT = """You are a task classifier for a trading strategy analysis system.
-Analyze the user request and return ONLY a JSON object (no markdown, no explanation).
-
-Task types (pick 1-3 that apply):
-- casual_chat: greetings, small talk, simple questions
-- explanation: asking for explanations, definitions, summaries
-- deep_reasoning: strategy analysis, optimization logic, metric interpretation, trade analysis
-- code_generation: writing/modifying code, parameters, config
-- structured_output: needs strict JSON, tables, schemas
-- tool_calling: executing tools, running backtests, calling APIs
-- comparison: comparing strategies, models, approaches, pairs
-
-Complexity levels:
-- low: simple conversational response, single model sufficient
-- medium: needs analysis + clean presentation (2-step)
-- high: complex analysis that benefits from multiple perspectives (debate mode)
-
-Pipeline types:
-- simple: quick conversational response
-- analysis: deep reasoning then composed output
-- debate: two parallel analyses then judge then compose (for high-stakes decisions)
-- code: code generation then explanation
-- structured: strict JSON output
-- tool: tool execution then analysis
-
-Return exactly:
-{"task_types":["..."],"complexity":"low|medium|high","requires_code":false,"requires_structured_out":false,"confidence":0.9,"recommended_pipeline":"simple|analysis|debate|code|structured|tool"}"""
 
 
 DEFAULT_CLASSIFICATION = Classification(

@@ -1,0 +1,202 @@
+.sl-header-badges {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.sl-source-card {
+  margin-top: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
+}
+
+.sl-source-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.sl-source-toolbar__left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.sl-source-heading {
+  margin: 0;
+  padding: 0;
+  border-bottom: none;
+}
+
+.sl-source-toolbar__actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.sl-source-body {
+  padding: var(--space-3);
+}
+
+.sl-source-body.is-hidden {
+  display: none;
+}
+
+.sl-source-editor {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--surface-1);
+}
+
+.sl-source-editor .CodeMirror {
+  height: min(68vh, 700px);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+.sl-source-editor .cm-s-4tie.CodeMirror {
+  background: var(--surface-1);
+  color: var(--text-primary);
+}
+
+.sl-source-editor .cm-s-4tie .CodeMirror-cursor {
+  border-left: 2px solid var(--violet);
+}
+
+.sl-source-editor .CodeMirror-gutters {
+  border-right: 1px solid var(--border-subtle);
+}
+
+.sl-source-editor .cm-s-4tie .CodeMirror-gutters {
+  background: color-mix(in srgb, var(--surface-3) 75%, transparent);
+}
+
+.sl-source-editor .cm-s-4tie .CodeMirror-linenumber {
+  color: var(--text-muted);
+}
+
+.sl-source-editor .cm-s-4tie .CodeMirror-activeline-background {
+  background: color-mix(in srgb, var(--surface-3) 80%, transparent);
+}
+
+.sl-source-editor .cm-s-4tie .CodeMirror-selected {
+  background: color-mix(in srgb, var(--violet) 26%, transparent);
+}
+
+.sl-source-editor .cm-s-4tie .CodeMirror-matchingbracket {
+  color: var(--green);
+  outline: 1px solid var(--green-ring);
+}
+
+.sl-source-editor .cm-s-4tie .cm-comment {
+  color: var(--text-muted);
+}
+
+.sl-source-editor .cm-s-4tie .cm-keyword,
+.sl-source-editor .cm-s-4tie .cm-def {
+  color: #8ab4ff;
+}
+
+.sl-source-editor .cm-s-4tie .cm-number,
+.sl-source-editor .cm-s-4tie .cm-atom {
+  color: #e7b96e;
+}
+
+.sl-source-editor .cm-s-4tie .cm-string,
+.sl-source-editor .cm-s-4tie .cm-string-2 {
+  color: #8fd08f;
+}
+
+.sl-source-editor .cm-s-4tie .cm-property,
+.sl-source-editor .cm-s-4tie .cm-variable,
+.sl-source-editor .cm-s-4tie .cm-variable-2 {
+  color: #c7d4e8;
+}
+
+.sl-source-editor .cm-s-4tie .cm-operator {
+  color: #9dc5ff;
+}
+
+.sl-source-editor .cm-s-4tie .cm-error {
+  background: transparent;
+  color: var(--red);
+}
+
+.sl-source-editor .CodeMirror-merge {
+  border: none;
+}
+
+.sl-source-fallback {
+  padding: var(--space-3);
+}
+
+.sl-source-fallback.is-hidden {
+  display: none;
+}
+
+.sl-source-textarea {
+  margin-top: var(--space-2);
+  min-height: 360px;
+  width: 100%;
+  font-family: var(--font-mono);
+  resize: vertical;
+}
+
+.sl-source-collapsed {
+  margin: var(--space-3);
+  padding: var(--space-3);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.sl-source-collapsed.is-hidden {
+  display: none;
+}
+
+.sl-source-error {
+  padding: 0 var(--space-3) var(--space-3);
+  font-size: var(--text-xs);
+  white-space: pre-wrap;
+}
+
+.sl-source-editor .sl-param-highlight {
+  background: color-mix(in srgb, var(--amber) 22%, transparent);
+  border-bottom: 1px solid var(--amber-ring);
+  border-radius: 2px;
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--amber) 35%, transparent);
+}
+
+@media (max-width: 1024px) {
+  .sl-source-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .sl-source-toolbar__actions {
+    width: 100%;
+  }
+
+  .sl-source-editor .CodeMirror {
+    height: min(58vh, 560px);
+  }
+}
+
+@media (max-width: 720px) {
+  .sl-source-toolbar__actions .btn {
+    flex: 1 1 calc(50% - var(--space-1));
+    min-width: 120px;
+  }
+
+  .sl-source-editor .CodeMirror {
+    height: min(52vh, 460px);
+  }
+}

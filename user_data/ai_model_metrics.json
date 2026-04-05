@@ -1,0 +1,38 @@
+{
+  "updated_at": 1775432643.460351,
+  "roles": {
+    "composer": {
+      "openrouter/model:free": {
+        "requests": 3.0,
+        "successes": 3.0,
+        "rate_limits": 0.0,
+        "latency_sum_ms": 0.0,
+        "latency_samples": 3.0,
+        "cooldown_until": 0.0,
+        "updated_at": 1775432643.4156752
+      }
+    },
+    "explainer": {
+      "openrouter/model:free": {
+        "requests": 9.0,
+        "successes": 9.0,
+        "rate_limits": 0.0,
+        "latency_sum_ms": 6.0,
+        "latency_samples": 9.0,
+        "cooldown_until": 0.0,
+        "updated_at": 1775432643.460351
+      }
+    },
+    "judge": {
+      "openrouter/model:free": {
+        "requests": 3.0,
+        "successes": 3.0,
+        "rate_limits": 0.0,
+        "latency_sum_ms": 4.0,
+        "latency_samples": 3.0,
+        "cooldown_until": 0.0,
+        "updated_at": 1775432643.4501228
+      }
+    }
+  }
+}

@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import json
+import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
@@ -196,6 +199,70 @@ class BacktestRouterTests(unittest.TestCase):
         self.assertTrue(body["raw_artifact_missing"])
         self.assertEqual(body["data_source"], "parsed_results")
         self.assertIn("overview", body["payload"])
+
+    def test_apply_run_config_updates_core_fields_and_last_config(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cfg_path = Path(tmpdir) / "config.json"
+            cfg_path.write_text(json.dumps({"strategy": "Old", "timeframe": "1h"}), encoding="utf-8")
+            with (
+                patch("app.routers.backtest._CONFIG_FILE", cfg_path),
+                patch(
+                    "app.routers.backtest.load_run_meta",
+                    return_value={
+                        "run_id": "run_123",
+                        "strategy": "MultiMa",
+                        "strategy_class": "MultiMa",
+                        "pairs": ["ETH/USDT"],
+                        "timeframe": "5m",
+                        "timerange": "20250101-20250131",
+                        "exchange": "binance",
+                        "dry_run_wallet": 50,
+                        "max_open_trades": 1,
+                        "stake_amount": "unlimited",
+                        "strategy_params": {"buy_fast": 12},
+                    },
+                ),
+                patch("app.routers.backtest.STRATEGIES_DIR", Path(tmpdir)),
+                patch("app.routers.backtest.save_last_config") as save_last_config_mock,
+            ):
+                response = self.client.post("/runs/run_123/apply-config")
+
+            self.assertEqual(response.status_code, 200)
+            body = response.json()
+            self.assertIn("strategy", body["applied"])
+            self.assertIn("last_config", body["applied"])
+            self.assertEqual(body["warnings"], [])
+            saved_cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
+            self.assertEqual(saved_cfg["strategy"], "MultiMa")
+            self.assertEqual(saved_cfg["timeframe"], "5m")
+            save_last_config_mock.assert_called_once()
+            sidecar = json.loads((Path(tmpdir) / "MultiMa.json").read_text(encoding="utf-8"))
+            self.assertEqual(sidecar["params"]["buy"]["buy_fast"], 12)
+
+    def test_apply_run_config_warns_for_external_strategy_path(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cfg_path = Path(tmpdir) / "config.json"
+            cfg_path.write_text("{}", encoding="utf-8")
+            with (
+                patch("app.routers.backtest._CONFIG_FILE", cfg_path),
+                patch(
+                    "app.routers.backtest.load_run_meta",
+                    return_value={
+                        "run_id": "run_123",
+                        "strategy": "MultiMa_v2",
+                        "strategy_class": "MultiMa",
+                        "strategy_path": "/tmp/external",
+                        "strategy_params": {"buy_fast": 12},
+                    },
+                ),
+                patch("app.routers.backtest.save_last_config"),
+            ):
+                response = self.client.post("/runs/run_123/apply-config")
+
+            self.assertEqual(response.status_code, 200)
+            body = response.json()
+            self.assertIn("strategy_params", body["skipped"])
+            self.assertTrue(any("external strategy_path" in warning for warning in body["warnings"]))
 
 
 if __name__ == "__main__":

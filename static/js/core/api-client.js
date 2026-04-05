@@ -25,6 +25,18 @@ window.API = (() => {
   }
 
   const get   = (path)        => request('GET',    path);
+  const getText = async (path) => {
+    const res = await fetch(`${BASE}${path}`, { method: 'GET' });
+    if (!res.ok) {
+      let detail = `HTTP ${res.status}`;
+      try {
+        const j = await res.json();
+        detail = j.detail || JSON.stringify(j);
+      } catch {}
+      throw new Error(detail);
+    }
+    return res.text();
+  };
   const post  = (path, body)  => request('POST',   path, body);
   const del   = (path)        => request('DELETE', path);
   const patch = (path, body)  => request('PATCH',  path, body);
@@ -35,8 +47,11 @@ window.API = (() => {
   /* ---- Strategies ------------------------------------------- */
   const getStrategies      = ()       => get('/strategies');
   const getStrategyParams  = (name)   => get(`/strategies/${encodeURIComponent(name)}/params`);
+  const getStrategySource  = (name)   => getText(`/strategies/${encodeURIComponent(name)}/source`);
   const saveStrategyParams = (name, parameters) =>
     post(`/strategies/${encodeURIComponent(name)}/params`, { parameters });
+  const saveStrategySource = (name, source) =>
+    post(`/strategies/${encodeURIComponent(name)}/source`, { source });
 
   /* ---- Pairs ------------------------------------------------- */
   const getPairs = (exchange = 'binance', timeframe = null) => {
@@ -53,6 +68,7 @@ window.API = (() => {
   const getRuns         = ()        => get('/runs');
   const getRun          = (id)      => get(`/runs/${id}`);
   const getRunRaw       = (id)      => get(`/runs/${id}/raw`);
+  const applyRunConfig  = (id)      => post(`/runs/${id}/apply-config`, {});
   const startBacktest   = (body)    => post('/run', body);
   const deleteRun       = (id)      => del(`/runs/${id}`);
   const getLastConfig   = ()        => get('/last-config');
@@ -84,12 +100,12 @@ window.API = (() => {
   const compareRuns    = (body)      => post('/compare', body);
 
   return {
-    request, get, post, del, patch,
+    request, get, getText, post, del, patch,
     health,
-    getStrategies, getStrategyParams, saveStrategyParams,
+    getStrategies, getStrategyParams, getStrategySource, saveStrategyParams, saveStrategySource,
     getPairs,
     getConfig, patchConfig,
-    getRuns, getRun, getRunRaw, startBacktest, deleteRun, getLastConfig,
+    getRuns, getRun, getRunRaw, applyRunConfig, startBacktest, deleteRun, getLastConfig,
     downloadData, getDownload, dataCoverage,
     getHyperoptRuns, getHyperoptRun, startHyperopt, deleteHyperoptRun,
     getLossFunctions, getHyperoptSpaces, applyHyperoptParams,

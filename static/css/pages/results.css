@@ -11,6 +11,7 @@
   width: min(1320px, calc(100vw - 48px));
   max-width: none;
   max-height: min(88vh, 940px);
+  max-height: min(88dvh, 940px);
   overflow: hidden;
 }
 
@@ -111,13 +112,22 @@
 
 .result-explorer__tabs {
   display: flex;
+  align-items: flex-end;
   gap: var(--space-2);
-  padding: var(--space-4) var(--space-5) 0;
+  padding: var(--space-4) var(--space-5) var(--space-2);
   border-bottom: 1px solid var(--border-subtle);
   overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+  background: var(--surface-1);
 }
 
 .result-explorer__tab {
+  flex: 0 0 auto;
+  min-height: 34px;
   border: 1px solid transparent;
   border-bottom: none;
   border-radius: var(--radius) var(--radius) 0 0;
@@ -130,6 +140,23 @@
   transition: color var(--ease-fast), background-color var(--ease-fast), border-color var(--ease-fast);
 }
 
+.result-explorer__tabs::-webkit-scrollbar {
+  height: 6px;
+}
+
+.result-explorer__tabs::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.result-explorer__tabs::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: var(--radius-full);
+}
+
+.result-explorer__tabs::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}
+
 .result-explorer__tab:hover,
 .result-explorer__tab.tab--active {
   color: var(--text-primary);
@@ -137,11 +164,17 @@
   border-color: var(--border-subtle);
 }
 
+.result-explorer__tab.tab--active {
+  font-weight: var(--font-semibold);
+  box-shadow: inset 0 -2px 0 var(--violet);
+}
+
 .result-explorer .tab-panel {
   display: none;
   padding: var(--space-5);
   overflow-y: auto;
   overscroll-behavior: contain;
+  scrollbar-gutter: stable;
   min-height: 0;
   flex: 1;
 }
@@ -332,6 +365,11 @@
   .result-explorer__hero,
   .result-explorer .tab-panel {
     padding: var(--space-4);
+  }
+
+  .result-explorer__tabs {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
   }
 
   .result-explorer__hero-stats {

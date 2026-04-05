@@ -3,7 +3,26 @@
    ============================================================ */
 
 .settings-layout {
-  max-width: 760px;
+  max-width: 920px;
+}
+
+.settings-layout .card {
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 75%, transparent);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.settings-layout .card__header {
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.settings-layout .card__body {
+  padding-top: var(--space-4);
+  overflow: visible;
+}
+
+.settings-layout .form-row {
+  gap: var(--space-4);
 }
 
 /* ── Section labels inside forms ──────────────────────────── */
@@ -54,40 +73,128 @@
   text-decoration: underline;
 }
 
-/* ── Secret input wrapper ─────────────────────────────────── */
-
-.settings-secret-wrap {
-  position: relative;
-  display: flex;
-  align-items: center;
+.settings-api-box {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--surface-2) 92%, transparent) 0%, var(--surface-1) 100%);
+  overflow: hidden;
 }
 
-.settings-secret-input {
-  flex: 1;
-  padding-right: 38px;   /* room for the reveal button */
+.settings-input-panel {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--surface-2) 92%, transparent) 0%, var(--surface-1) 100%);
+  overflow: hidden;
+}
+
+.settings-api-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+  background: color-mix(in srgb, var(--surface-2) 90%, transparent);
+}
+
+.settings-input-panel__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+  background: color-mix(in srgb, var(--surface-2) 90%, transparent);
+}
+
+.settings-input-panel__body {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+}
+
+.settings-input-panel__body .form-group:last-child {
+  margin-bottom: 0;
+}
+
+.settings-api-count {
   font-family: var(--font-mono);
-  letter-spacing: 0.05em;
-}
-
-.settings-reveal-btn {
-  position: absolute;
-  right: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  background: none;
-  border: none;
+  font-size: var(--text-xs);
   color: var(--text-muted);
-  cursor: pointer;
-  border-radius: var(--radius-xs);
-  transition: color 0.15s;
-  padding: 0;
 }
 
-.settings-reveal-btn:hover {
+.settings-api-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.settings-api-list {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+}
+
+.settings-api-row {
+  display: grid;
+  gap: var(--space-2);
+  grid-template-columns: minmax(0, 1fr) auto auto;
+}
+
+.settings-api-input {
+  font-family: var(--font-mono);
+}
+
+.settings-api-btn {
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-3);
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.settings-api-btn:hover {
+  border-color: var(--border-strong);
   color: var(--text-primary);
+}
+
+.settings-api-btn--danger:hover {
+  border-color: color-mix(in srgb, var(--red) 55%, var(--border-subtle));
+  color: var(--red-light);
+}
+
+.settings-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.settings-table-wrap .data-table {
+  min-width: 620px;
+}
+
+@media (max-width: 768px) {
+  .settings-layout {
+    max-width: 100%;
+  }
+
+  .settings-layout .form-row {
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .settings-api-row {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-api-btn {
+    min-height: 36px;
+  }
 }
 
 /* ── Save status inline label ─────────────────────────────── */

@@ -17,24 +17,66 @@ window.AIDiagPage = (() => {
     evtSource: null,
     streamController: null,
     providers: null,
+    loopEnabled: false,
+    loopBusy: false,
+    loopId: null,
+    loopStream: null,
+    lastApplied: null,
+    pendingRerunPrompt: false,
+    loopToken: 0,
   };
 
   /* ---- DOM refs (populated in init) ------------------------ */
   let _el = {};
 
   /* ---- Markdown renderer ----------------------------------- */
-  function _renderMarkdown(text) {
+  function _collectCodeBlockHints(rawText) {
+    const hints = [];
+    const src = String(rawText || '');
+    const rx = /```([A-Za-z0-9_-]*)\n?([\s\S]*?)```/g;
+    let match;
+    let idx = 0;
+    while ((match = rx.exec(src)) !== null) {
+      const before = src.slice(Math.max(0, match.index - 500), match.index);
+      const after = src.slice(rx.lastIndex, rx.lastIndex + 160);
+      const beforeMatches = [...before.matchAll(/\b([A-Za-z0-9_-]+\.py)\b/g)];
+      const afterMatch = after.match(/\b([A-Za-z0-9_-]+\.py)\b/);
+      const filename = beforeMatches.length
+        ? beforeMatches[beforeMatches.length - 1][1]
+        : (afterMatch ? afterMatch[1] : '');
+      hints[idx] = {
+        lang: String(match[1] || '').toLowerCase(),
+        filename,
+      };
+      idx += 1;
+    }
+    return hints;
+  }
+
+  function _renderMarkdown(text, opts = {}) {
+    const assistantMessageId = opts.assistantMessageId || '';
+    const codeHints = _collectCodeBlockHints(text);
+    let codeIdx = 0;
     let html = text
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-    // Code blocks (``` ... ```)
     html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
-      const label = lang || 'code';
+      const hint = codeHints[codeIdx] || {};
+      const blockIndex = codeIdx;
+      codeIdx += 1;
+      const label = lang || hint.lang || 'code';
       const escaped = code.trim();
-      return `<div class="cmd-block">
+      const filename = hint.filename || '';
+      const isPython = /^python|py$/i.test(label);
+      const actions = [
+        '<button class="cmd-block__action" data-action="copy">copy</button>',
+        `<button class="cmd-block__action" data-action="diff"${isPython ? '' : ' style="display:none"'}>diff</button>`,
+        `<button class="cmd-block__action cmd-block__action--apply" data-action="apply"${isPython ? '' : ' style="display:none"'}>apply</button>`,
+      ].join('');
+      return `<div class="cmd-block" data-code-block-index="${blockIndex}" data-assistant-message-id="${_escHtml(assistantMessageId)}" data-inferred-filename="${_escHtml(filename)}" data-code-lang="${_escHtml(String(label).toLowerCase())}">
         <div class="cmd-block__label">
-          <span>${_escHtml(label)}</span>
-          <button class="cmd-block__copy" onclick="navigator.clipboard.writeText(this.closest('.cmd-block').querySelector('pre').textContent)">copy</button>
+          <span>${_escHtml(label)}${filename ? ` · ${_escHtml(filename)}` : ''}</span>
+          <span class="cmd-block__actions">${actions}</span>
         </div>
         <pre>${escaped}</pre>
       </div>`;
@@ -52,6 +94,8 @@ window.AIDiagPage = (() => {
     html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
     // Italic
     html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    // Links
+    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
 
     // Unordered lists
     html = html.replace(/^[\*\-] (.+)$/gm, '<li>$1</li>');
@@ -172,6 +216,7 @@ window.AIDiagPage = (() => {
       <span style="color:var(--text-muted)">Context:</span>
       <span class="ai-context-badge" id="ai-context-badge"></span>
       <button class="ai-context-clear" id="ai-context-clear">clear</button>
+      <button class="ai-loop-btn" id="ai-loop-toggle">Start Loop</button>
       <button class="ai-inject-btn" id="ai-inject-btn" style="margin-left:auto">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/>
@@ -325,6 +370,7 @@ window.AIDiagPage = (() => {
       contextBar:      $('ai-context-bar'),
       contextBadge:    $('ai-context-badge'),
       contextClear:    $('ai-context-clear'),
+      loopToggle:      $('ai-loop-toggle'),
       injectBtn:       $('ai-inject-btn'),
       injectBtn2:      $('ai-inject-btn2'),
       injectBtn3:      $('ai-inject-btn3'),
@@ -469,6 +515,7 @@ window.AIDiagPage = (() => {
 
   /* ---- Switch conversation --------------------------------- */
   async function _switchConversation(convId) {
+    _closeLoopStream();
     _state.conversationId = convId;
     _el.thread.innerHTML = '';
 
@@ -485,6 +532,11 @@ window.AIDiagPage = (() => {
         _state.provider = conv.provider || _state.provider || 'openrouter';
         _state.model = conv.model || _state.model || null;
         _state.contextRunId = conv.context_run_id || null;
+        _state.loopEnabled = false;
+        _state.loopBusy = false;
+        _state.pendingRerunPrompt = false;
+        _state.loopId = null;
+        _state.loopToken += 1;
         _state.contextStrategyName = null;
         _state.contextTimeframe = null;
 
@@ -496,7 +548,7 @@ window.AIDiagPage = (() => {
         _el.deepAnalyseBtn.disabled = !_state.contextRunId;
         if (_el.evolveBtn) _el.evolveBtn.disabled = !_state.contextRunId;
 
-        (conv.messages || []).forEach(m => _appendMessage(m.role, m.content, m.meta));
+        (conv.messages || []).forEach(m => _appendMessage(m.role, m.content, m.meta, m.id));
       }
     } catch (e) {
       _setStatus('Could not load conversation');
@@ -507,10 +559,17 @@ window.AIDiagPage = (() => {
 
   /* ---- New chat -------------------------------------------- */
   function _newChat() {
+    _closeLoopStream();
     _state.conversationId = null;
+    _state.loopEnabled = false;
+    _state.loopBusy = false;
+    _state.pendingRerunPrompt = false;
+    _state.loopId = null;
+    _state.loopToken += 1;
     _el.thread.innerHTML = '';
     _showEmpty(true);
     document.querySelectorAll('.ai-conv-item').forEach(el => el.classList.remove('active'));
+    _updateLoopButton();
     _el.textarea.focus();
   }
 
@@ -552,13 +611,39 @@ window.AIDiagPage = (() => {
     }
 
     if (_el.evolveBtn) _el.evolveBtn.disabled = !active;
+    _updateLoopButton();
+  }
+
+  function _updateLoopButton() {
+    if (!_el.loopToggle) return;
+    const active = !!_state.contextRunId;
+    _el.loopToggle.disabled = !active || _state.loopBusy;
+    if (_state.loopBusy) {
+      _el.loopToggle.textContent = 'Loop Busy...';
+      _el.loopToggle.classList.add('active');
+      return;
+    }
+    _el.loopToggle.textContent = _state.loopEnabled ? 'Stop Loop' : 'Start Loop';
+    _el.loopToggle.classList.toggle('active', _state.loopEnabled);
+  }
+
+  function _closeLoopStream() {
+    if (_state.loopStream) {
+      try { _state.loopStream.close(); } catch (_) {}
+      _state.loopStream = null;
+    }
   }
 
   function _clearContext() {
+    _closeLoopStream();
     _state.contextRunId = null;
     _state.contextStrategyName = null;
     _state.contextTimeframe = null;
     _updateContextBar();
+    _state.loopEnabled = false;
+    _state.loopBusy = false;
+    _state.pendingRerunPrompt = false;
+    _state.loopId = null;
     _el.deepAnalyseBtn.disabled = true;
     if (_el.evolveBtn) _el.evolveBtn.disabled = true;
   }
@@ -568,23 +653,57 @@ window.AIDiagPage = (() => {
     return ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${ms}ms`;
   }
 
+  function _formatStepCount(stepCount) {
+    return `${stepCount} ${stepCount === 1 ? 'step' : 'steps'}`;
+  }
+
+  function _humanRole(role) {
+    return String(role || 'step').replace(/_/g, ' ');
+  }
+
+  function _shortModel(modelId) {
+    if (!modelId) return '';
+    const tail = String(modelId).split('/').pop() || String(modelId);
+    return tail.replace(/:free$/i, '');
+  }
+
   function _traceLabel(evt) {
     const labels = {
-      classifier_decision: 'Classifier',
-      pipeline_selected: 'Pipeline',
-      step_start: `Start · ${evt.role || 'step'}`,
-      step_complete: evt.role === 'judge' ? 'Judge verdict' : `Done · ${evt.role || 'step'}`,
-      final: 'Final',
+      classifier_decision: 'Classifier Decision',
+      pipeline_selected: 'Pipeline Selected',
+      step_start: `Started ${_humanRole(evt.role)}`,
+      step_complete: evt.role === 'judge' ? 'Judge Completed' : `Completed ${_humanRole(evt.role)}`,
+      final: 'Completed',
     };
     return labels[evt.event_type] || evt.event_type || 'Step';
   }
 
+  function _tracePreview(evt) {
+    if (evt.event_type === 'final') return '';
+    if (evt.event_type === 'step_complete' && evt.role !== 'judge') return '';
+
+    if (evt.event_type === 'classifier_decision') {
+      const pipeline = evt.pipeline_type || evt.classification?.recommended_pipeline;
+      const complexity = evt.classification?.complexity;
+      if (pipeline || complexity) {
+        return `Pipeline: ${pipeline || 'simple'}${complexity ? ` · Complexity: ${complexity}` : ''}`;
+      }
+    }
+
+    if (evt.event_type === 'pipeline_selected' && evt.pipeline_type) {
+      return `Selected pipeline: ${evt.pipeline_type}`;
+    }
+
+    return evt.output_preview || '';
+  }
+
   function _renderTraceItem(evt) {
     const label = _traceLabel(evt);
-    const model = evt.model_id ? _escHtml(evt.model_id.split('/').pop()) : '';
+    const model = evt.model_id ? _escHtml(_shortModel(evt.model_id)) : '';
     const provider = evt.provider ? _escHtml(evt.provider) : '';
     const duration = _formatTraceDuration(evt.duration_ms);
-    const preview = evt.output_preview ? `<div class="ai-thinking-item__preview">${_escHtml(evt.output_preview)}</div>` : '';
+    const previewText = _tracePreview(evt);
+    const preview = previewText ? `<div class="ai-thinking-item__preview">${_escHtml(previewText)}</div>` : '';
     const chain = evt.fallback_chain?.length ? `<span class="ai-thinking-item__chip">fallback</span>` : '';
     const attempt = evt.attempt_count && evt.attempt_count > 1 ? `<span class="ai-thinking-item__chip">${evt.attempt_count} attempts</span>` : '';
     return `
@@ -607,9 +726,10 @@ window.AIDiagPage = (() => {
     const stepCount = trace.filter(evt => evt.event_type === 'step_complete').length;
     return `
       <div class="ai-thinking ${open ? 'open' : ''}">
-        <button class="ai-thinking__toggle" type="button">
-          <span>Thinking</span>
-          <span class="ai-thinking__summary">${stepCount} steps</span>
+        <button class="ai-thinking__toggle" type="button" aria-expanded="${open ? 'true' : 'false'}">
+          <span class="ai-thinking__title">Thinking</span>
+          <span class="ai-thinking__summary">${_formatStepCount(stepCount)}</span>
+          <span class="ai-thinking__chevron" aria-hidden="true">▾</span>
         </button>
         <div class="ai-thinking__body">
           <div class="ai-thinking__list">${trace.map(_renderTraceItem).join('')}</div>
@@ -619,7 +739,7 @@ window.AIDiagPage = (() => {
   }
 
   /* ---- Message rendering ----------------------------------- */
-  function _appendMessage(role, content, meta) {
+  function _appendMessage(role, content, meta, messageId = null) {
     // Hide empty state
     _showEmpty(false);
 
@@ -627,6 +747,7 @@ window.AIDiagPage = (() => {
     const div = document.createElement('div');
     div.className = `ai-message ai-message--${role}`;
     div.dataset.role = role;
+    if (messageId) div.dataset.messageId = messageId;
 
     let headerHtml = '';
     if (role === 'assistant') {
@@ -645,7 +766,7 @@ window.AIDiagPage = (() => {
     }
 
     const bubbleContent = role === 'assistant'
-      ? _renderMarkdown(content)
+      ? _renderMarkdown(content, { assistantMessageId: messageId || '' })
       : `<p>${_escHtml(content).replace(/\n/g, '<br>')}</p>`;
     const trace = meta?.pipeline?.trace || meta?.trace || [];
     const thinkingHtml = role === 'assistant' ? _renderThinkingPanel(trace) : '';
@@ -667,18 +788,20 @@ window.AIDiagPage = (() => {
   }
 
   /* ---- Streaming ------------------------------------------- */
-  async function _sendMessage() {
-    const text = _el.textarea.value.trim();
+  async function _sendMessage(overrideText = null, opts = {}) {
+    const text = (overrideText ?? _el.textarea.value).trim();
     if (!text || _state.streaming) return;
 
-    _el.textarea.value = '';
-    _resizeTextarea();
+    if (overrideText === null) {
+      _el.textarea.value = '';
+      _resizeTextarea();
+    }
     _state.streaming = true;
     _el.sendBtn.style.display = 'none';
     _el.stopBtn.style.display = '';
     _setStatus('');
 
-    _appendMessage('user', text);
+    _appendMessage('user', text, opts.userMeta || {});
     _scrollThread();
 
     // Create assistant bubble for streaming
@@ -696,9 +819,10 @@ window.AIDiagPage = (() => {
     const thinking = document.createElement('div');
     thinking.className = 'ai-thinking open';
     thinking.innerHTML = `
-      <button class="ai-thinking__toggle" type="button">
-        <span>Thinking</span>
+      <button class="ai-thinking__toggle" type="button" aria-expanded="true">
+        <span class="ai-thinking__title">Thinking</span>
         <span class="ai-thinking__summary">starting...</span>
+        <span class="ai-thinking__chevron" aria-hidden="true">▾</span>
       </button>
       <div class="ai-thinking__body">
         <div class="ai-thinking__list"></div>
@@ -713,6 +837,8 @@ window.AIDiagPage = (() => {
     _scrollThread();
 
     let fullText = '';
+    let finalPipeline = null;
+    let finalAssistantMessageId = null;
     let aborted = false;
     let traceEvents = [];
 
@@ -720,7 +846,7 @@ window.AIDiagPage = (() => {
       if (!thinkingList || !thinkingSummary) return;
       thinkingList.innerHTML = traceEvents.map(_renderTraceItem).join('');
       const stepCount = traceEvents.filter(evt => evt.event_type === 'step_complete').length;
-      thinkingSummary.textContent = stepCount ? `${stepCount} steps` : `${traceEvents.length} events`;
+      thinkingSummary.textContent = stepCount ? _formatStepCount(stepCount) : `${traceEvents.length} events`;
     };
 
     const body = JSON.stringify({
@@ -739,7 +865,7 @@ window.AIDiagPage = (() => {
     _el.stopBtn.onclick = () => {
       aborted = true;
       controller.abort();
-      _finishStream(bubble, headerDiv, fullText, null);
+      _finishStream(assistantDiv, bubble, headerDiv, fullText, null, null);
     };
 
     try {
@@ -814,7 +940,7 @@ window.AIDiagPage = (() => {
 
             if (evt.error) {
               bubble.innerHTML = `<span style="color:var(--red)">${_escHtml(evt.error)}</span>`;
-              _finishStream(bubble, headerDiv, '', null);
+              _finishStream(assistantDiv, bubble, headerDiv, '', null, null);
               aborted = true;
               break;
             }
@@ -824,6 +950,8 @@ window.AIDiagPage = (() => {
                 _state.conversationId = evt.thread_id || evt.conversation_id;
               }
               const pipeline = evt.pipeline || {};
+              finalPipeline = pipeline || null;
+              finalAssistantMessageId = evt.assistant_message_id || null;
               if (pipeline.trace?.length) {
                 traceEvents = pipeline.trace;
                 renderTrace();
@@ -831,9 +959,9 @@ window.AIDiagPage = (() => {
               const finalText = evt.fullText || fullText;
               if (!finalText) {
                 bubble.innerHTML = '<span style="color:var(--amber)">No response received from the AI provider.</span>';
-                _finishStream(bubble, headerDiv, '', null);
+                _finishStream(assistantDiv, bubble, headerDiv, '', null, null);
               } else {
-                _finishStream(bubble, headerDiv, finalText, pipeline);
+                _finishStream(assistantDiv, bubble, headerDiv, finalText, pipeline, finalAssistantMessageId);
               }
               await _loadConversations();
               aborted = true; // prevent double-finish
@@ -846,22 +974,30 @@ window.AIDiagPage = (() => {
     } catch (e) {
       if (!aborted) {
         bubble.innerHTML = `<span style="color:var(--red)">Connection error: ${_escHtml(e.message)}</span>`;
-        _finishStream(bubble, headerDiv, '', null);
+        _finishStream(assistantDiv, bubble, headerDiv, '', null, null);
       }
     }
 
     if (!aborted) {
-      _finishStream(bubble, headerDiv, fullText, null);
+      _finishStream(assistantDiv, bubble, headerDiv, fullText, null, null);
     }
+    return {
+      fullText,
+      pipeline: finalPipeline,
+      assistantMessageId: finalAssistantMessageId,
+    };
   }
 
-  function _finishStream(bubble, headerDiv, finalText, pipeline) {
+  function _finishStream(assistantDiv, bubble, headerDiv, finalText, pipeline, assistantMessageId) {
     // Remove streaming cursor
     const cursor = bubble.querySelector('.ai-streaming-cursor');
     if (cursor) cursor.remove();
 
     if (finalText) {
-      bubble.innerHTML = _renderMarkdown(finalText);
+      bubble.innerHTML = _renderMarkdown(finalText, { assistantMessageId: assistantMessageId || '' });
+      if (assistantMessageId && assistantDiv) {
+        assistantDiv.dataset.messageId = assistantMessageId;
+      }
     }
 
     // Update header with final info
@@ -1052,6 +1188,300 @@ window.AIDiagPage = (() => {
     const hasText = (_el.textarea.value || '').trim().length > 0;
     const hasModel = !!_state.model || !!_el.modelSelect?.value;
     _el.sendBtn.disabled = !hasText || _state.streaming;
+  }
+
+  function _idemKey(prefix = 'k') {
+    return `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+  }
+
+  function _durationSuffix(evt) {
+    const ms = Number(evt?.duration_ms || 0);
+    if (!ms) return '';
+    return ms >= 1000 ? ` (${(ms / 1000).toFixed(1)}s)` : ` (${ms}ms)`;
+  }
+
+  function _strategyFromFilename(filename) {
+    const raw = String(filename || '').trim();
+    if (!raw) return '';
+    return raw.toLowerCase().endsWith('.py') ? raw.slice(0, -3) : raw;
+  }
+
+  function _renderLoopTable(rows) {
+    const safeRows = Array.isArray(rows) ? rows : [];
+    if (!safeRows.length) return '_No result rows available._';
+    const lines = [
+      '| Section | Metric | Before | After | Delta |',
+      '|---|---|---:|---:|---:|',
+      ...safeRows.map((r) => `| ${r.section || ''} | ${r.metric || ''} | ${r.before ?? ''} | ${r.after ?? ''} | ${r.delta ?? ''} |`),
+    ];
+    return ['```text', ...lines, '```'].join('\n');
+  }
+
+  function _renderLoopFileChanges(fileChanges) {
+    const py = fileChanges?.strategy_py || {};
+    const js = fileChanges?.strategy_json || {};
+    const snippet = [];
+    const pyPreview = Array.isArray(py.diff_preview) ? py.diff_preview.slice(0, 40) : [];
+    const jsonPreview = Array.isArray(js.diff_preview) ? js.diff_preview.slice(0, 40) : [];
+    if (pyPreview.length) snippet.push(`# ${py.path || 'strategy.py'}\n${pyPreview.join('\n')}`);
+    if (jsonPreview.length) snippet.push(`# ${js.path || 'strategy.json'}\n${jsonPreview.join('\n')}`);
+    const body = snippet.length ? `\n\n\`\`\`diff\n${snippet.join('\n\n')}\n\`\`\`` : '';
+    return `- \`.py\`: **${py.changed ? 'changed' : 'unchanged'}**\n- \`.json\`: **${js.changed ? 'changed' : 'unchanged'}**${body}`;
+  }
+
+  function _renderLoopTests(testResults) {
+    const tests = Array.isArray(testResults) ? testResults : [];
+    if (!tests.length) return '_No tests were captured._';
+    const rows = [
+      '| Test | OK | Code | Duration (ms) |',
+      '|---|---|---:|---:|',
+      ...tests.map((t) => `| ${t.name || ''} | ${t.ok ? 'yes' : 'no'} | ${t.code ?? ''} | ${t.duration_ms ?? ''} |`),
+    ];
+    const snippets = tests
+      .slice(0, 3)
+      .map((t) => {
+        const out = String(t.stderr || t.stdout || '(no output)').slice(0, 500);
+        return `### ${t.name || 'test'}\n\`\`\`text\n${out}\n\`\`\``;
+      })
+      .join('\n\n');
+    return `${['```text', ...rows, '```'].join('\n')}\n\n${snippets}`;
+  }
+
+  async function _confirmLoopRerun(loopId, confirm) {
+    await fetch(`/ai/loop/${encodeURIComponent(loopId)}/confirm-rerun`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ confirm: !!confirm, idempotency_key: _idemKey('confirm') }),
+    });
+  }
+
+  async function _stopLoopRemote() {
+    if (_state.loopId) {
+      try {
+        await fetch(`/ai/loop/${encodeURIComponent(_state.loopId)}/stop`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idempotency_key: _idemKey('stop') }),
+        });
+      } catch (_) {}
+    }
+    _closeLoopStream();
+    _state.loopBusy = false;
+    _state.loopEnabled = false;
+    _state.loopId = null;
+    _updateLoopButton();
+  }
+
+  function _handleLoopEvent(evt) {
+    const step = String(evt.step || '');
+    if (step === 'loop_started') {
+      const planned = (evt.planned_steps || []).map((s, i) => `${i + 1}. ${s}`).join('\n');
+      _appendMessage('assistant', `Loop started${_durationSuffix(evt)}.\n\nPlanned workflow:\n${planned || '1. apply\n2. validate\n3. rerun\n4. compare\n5. test\n6. report'}`, { auto_loop: true });
+      return;
+    }
+    if (step === 'apply_done') {
+      const applyResult = evt.apply_result || {};
+      _state.lastApplied = applyResult;
+      _appendMessage('assistant', `Applied update to **${applyResult.strategy || evt.strategy || 'strategy'}**${_durationSuffix(evt)}.\n\n${_renderLoopFileChanges(evt.file_changes || applyResult.file_changes || {})}`, { auto_loop: true });
+      return;
+    }
+    if (step === 'ai_validate_done') {
+      _appendMessage('assistant', `Validation complete${_durationSuffix(evt)}:\n\n${evt.validation_text || '_No validation text._'}`, { auto_loop: true });
+      if (_state.loopEnabled && _state.loopId === evt.loop_id) {
+        _state.pendingRerunPrompt = true;
+        const confirm = window.confirm('Loop validation finished. Run rerun now?');
+        _state.pendingRerunPrompt = false;
+        _confirmLoopRerun(evt.loop_id, confirm).catch(() => Toast.error('Could not send rerun confirmation'));
+      }
+      return;
+    }
+    if (step === 'rerun_started') {
+      _appendMessage('assistant', `Rerun started${_durationSuffix(evt)}.\n\n\`\`\`json\n${JSON.stringify(evt.rerun_request || {}, null, 2)}\n\`\`\``, { auto_loop: true });
+      return;
+    }
+    if (step === 'rerun_done') {
+      _appendMessage('assistant', `Rerun finished${_durationSuffix(evt)} with status **${evt.status || 'unknown'}** (run_id: \`${evt.run_id || 'n/a'}\`).`, { auto_loop: true });
+      return;
+    }
+    if (step === 'result_diff') {
+      _appendMessage('assistant', `Result delta summary${_durationSuffix(evt)}:\n\n${_renderLoopTable(evt.table_rows)}`, { auto_loop: true });
+      return;
+    }
+    if (step === 'file_diff') {
+      _appendMessage('assistant', `File delta summary:\n\n${_renderLoopFileChanges(evt.file_changes || {})}`, { auto_loop: true });
+      return;
+    }
+    if (step === 'tests_done') {
+      _appendMessage('assistant', `Validation test pack${_durationSuffix(evt)}:\n\n${_renderLoopTests(evt.test_results)}`, { auto_loop: true });
+      return;
+    }
+    if (step === 'cycle_done') {
+      if (evt.run_id) {
+        _state.contextRunId = evt.run_id;
+        if (_state.lastApplied?.strategy) _state.contextStrategyName = _state.lastApplied.strategy;
+        _updateContextBar();
+      }
+      const reportLinks = evt.report_download_url
+        ? `\n\n[Download Report](${evt.report_download_url}) · [View Report](${evt.report_url || '#'})`
+        : (evt.md_report_path ? `\n\nReport: \`${evt.md_report_path}\`` : '');
+      const metrics = evt.metrics?.summary || {};
+      const metricsLine = Object.keys(metrics).length
+        ? `\n\nLatency metrics captured for ${Object.keys(metrics).length} steps.`
+        : '';
+      _appendMessage('assistant', `Cycle completed.\n\n${evt.message || 'Review complete.'}${reportLinks}${metricsLine}`, { auto_loop: true });
+      _state.loopBusy = false;
+      _state.loopId = null;
+      _closeLoopStream();
+      _updateLoopButton();
+      return;
+    }
+    if (step === 'loop_stopped') {
+      _appendMessage('assistant', `Loop stopped.\n\n${evt.message || 'Stopped by user.'}`, { auto_loop: true });
+      _state.loopBusy = false;
+      _state.loopEnabled = false;
+      _state.loopId = null;
+      _closeLoopStream();
+      _updateLoopButton();
+      return;
+    }
+    if (step === 'loop_failed') {
+      _appendMessage('assistant', `Loop failed:\n\n${evt.message || 'Unknown error.'}`, { auto_loop: true });
+      _state.loopBusy = false;
+      _state.loopId = null;
+      _closeLoopStream();
+      _updateLoopButton();
+    }
+  }
+
+  async function _startLoopFromBlock({ assistantMessageId, blockIndex, fallbackStrategy }) {
+    if (!_state.conversationId) throw new Error('No active thread');
+    if (!_state.contextRunId) throw new Error('Inject backtest context first');
+    if (_state.loopBusy) throw new Error('Loop is already running');
+
+    const payload = {
+      thread_id: _state.conversationId,
+      assistant_message_id: assistantMessageId,
+      code_block_index: blockIndex,
+      fallback_strategy: fallbackStrategy || undefined,
+      context_run_id: _state.contextRunId,
+      provider: _state.provider || 'openrouter',
+      model: _state.model || undefined,
+      goal_id: _state.goal || 'balanced',
+      idempotency_key: _idemKey('start'),
+      rollback_on_regression: true,
+      stop_rules: {
+        min_profit_delta: 0,
+        max_drawdown_increase: 0,
+        require_tests_pass: true,
+      },
+    };
+    const res = await fetch('/ai/loop/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.loop_id) throw new Error(data.detail || `Loop start failed: HTTP ${res.status}`);
+
+    _state.loopBusy = true;
+    _state.loopId = data.loop_id;
+    _updateLoopButton();
+    _appendMessage('assistant', 'Loop started in semi-auto mode.\n\nI will apply code, validate with AI, wait for your rerun confirmation, rerun backtest, compare results, diff files, run tests, and write a markdown audit report.', { auto_loop: true });
+
+    _closeLoopStream();
+    const es = new EventSource(`/ai/loop/${encodeURIComponent(data.loop_id)}/stream`);
+    _state.loopStream = es;
+    es.onmessage = (e) => {
+      try {
+        const evt = JSON.parse(e.data);
+        _handleLoopEvent(evt);
+        if (evt.done) {
+          try { es.close(); } catch (_) {}
+          if (_state.loopStream === es) _state.loopStream = null;
+        }
+      } catch (_) {}
+    };
+    es.onerror = () => {
+      try { es.close(); } catch (_) {}
+      if (_state.loopStream === es) _state.loopStream = null;
+      if (_state.loopBusy) {
+        _state.loopBusy = false;
+        _state.loopId = null;
+        _updateLoopButton();
+        Toast.error('Loop stream disconnected');
+      }
+    };
+  }
+
+  async function _handleCodeAction(action, blockEl) {
+    if (!blockEl) return;
+    const pre = blockEl.querySelector('pre');
+    const code = pre ? pre.textContent : '';
+    const codeLang = String(blockEl.dataset.codeLang || '');
+    const assistantMessageId = blockEl.dataset.assistantMessageId || '';
+    const blockIndex = Number(blockEl.dataset.codeBlockIndex || -1);
+    const inferredFilename = blockEl.dataset.inferredFilename || '';
+
+    if (action === 'copy') {
+      if (!code) return;
+      await navigator.clipboard.writeText(code);
+      Toast.success('Code copied');
+      return;
+    }
+
+    if (action === 'diff') {
+      if (!/^python|py$/i.test(codeLang)) return;
+      const strategyHint = _strategyFromFilename(inferredFilename) || _state.contextStrategyName || '';
+      if (!strategyHint) {
+        Toast.error('Cannot open diff: no strategy file inferred');
+        return;
+      }
+      const resp = await fetch(`/strategies/${encodeURIComponent(strategyHint)}/source`);
+      if (!resp.ok) {
+        Toast.error(`Cannot load current source for ${strategyHint}.py`);
+        return;
+      }
+      const currentSrc = await resp.text();
+      _el.evoDiffTitle.textContent = `Code Diff — ${strategyHint}.py (chat proposal)`;
+      _renderCodeDiff(currentSrc, code);
+      _el.evoDiffOverlay.classList.add('open');
+      return;
+    }
+
+    if (action === 'apply') {
+      if (!/^python|py$/i.test(codeLang)) return;
+      if (!_state.conversationId) {
+        Toast.error('No active thread yet. Send a chat message first.');
+        return;
+      }
+      const fallbackStrategy = _state.contextStrategyName || _strategyFromFilename(inferredFilename) || undefined;
+      if (_state.loopEnabled) {
+        await _startLoopFromBlock({
+          assistantMessageId,
+          blockIndex,
+          fallbackStrategy,
+        });
+        return;
+      }
+      const payload = {
+        thread_id: _state.conversationId,
+        assistant_message_id: assistantMessageId,
+        code_block_index: blockIndex,
+        fallback_strategy: fallbackStrategy,
+      };
+      const res = await fetch('/ai/chat/apply-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        Toast.error(data.detail || `Apply failed: HTTP ${res.status}`);
+        return;
+      }
+      _state.lastApplied = data;
+      Toast.success(`Applied to ${data.strategy}.py`);
+    }
   }
 
   /* ---- Evolution panel ------------------------------------ */
@@ -1582,7 +2012,7 @@ window.AIDiagPage = (() => {
         return; // offline, don't switch
       }
       if (prov === 'openrouter' && p && !p.openrouter.available) {
-        _el.providerWarning.textContent = 'Set OPENROUTER_API_KEY in Secrets to enable OpenRouter.';
+        _el.providerWarning.textContent = 'Set OPENROUTER_API_KEYS (or OPENROUTER_API_KEY) in Secrets to enable OpenRouter.';
         _el.providerWarning.classList.add('visible');
         setTimeout(() => _el.providerWarning.classList.remove('visible'), 4000);
         return;
@@ -1624,7 +2054,7 @@ window.AIDiagPage = (() => {
     });
 
     // Send button
-    _el.sendBtn.addEventListener('click', _sendMessage);
+    _el.sendBtn.addEventListener('click', () => _sendMessage());
 
     // New chat
     _el.newChat.addEventListener('click', _newChat);
@@ -1651,10 +2081,21 @@ window.AIDiagPage = (() => {
     });
 
     _el.thread.addEventListener('click', e => {
+      const actionBtn = e.target.closest('.cmd-block__action');
+      if (actionBtn) {
+        const block = actionBtn.closest('.cmd-block');
+        const action = actionBtn.dataset.action;
+        _handleCodeAction(action, block).catch(err => {
+          Toast.error(`Code action failed: ${err.message || err}`);
+        });
+        return;
+      }
       const toggle = e.target.closest('.ai-thinking__toggle');
       if (!toggle) return;
       const panel = toggle.closest('.ai-thinking');
-      if (panel) panel.classList.toggle('open');
+      if (!panel) return;
+      panel.classList.toggle('open');
+      toggle.setAttribute('aria-expanded', panel.classList.contains('open') ? 'true' : 'false');
     });
 
     // Inject buttons
@@ -1665,6 +2106,26 @@ window.AIDiagPage = (() => {
 
     // Clear context
     _el.contextClear.addEventListener('click', _clearContext);
+    if (_el.loopToggle) {
+      _el.loopToggle.addEventListener('click', async () => {
+        if (!_state.contextRunId) return;
+        if (_state.loopEnabled) {
+          await _stopLoopRemote();
+          Toast.info('Loop stopped');
+        } else {
+          if (_state.loopBusy) return;
+          _state.loopEnabled = true;
+          _state.loopToken += 1;
+          Toast.success('Loop enabled');
+          _appendMessage(
+            'assistant',
+            'Loop is armed. Click **apply** on a strategy code block to start the narrated cycle.',
+            { auto_loop: true }
+          );
+        }
+        _updateLoopButton();
+      });
+    }
 
     // Deep Analyse button
     _el.deepAnalyseBtn.addEventListener('click', _openDeepPanel);
@@ -1717,6 +2178,7 @@ window.AIDiagPage = (() => {
 
     DOM.setHTML(el, _buildLayout());
     _cacheRefs();
+    _updateLoopButton();
     _bindEvents();
 
     // Initial loads

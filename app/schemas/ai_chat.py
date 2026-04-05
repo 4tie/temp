@@ -50,3 +50,29 @@ class ThreadMessageAppendRequest(BaseModel):
     model: Optional[str] = None
     context_run_id: Optional[str] = None
     context_mode: Optional[str] = None
+
+
+class ApplyCodeRequest(BaseModel):
+    thread_id: str
+    assistant_message_id: str
+    code_block_index: int
+    fallback_strategy: Optional[str] = None
+
+
+class LoopStartRequest(BaseModel):
+    thread_id: str
+    assistant_message_id: str
+    code_block_index: int
+    fallback_strategy: Optional[str] = None
+    context_run_id: Optional[str] = None
+    provider: str = "openrouter"
+    model: Optional[str] = None
+    goal_id: Optional[str] = None
+    idempotency_key: Optional[str] = None
+    rollback_on_regression: bool = False
+    stop_rules: Optional[dict[str, Any]] = None
+
+
+class LoopConfirmRequest(BaseModel):
+    confirm: bool = True
+    idempotency_key: Optional[str] = None

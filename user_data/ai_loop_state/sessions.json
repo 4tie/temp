@@ -1,0 +1,37 @@
+{
+  "sessions": {
+    "9f11f962-3fdc-498b-bd98-de65ee886835": {
+      "loop_id": "9f11f962-3fdc-498b-bd98-de65ee886835",
+      "thread_id": "thread-loop",
+      "status": "running",
+      "started_at": "2026-04-05T23:44:03.515129+00:00",
+      "updated_at": "2026-04-05T23:44:03.515129+00:00",
+      "strategy": null,
+      "baseline_run_id": "run-ctx",
+      "new_run_id": null,
+      "steps": [],
+      "table_rows": [],
+      "test_results": [],
+      "file_changes": {},
+      "validation_text": "",
+      "step_metrics": [],
+      "request": {
+        "thread_id": "thread-loop",
+        "assistant_message_id": "assistant-1",
+        "code_block_index": 0,
+        "fallback_strategy": null,
+        "context_run_id": "run-ctx",
+        "provider": "openrouter",
+        "model": null,
+        "goal_id": "balanced",
+        "rollback_on_regression": false,
+        "stop_rules": {}
+      },
+      "rerun_confirmed": null,
+      "stop_requested": false,
+      "md_report_path": "/tmp/tmpvz70y95d/9f11f962-3fdc-498b-bd98-de65ee886835.md"
+    }
+  },
+  "idempotency": {},
+  "updated_at": "2026-04-05T23:44:03.515256+00:00"
+}

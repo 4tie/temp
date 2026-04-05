@@ -14,7 +14,13 @@ from app.core.processes import (
 )
 from app.services.command_builder import build_backtest_command, build_download_data_command, build_hyperopt_command
 from app.services.result_parser import parse_backtest_results, find_run_local_result_artifact
-from app.services.storage import save_run_meta, save_run_results, save_run_logs, get_run_dir, load_run_meta
+from app.services.storage import (
+    save_run_meta,
+    save_run_results,
+    save_run_logs,
+    get_run_dir,
+    load_run_meta,
+)
 from app.services.hyperopt_storage import save_hyperopt_meta, save_hyperopt_results, save_hyperopt_logs, get_hyperopt_run_dir
 
 
@@ -156,8 +162,10 @@ def start_backtest(
     meta: dict[str, Any] = {
         "run_id": run_id,
         "strategy": display_strategy,
+        "display_strategy": display_strategy,
         "strategy_class": strategy,
         "base_strategy": strategy,
+        "strategy_base": strategy,
         "pairs": pairs,
         "timeframe": timeframe,
         "timerange": timerange,
@@ -237,7 +245,11 @@ def _download_worker(job_id: str, cmd: list[str]):
 
 
 def _run_subprocess(run_id: str, cmd: list[str], run_dir: Path, meta: dict):
-    thread = threading.Thread(target=_backtest_worker, args=(run_id, cmd, run_dir, meta), daemon=True)
+    thread = threading.Thread(
+        target=_backtest_worker,
+        args=(run_id, cmd, run_dir, meta),
+        daemon=True,
+    )
     thread.start()
 
 
@@ -341,6 +353,7 @@ def _backtest_worker(run_id: str, cmd: list[str], run_dir: Path, meta: dict):
                 meta["raw_artifact"] = {"available": False, "run_local": False}
             else:
                 results = parse_backtest_results(run_dir)
+                results["display_strategy"] = meta.get("display_strategy") or meta.get("strategy")
                 if results.get("error"):
                     set_status(run_id, "failed")
                     append_log(run_id, f"ERROR: Failed to parse run-local result artifact: {results.get('error')}")

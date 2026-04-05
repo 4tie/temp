@@ -12,8 +12,11 @@
   align-self: start;
   /* Cap total column height so it never overflows the page */
   max-height: calc(100vh - var(--topbar-height) - var(--statusbar-height) - 120px);
+  max-height: calc(100dvh - var(--topbar-height) - var(--statusbar-height) - 120px);
   overflow-y: auto;
   overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
   display: flex;
   flex-direction: column;
   gap: var(--space-4);

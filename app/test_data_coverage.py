@@ -154,6 +154,77 @@ class DataCoverageTests(unittest.TestCase):
             self.assertIsNone(item["expected_candles_per_day"])
             self.assertTrue(isinstance(item.get("daily_validation_skip_reason"), str))
 
+    def test_partial_current_day_is_allowed_when_end_day_is_today(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            data_dir = Path(tmp) / "data"
+            ex_dir = data_dir / "binance"
+            ex_dir.mkdir(parents=True)
+            today = datetime.now(timezone.utc).date()
+            day_start = datetime(today.year, today.month, today.day, tzinfo=timezone.utc)
+            candles = _candles_for_day(day_start, 5, 226)
+            (ex_dir / "ETH_USDT-5m.json").write_text(json.dumps(candles), encoding="utf-8")
+            timerange = f"{today.strftime('%Y%m%d')}-{today.strftime('%Y%m%d')}"
+
+            with patch("app.services.data_coverage.DATA_DIR", data_dir):
+                coverage = check_data_coverage(
+                    pairs=["ETH/USDT"],
+                    timeframe="5m",
+                    exchange="binance",
+                    timerange=timerange,
+                )
+
+            item = coverage[0]
+            self.assertEqual(item["missing_days"], [])
+            self.assertEqual(item["incomplete_days"], [])
+            self.assertTrue(item["partial_current_day_allowed"])
+
+    def test_missing_current_day_remains_missing(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            data_dir = Path(tmp) / "data"
+            ex_dir = data_dir / "binance"
+            ex_dir.mkdir(parents=True)
+            (ex_dir / "ETH_USDT-5m.json").write_text(json.dumps([]), encoding="utf-8")
+            today = datetime.now(timezone.utc).date()
+            timerange = f"{today.strftime('%Y%m%d')}-{today.strftime('%Y%m%d')}"
+
+            with patch("app.services.data_coverage.DATA_DIR", data_dir):
+                coverage = check_data_coverage(
+                    pairs=["ETH/USDT"],
+                    timeframe="5m",
+                    exchange="binance",
+                    timerange=timerange,
+                )
+
+            item = coverage[0]
+            self.assertEqual(item["missing_days"], [today.isoformat()])
+            self.assertEqual(item["incomplete_days"], [])
+            self.assertTrue(item["partial_current_day_allowed"])
+
+    def test_partial_past_end_day_is_still_incomplete(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            data_dir = Path(tmp) / "data"
+            ex_dir = data_dir / "binance"
+            ex_dir.mkdir(parents=True)
+            yesterday = datetime.now(timezone.utc).date() - timedelta(days=1)
+            day_start = datetime(yesterday.year, yesterday.month, yesterday.day, tzinfo=timezone.utc)
+            candles = _candles_for_day(day_start, 5, 226)
+            (ex_dir / "ETH_USDT-5m.json").write_text(json.dumps(candles), encoding="utf-8")
+            timerange = f"{yesterday.strftime('%Y%m%d')}-{yesterday.strftime('%Y%m%d')}"
+
+            with patch("app.services.data_coverage.DATA_DIR", data_dir):
+                coverage = check_data_coverage(
+                    pairs=["ETH/USDT"],
+                    timeframe="5m",
+                    exchange="binance",
+                    timerange=timerange,
+                )
+
+            item = coverage[0]
+            self.assertEqual(item["missing_days"], [])
+            self.assertEqual(len(item["incomplete_days"]), 1)
+            self.assertEqual(item["incomplete_days"][0]["actual"], 226)
+            self.assertFalse(item["partial_current_day_allowed"])
+
 
 if __name__ == "__main__":
     unittest.main()

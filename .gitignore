@@ -25,6 +25,19 @@ env/
 .DS_Store
 Thumbs.db
 
+# Local tooling/state (machine-specific)
+.local/
+.config/
+.amazonq/
+.agents/
+.codex
+4t/
+
+# Node / Playwright
+node_modules/
+playwright-report/
+test-results/
+
 # FreqTrade runtime data (large / generated)
 user_data/data/
 user_data/backtest_results/

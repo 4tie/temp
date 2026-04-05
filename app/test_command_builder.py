@@ -20,7 +20,7 @@ class CommandBuilderTests(unittest.TestCase):
         self.assertIn("user_data/backtest_results/test_run", cmd)
         self.assertNotIn("--export-filename", cmd)
 
-    def test_build_download_data_command_uses_timeframes_without_prepend(self) -> None:
+    def test_build_download_data_command_uses_timeframes_with_prepend(self) -> None:
         cmd = build_download_data_command(
             pairs=["ETH/USDT"],
             timeframe="5m",
@@ -29,7 +29,7 @@ class CommandBuilderTests(unittest.TestCase):
 
         self.assertIn("--timeframes", cmd)
         self.assertIn("5m", cmd)
-        self.assertNotIn("--prepend", cmd)
+        self.assertIn("--prepend", cmd)
         self.assertNotIn("--timeframe", cmd)
         self.assertIn("--timerange", cmd)
         tr_idx = cmd.index("--timerange") + 1
