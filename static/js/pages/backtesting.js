@@ -182,6 +182,61 @@ window.BacktestPage = (() => {
     return [...document.querySelectorAll(`#${listId} .pairs-row__check:checked`)].map(c => c.value);
   }
 
+  function _buildDownloadCommand() {
+    const get = id => { const el = DOM.$(`#${id}`, _el); return el ? el.value : ''; };
+    const timeframe = get('bt-timeframe') || '5m';
+    const timerange = get('bt-timerange') || '';
+    const pairs = _getSelectedPairs('bt-pairs-list');
+    const cmd = [
+      'python', '-m', 'freqtrade', 'download-data',
+      '-c', 'user_data/config.json',
+      '--timeframes', timeframe,
+    ];
+    if (timerange) cmd.push('--timerange', timerange);
+    if (pairs.length) cmd.push('--pairs', ...pairs);
+    return cmd;
+  }
+
+  function _sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  function _tokenizeEditedCommand(text) {
+    const src = String(text || '').trim();
+    if (!src) return [];
+    const tokens = src.match(/"[^"]*"|'[^']*'|\S+/g) || [];
+    return tokens.map(t => t.replace(/^['"]|['"]$/g, ''));
+  }
+
+  async function _editCommandBeforeRun(defaultCmd) {
+    const initial = defaultCmd.join(' ');
+    let edited = null;
+    try {
+      if (window.Modal && typeof window.Modal.codePrompt === 'function') {
+        edited = await window.Modal.codePrompt({
+          title: 'Edit Command',
+          message: 'Review or modify the command before execution.',
+          label: 'Command',
+          value: initial,
+          confirmLabel: 'Run',
+          cancelLabel: 'Cancel',
+        });
+      } else {
+        edited = window.prompt('Edit command before run:', initial);
+      }
+    } catch (err) {
+      Toast.error('Command editor failed to open: ' + (err?.message || String(err)));
+      return null;
+    }
+    if (edited === null) return null;
+    const tokens = _tokenizeEditedCommand(edited);
+    if (!tokens.length) {
+      Toast.warning('Command cannot be empty.');
+      return null;
+    }
+    return tokens;
+  }
+
   /* ── Live command preview ── */
   function _buildLiveCommand() {
     const get = id => { const el = DOM.$(`#${id}`, _el); return el ? el.value : ''; };
@@ -193,9 +248,10 @@ window.BacktestPage = (() => {
     const cmd = [
       'python', '-m', 'freqtrade', 'backtesting',
       '-c', 'user_data/config.json',
+      '--strategy', strategy || '<strategy>',
       '--timeframe', timeframe,
       '--export', 'trades',
-      '--export-filename', `user_data/backtest_results/${strategy || '<strategy>'}/result.json`,
+      '--backtest-directory', `user_data/backtest_results/${strategy || '<strategy>'}`,
     ];
 
     if (timerange) cmd.push('--timerange', timerange);
@@ -534,10 +590,11 @@ window.BacktestPage = (() => {
       const favs      = _getFavs();
       const selected  = preSelected ? new Set(preSelected) : new Set();
 
+      const uniq = (arr) => [...new Set(arr)];
       const favLocal   = local.filter(p => favs.has(p));
       const favConfig  = config.filter(p => favs.has(p));
       const favPopular = popular.filter(p => favs.has(p));
-      const allFavs    = [...favLocal, ...favConfig, ...favPopular];
+      const allFavs    = uniq([...favLocal, ...favConfig, ...favPopular]);
 
       const nonFavLocal   = local.filter(p => !favs.has(p));
       const nonFavConfig  = config.filter(p => !favs.has(p));
@@ -688,11 +745,52 @@ window.BacktestPage = (() => {
 
   function _quickParamDescription(param) {
     if (!param) return '';
-    if (param.type === 'int') return `Integer · ${param.low} to ${param.high}`;
-    if (param.type === 'decimal') return `Decimal · ${param.low} to ${param.high} · ${param.decimals ?? 3} dp`;
+    const range = _quickParamRangeText(param);
+    if (param.type === 'int') return `Integer${range ? ` · ${range}` : ''}`;
+    if (param.type === 'decimal') return `Decimal${range ? ` · ${range}` : ''} · ${param.decimals ?? 3} dp`;
     if (param.type === 'categorical') return `Categorical · ${param.options?.length || 0} options`;
     if (param.type === 'bool') return 'Boolean';
     return param.type || 'Parameter';
+  }
+
+  function _quickParamRangeText(param) {
+    if (!param) return '';
+    if (param.low != null && param.high != null) return `${param.low} to ${param.high}`;
+    if (param.low != null) return `From ${param.low}`;
+    if (param.high != null) return `Up to ${param.high}`;
+    return '';
+  }
+
+  function _quickGroupEditedCount(params) {
+    return params.reduce((count, param) => {
+      return count + (_quickValuesEqual(_quickParamsState.currentValues[param.name], _quickParamsState.seedValues[param.name]) ? 0 : 1);
+    }, 0);
+  }
+
+  function _quickParamMetaBadges(param) {
+    const tags = [];
+    const range = _quickParamRangeText(param);
+    if (param.type === 'int') {
+      tags.push('Integer');
+      if (range) tags.push(range);
+    } else if (param.type === 'decimal') {
+      tags.push('Decimal');
+      if (range) tags.push(range);
+      if (param.decimals != null) tags.push(`${param.decimals} dp`);
+    } else if (param.type === 'categorical') {
+      tags.push('Categorical');
+      if (Array.isArray(param.options)) tags.push(`${param.options.length} options`);
+    } else if (param.type === 'bool') {
+      tags.push('Boolean');
+    } else if (param.type) {
+      tags.push(param.type);
+    }
+
+    return `
+      <div class="quick-params__field-tags">
+        ${tags.map((tag) => `<span class="quick-params__field-tag">${_esc(tag)}</span>`).join('')}
+      </div>
+    `;
   }
 
   function _groupQuickParams(parameters) {
@@ -810,6 +908,7 @@ window.BacktestPage = (() => {
     const strategyName = _quickParamsState.strategyName || _resolveRunStrategyName(meta) || 'Unknown strategy';
     const strategyLabel = _quickParamsState.strategyLabel || _resolveRunStrategyLabel(meta);
     const runId = _quickParamsState.runId || _resultRunId || '—';
+    const totalParams = _quickParamsState.parameters.length;
     const dirtyCount = _quickDirtyCount();
     let dirtyLabel = dirtyCount ? `${dirtyCount} unsaved change${dirtyCount === 1 ? '' : 's'}` : 'Clean';
     let dirtyTone = dirtyCount ? 'badge--amber' : 'badge--green';
@@ -829,13 +928,18 @@ window.BacktestPage = (() => {
         <div class="quick-params__summary">
           <div class="quick-params__title">${_esc(subtitle)}</div>
           <div class="quick-params__meta">${_esc(_quickParamsSummaryMetaText())}</div>
+          <div class="quick-params__summary-stats">
+            ${totalParams ? `<span class="quick-params__summary-chip">${_esc(`${totalParams} parameters`)}</span>` : ''}
+            ${mode === 'editable' ? '<span class="quick-params__summary-chip">Edit, then save and run</span>' : ''}
+          </div>
         </div>
         <div class="quick-params__toolbar-right">
           <span class="badge ${dirtyTone}" id="bt-quick-dirty-badge">${_esc(dirtyLabel)}</span>
           <div class="quick-params__actions">
-            <button type="button" class="btn btn--primary btn--sm" data-quick-action="run">Run Again</button>
-            <button type="button" class="btn btn--secondary btn--sm" data-quick-action="save">Save to Strategy</button>
-            <button type="button" class="btn btn--secondary btn--sm" data-quick-action="reset">Reset</button>
+            <button type="button" class="btn btn--primary btn--sm" data-quick-action="save-run">Save and Run</button>
+            <button type="button" class="btn btn--secondary btn--sm" data-quick-action="run">Run Again</button>
+            <button type="button" class="btn btn--ghost btn--sm" data-quick-action="save">Save to Strategy</button>
+            <button type="button" class="btn btn--ghost btn--sm" data-quick-action="reset">Reset</button>
           </div>
         </div>
       </div>
@@ -908,7 +1012,10 @@ window.BacktestPage = (() => {
       <section class="quick-params__group">
         <div class="quick-params__group-header">
           <h3 class="quick-params__group-title">${_esc(_quickGroupLabel(space))}</h3>
-          <span class="quick-params__group-count">${params.length}</span>
+          <div class="quick-params__group-meta">
+            <span class="quick-params__group-count">${_esc(`${params.length} params`)}</span>
+            ${_quickGroupEditedCount(params) ? `<span class="quick-params__group-edited">${_esc(`${_quickGroupEditedCount(params)} edited`)}</span>` : ''}
+          </div>
         </div>
         <div class="quick-params__grid">
           ${params.map((param) => {
@@ -916,10 +1023,12 @@ window.BacktestPage = (() => {
             return `
               <div class="quick-params__field${dirty ? ' quick-params__field--dirty' : ''}" data-quick-field="${_esc(param.name)}">
                 <div class="quick-params__field-head">
-                  <label class="quick-params__field-label" for="${_esc(`bt-qp-${param.name}`)}">${_esc(_quickParamLabel(param.name))}</label>
+                  <div class="quick-params__field-title-wrap">
+                    <label class="quick-params__field-label" for="${_esc(`bt-qp-${param.name}`)}">${_esc(_quickParamLabel(param.name))}</label>
+                    ${_quickParamMetaBadges(param)}
+                  </div>
                   <span class="quick-params__field-badge"${dirty ? '' : ' style="display:none"'}>Edited</span>
                 </div>
-                <div class="quick-params__field-meta">${_esc(_quickParamDescription(param))}</div>
                 ${_quickParamControl(param)}
               </div>
             `;
@@ -948,6 +1057,7 @@ window.BacktestPage = (() => {
     const hasRunContext = Boolean(_loadedResult?.meta && (_quickParamsState.strategyName || _resolveRunStrategyName(_loadedResult.meta)));
     const isRunning = Boolean(_activeRunId);
     const disableRun = !hasRunContext || _quickParamsState.loading || _quickParamsState.saving || isRunning;
+    const disableSaveRun = !isEditable || !hasParams || _quickParamsState.loading || _quickParamsState.saving || isRunning || dirtyCount === 0;
     const disableSave = !isEditable || !hasParams || _quickParamsState.loading || _quickParamsState.saving || dirtyCount === 0;
     const disableReset = !isEditable || !hasParams || _quickParamsState.loading || _quickParamsState.saving || dirtyCount === 0;
 
@@ -959,9 +1069,24 @@ window.BacktestPage = (() => {
       if (badge) badge.style.display = dirty ? '' : 'none';
     });
 
+    const saveRunBtn = body.querySelector('[data-quick-action="save-run"]');
     const runBtn = body.querySelector('[data-quick-action="run"]');
     const saveBtn = body.querySelector('[data-quick-action="save"]');
     const resetBtn = body.querySelector('[data-quick-action="reset"]');
+    if (saveRunBtn) {
+      saveRunBtn.disabled = disableSaveRun;
+      if (mode === 'rerun-only') {
+        saveRunBtn.title = 'Save and Run is unavailable for external strategy workspaces.';
+      } else if (mode === 'unavailable') {
+        saveRunBtn.title = 'Strategy parameters are unavailable for this run.';
+      } else if (dirtyCount === 0) {
+        saveRunBtn.title = 'Change a parameter first, then Save and Run.';
+      } else if (isRunning) {
+        saveRunBtn.title = 'Another backtest is running right now.';
+      } else {
+        saveRunBtn.title = '';
+      }
+    }
     if (runBtn) {
       runBtn.disabled = disableRun;
       runBtn.title = isRunning ? 'Run Again is disabled while another backtest is active.' : '';
@@ -1007,10 +1132,10 @@ window.BacktestPage = (() => {
       } else if (isRunning) {
         stateText = `Backtest ${_activeRunId} is running. Run Again is disabled until it completes.`;
       } else if (isEditable && hasParams && dirtyCount) {
-        stateText = 'Current values differ from the loaded baseline.';
-        stateEl.classList.add('text-red');
+        stateText = 'Edited values are ready. Save and Run will persist them first, then start the same run context.';
+        stateEl.classList.add('text-amber');
       } else if (isEditable && hasParams) {
-        stateText = 'Current values match the loaded baseline.';
+        stateText = 'Current values match the loaded baseline. Use Run Again for a temporary rerun.';
       }
       stateEl.textContent = stateText;
       stateEl.style.display = stateText ? '' : 'none';
@@ -1134,6 +1259,11 @@ window.BacktestPage = (() => {
     const button = event.target.closest('[data-quick-action]');
     if (!button) return;
 
+    if (button.dataset.quickAction === 'save-run') {
+      await _saveAndRunQuickParams();
+      return;
+    }
+
     if (button.dataset.quickAction === 'run') {
       await _runQuickParamsBacktest();
       return;
@@ -1148,6 +1278,13 @@ window.BacktestPage = (() => {
       _quickParamsState.currentValues = { ..._quickParamsState.seedValues };
       _renderQuickParams();
     }
+  }
+
+  async function _saveAndRunQuickParams() {
+    if (!_quickHasParams() || !_quickDirtyCount()) return;
+    const saved = await _saveQuickParams({ showToast: false });
+    if (!saved) return;
+    await _runQuickParamsBacktest();
   }
 
   function _ensureStrategyOption(value, label) {
@@ -1222,13 +1359,14 @@ window.BacktestPage = (() => {
     };
 
     try {
-      const hasCoverage = await _validateSelectedPairData(body);
+      const hasCoverage = await _ensureCoverageWithAutoDownload(body);
       if (!hasCoverage) return;
     } catch (err) {
-      Toast.error('Failed to validate pair data: ' + err.message);
+      Toast.error('Failed to validate/download pair data: ' + err.message);
       return;
     }
 
+    _clearLoadedResult();
     _setRunning(true);
     try {
       const res = await API.startBacktest(body);
@@ -1243,12 +1381,13 @@ window.BacktestPage = (() => {
     }
   }
 
-  async function _saveQuickParams() {
-    if (!_quickHasParams()) return;
+  async function _saveQuickParams(options = {}) {
+    const showToast = options.showToast !== false;
+    if (!_quickHasParams()) return false;
     const strategyName = _quickParamsState.strategyName;
     if (!strategyName) {
       Toast.error('Cannot save parameters because the strategy class is unavailable.');
-      return;
+      return false;
     }
 
     _normalizeAllQuickParamControls();
@@ -1260,11 +1399,13 @@ window.BacktestPage = (() => {
       _quickParamsState.seedValues = { ..._quickParamsState.currentValues };
       _quickParamsState.saving = false;
       _syncQuickParamsUiState();
-      Toast.success(`Saved parameters to ${strategyName}.json.`);
+      if (showToast) Toast.success(`Saved parameters to ${strategyName}.json.`);
+      return true;
     } catch (err) {
       _quickParamsState.saving = false;
       _syncQuickParamsUiState();
       Toast.error('Failed to save strategy parameters: ' + err.message);
+      return false;
     }
   }
 
@@ -1272,10 +1413,12 @@ window.BacktestPage = (() => {
   let _dlPollTimer = null;
 
   async function _onDownload() {
-    const tf       = DOM.$('#bt-timeframe', _el)?.value || '5m';
     const selected = _getSelectedPairs('bt-pairs-list');
 
     if (!selected.length) { Toast.warning('Select at least one pair to download.'); return; }
+    const defaultCmd = _buildDownloadCommand();
+    const commandOverride = await _editCommandBeforeRun(defaultCmd);
+    if (!commandOverride) return;
 
     const formBtn = DOM.$('#bt-dl-form-btn', _el);
     const logEl   = DOM.$('#bt-dl-logs', _el);
@@ -1285,7 +1428,9 @@ window.BacktestPage = (() => {
     if (logWrap) DOM.show(logWrap);
 
     try {
-      const res = await API.downloadData({ pairs: selected, timeframe: tf });
+      const tf = DOM.$('#bt-timeframe', _el)?.value || '5m';
+      const timerange = DOM.$('#bt-timerange', _el)?.value || null;
+      const res = await API.downloadData({ pairs: selected, timeframe: tf, timerange, command_override: commandOverride });
       _pollDownload(res.job_id || res.run_id, logEl, formBtn);
       Toast.info('Download started…');
     } catch (err) {
@@ -1329,16 +1474,58 @@ window.BacktestPage = (() => {
     set('#bt-stake',      cfg.stake_amount);
   }
 
-  async function _validateSelectedPairData({ pairs, timeframe, exchange }) {
-    const data = await API.dataCoverage({ pairs, timeframe, exchange });
+  async function _validateSelectedPairData({ pairs, timeframe, exchange, timerange }) {
+    const effectiveTimerange = timerange ?? (DOM.$('#bt-timerange', _el)?.value || null);
+    const data = await API.dataCoverage({ pairs, timeframe, exchange, timerange: effectiveTimerange });
     const missingPairs = data.missing_pairs || (data.coverage || [])
-      .filter(item => !item.available)
+      .filter(item => !item.available || ((item.missing_days || []).length > 0) || ((item.incomplete_days || []).length > 0))
       .map(item => item.pair);
 
-    if (!missingPairs.length) return true;
+    return {
+      ok: !missingPairs.length,
+      missingPairs,
+      details: (data.issue_details || []).slice(0, 3).join(' | '),
+    };
+  }
+
+  async function _waitForDownloadCompletion(jobId) {
+    const maxChecks = 480;
+    for (let i = 0; i < maxChecks; i++) {
+      const data = await API.getDownload(jobId);
+      if (data.status === 'completed') return data;
+      if (data.status === 'failed') {
+        const tail = (data.logs || []).slice(-3).join(' | ');
+        throw new Error(tail || 'Download job failed.');
+      }
+      await _sleep(2500);
+    }
+    throw new Error('Download timed out.');
+  }
+
+  async function _ensureCoverageWithAutoDownload({ pairs, timeframe, exchange, timerange }) {
+    let coverage = await _validateSelectedPairData({ pairs, timeframe, exchange, timerange });
+    if (coverage.ok) return true;
+
+    Toast.info(`Missing/incomplete data detected for ${coverage.missingPairs.join(', ')}. Auto-downloading now…`);
+    const res = await API.downloadData({
+      pairs,
+      timeframe,
+      timerange: timerange || null,
+    });
+    const jobId = res.job_id || res.run_id;
+    await _waitForDownloadCompletion(jobId);
+
+    const ex = exchange || (DOM.$('#bt-exchange', _el)?.value || 'binance');
+    await _loadPairs(ex);
+
+    coverage = await _validateSelectedPairData({ pairs, timeframe, exchange, timerange });
+    if (coverage.ok) {
+      Toast.success('Market data auto-downloaded and validated.');
+      return true;
+    }
 
     Toast.error(
-      `Missing local data for: ${missingPairs.join(', ')}. Download those pairs before backtesting.`
+      `Missing/incomplete local data for: ${coverage.missingPairs.join(', ')}.${coverage.details ? ` ${coverage.details}` : ''}`
     );
     return false;
   }
@@ -1358,15 +1545,19 @@ window.BacktestPage = (() => {
       timerange:       fd.get('timerange') || null,
       exchange:        fd.get('exchange') || 'binance',
     };
+    const commandOverride = await _editCommandBeforeRun(_buildLiveCommand());
+    if (!commandOverride) return;
+    body.command_override = commandOverride;
 
     try {
-      const hasCoverage = await _validateSelectedPairData(body);
+      const hasCoverage = await _ensureCoverageWithAutoDownload(body);
       if (!hasCoverage) return;
     } catch (err) {
-      Toast.error('Failed to validate pair data: ' + err.message);
+      Toast.error('Failed to validate/download pair data: ' + err.message);
       return;
     }
 
+    _clearLoadedResult();
     _setRunning(true);
     try {
       const res = await API.startBacktest(body);
@@ -1461,24 +1652,162 @@ window.BacktestPage = (() => {
       logs.innerHTML = (data.logs || []).slice(-200).map(l => `<div class="log-line">${_esc(l)}</div>`).join('');
       logs.scrollTop = logs.scrollHeight;
     }
-    if (data.status === 'completed' && data.results) {
+    const statusRunId = data.run_id || null;
+    const belongsToActiveRun = !_activeRunId || !statusRunId || statusRunId === _activeRunId;
+
+    if (data.status === 'completed' && data.results && belongsToActiveRun) {
       DOM.show(resCard);
       _resultRunId = data.run_id || _activeRunId || _resultRunId;
       _loadedResult = data;
       _renderResults(resBody, data.results);
       void _ensureQuickParamsForRun(data);
+    } else if (data.status === 'failed' && statusRunId && statusRunId === _activeRunId) {
+      _clearLoadedResult();
     }
+  }
+
+  function _resultDateMs(value) {
+    if (value == null || value === '') return null;
+    if (typeof value === 'number') {
+      if (value > 1e12) return value;
+      if (value > 1e9) return value * 1000;
+    }
+    const parsed = Date.parse(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  function _timerangeDays(timerange) {
+    const match = String(timerange || '').match(/^(\d{8})-(\d{8})$/);
+    if (!match) return null;
+    const start = Date.parse(`${match[1].slice(0, 4)}-${match[1].slice(4, 6)}-${match[1].slice(6, 8)}T00:00:00Z`);
+    const end = Date.parse(`${match[2].slice(0, 4)}-${match[2].slice(4, 6)}-${match[2].slice(6, 8)}T00:00:00Z`);
+    if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) return null;
+    return Math.max(((end - start) / 86400000) + 1, 1);
+  }
+
+  function _deriveBacktestDays(results) {
+    const run = results.run_metadata || {};
+    const runDays = FMT.toNumber(run.backtest_days ?? run.backtestDays);
+    if (runDays && runDays > 0) return runDays;
+
+    const startMs = _resultDateMs(run.backtest_start ?? run.backtestStart ?? run.backtest_start_ts ?? run.backtestStartTs);
+    const endMs = _resultDateMs(run.backtest_end ?? run.backtestEnd ?? run.backtest_end_ts ?? run.backtestEndTs);
+    if (startMs != null && endMs != null && endMs >= startMs) {
+      return Math.max((endMs - startMs) / 86400000, 1);
+    }
+
+    const timerangeDays = _timerangeDays(run.timerange);
+    if (timerangeDays != null) return timerangeDays;
+
+    const daily = Array.isArray(results.daily_profit) ? results.daily_profit : [];
+    if (daily.length > 0) return daily.length;
+
+    const dayRows = results.periodic_breakdown?.day || [];
+    if (Array.isArray(dayRows) && dayRows.length > 0) return dayRows.length;
+
+    const trades = Array.isArray(results.trades) ? results.trades : [];
+    if (trades.length > 0) {
+      const tradeStart = trades
+        .map((trade) => _resultDateMs(trade.openDate || trade.open_date || trade.closeDate || trade.close_date))
+        .filter((value) => value != null)
+        .sort((a, b) => a - b);
+      const tradeEnd = trades
+        .map((trade) => _resultDateMs(trade.closeDate || trade.close_date || trade.openDate || trade.open_date))
+        .filter((value) => value != null)
+        .sort((a, b) => b - a);
+      if (tradeStart.length && tradeEnd.length && tradeEnd[0] >= tradeStart[0]) {
+        return Math.max((tradeEnd[0] - tradeStart[0]) / 86400000, 1);
+      }
+    }
+
+    return null;
+  }
+
+  function _deriveWinLossStats(results) {
+    const summaryMetrics = results.summary_metrics || {};
+    const metricWins = FMT.toNumber(summaryMetrics.wins);
+    const metricLosses = FMT.toNumber(summaryMetrics.losses);
+    const metricDraws = FMT.toNumber(summaryMetrics.draws);
+    if (metricWins != null || metricLosses != null || metricDraws != null) {
+      return {
+        wins: metricWins ?? 0,
+        losses: metricLosses ?? 0,
+        draws: metricDraws ?? 0,
+      };
+    }
+
+    const perPair = Array.isArray(results.per_pair) ? results.per_pair : [];
+    if (perPair.length) {
+      return perPair.reduce((acc, row) => {
+        acc.wins += FMT.toNumber(row.wins) ?? 0;
+        acc.losses += FMT.toNumber(row.losses) ?? 0;
+        acc.draws += FMT.toNumber(row.draws) ?? 0;
+        return acc;
+      }, { wins: 0, losses: 0, draws: 0 });
+    }
+
+    const trades = Array.isArray(results.trades) ? results.trades : [];
+    if (trades.length) {
+      return trades.reduce((acc, trade) => {
+        const profit = FMT.toNumber(trade.profit_abs ?? trade.profitAbs ?? trade.profit_pct ?? trade.profitPct) ?? 0;
+        if (profit > 0) acc.wins += 1;
+        else if (profit < 0) acc.losses += 1;
+        else acc.draws += 1;
+        return acc;
+      }, { wins: 0, losses: 0, draws: 0 });
+    }
+
+    return { wins: null, losses: null, draws: null };
+  }
+
+  function _resultSummaryCard(title, value, meta = '', tone = '', variant = '') {
+    return `
+      <article class="bt-summary-card${variant ? ` bt-summary-card--${variant}` : ''}">
+        <div class="bt-summary-card__label">${_esc(title)}</div>
+        <div class="bt-summary-card__value ${tone ? `text-${tone}` : ''}">${value}</div>
+        ${meta ? `<div class="bt-summary-card__meta">${meta}</div>` : ''}
+      </article>
+    `;
+  }
+
+  function _resultRiskMeta(results, drawdownAbs) {
+    const risk = results.risk_metrics || {};
+    const lossStreak = FMT.toNumber(risk.max_consecutive_losses ?? results.summary?.maxConsecutiveLosses);
+    const duration = risk.drawdown_duration || results.summary?.drawdownDuration;
+    if (duration) return `Drawdown stretch ${_esc(duration)}`;
+    if (lossStreak != null && lossStreak > 0) return `Worst streak ${FMT.integer(lossStreak)} losses`;
+    if (drawdownAbs != null) return `Peak-to-trough ${FMT.currency(drawdownAbs)}`;
+    return '';
   }
 
   function _renderResults(el, results) {
     if (!el || !results) return;
     const ov = results.overview || {};
-    const profitPct = FMT.resultProfitPercent(ov);
-    const winRate = FMT.resultWinRate(ov.win_rate);
-    const drawdownPct = FMT.resultDrawdownPercent(ov.max_drawdown);
     const summary = results.summary || {};
-    const startingBalance = ov.starting_balance ?? summary.startingBalance;
-    const finalBalance = ov.final_balance ?? summary.finalBalance;
+    const risk = results.risk_metrics || {};
+    const profitPct = FMT.resultProfitPercent(summary);
+    const totalProfitAbs = FMT.toNumber(summary.totalProfit ?? ov.profit_total_abs);
+    const totalTrades = FMT.toNumber(summary.totalTrades ?? ov.total_trades);
+    const winRate = FMT.resultWinRate(summary.winRate ?? ov.win_rate);
+    const drawdownPct = FMT.resultDrawdownPercent(summary.maxDrawdown ?? ov.max_drawdown ?? risk.max_drawdown);
+    const drawdownAbs = FMT.toNumber(summary.maxDrawdownAbs ?? ov.max_drawdown_abs ?? risk.max_drawdown_abs);
+    const sharpe = FMT.toNumber(summary.sharpeRatio ?? summary.sharpe_ratio ?? ov.sharpe_ratio);
+    const startingBalance = FMT.toNumber(ov.starting_balance ?? summary.startingBalance);
+    const finalBalance = FMT.toNumber(ov.final_balance ?? summary.finalBalance);
+    const walletDelta = (startingBalance != null && finalBalance != null) ? (finalBalance - startingBalance) : null;
+    const backtestDays = _deriveBacktestDays(results);
+    const tradesPerDay = (totalTrades != null && backtestDays) ? (totalTrades / backtestDays) : null;
+    const tradeMeta = tradesPerDay != null
+      ? `${FMT.number(tradesPerDay, 1)} trades/day${backtestDays ? ` · ${FMT.number(backtestDays, 1)} day${backtestDays === 1 ? '' : 's'}` : ''}`
+      : '';
+    const winLoss = _deriveWinLossStats(results);
+    const winLossMeta = (winLoss.wins != null || winLoss.losses != null)
+      ? [
+          winLoss.wins != null ? `${FMT.integer(winLoss.wins)} wins` : null,
+          winLoss.losses != null ? `${FMT.integer(winLoss.losses)} losses` : null,
+          winLoss.draws ? `${FMT.integer(winLoss.draws)} draws` : null,
+        ].filter(Boolean).join(' · ')
+      : '';
     const resultCard = DOM.$('#bt-results-card', _el);
     if (resultCard) {
       resultCard.classList.add('result-explorer-card');
@@ -1488,19 +1817,43 @@ window.BacktestPage = (() => {
     }
     el.innerHTML = `
       <div class="result-explorer-card__hint">Click anywhere in this card to open the full explorer.</div>
-      <div class="results-overview">
-        ${_metric('Total Profit %',   profitPct != null ? FMT.pct(profitPct) : '—', FMT.toneProfit(profitPct))}
-        ${_metric('Profit (abs)',      FMT.currency(ov.profit_total_abs||0), FMT.toneProfit(ov.profit_total_abs))}
-        ${_metric('Total Trades',     ov.total_trades ?? '—')}
-        ${_metric('Win Rate',         winRate != null ? FMT.pct(winRate,1,false) : '—', FMT.toneWinRate(winRate))}
-        ${_metric('Max Drawdown',     drawdownPct != null ? FMT.pct(drawdownPct,1,false) : '—', FMT.toneDrawdown(drawdownPct))}
-        ${_metric('Sharpe Ratio',     FMT.number(summary.sharpeRatio ?? ov.sharpe_ratio), FMT.toneRatio(summary.sharpeRatio ?? ov.sharpe_ratio, 1))}
-        ${_metric('Final Balance',    FMT.currency(ov.final_balance), FMT.toneProfit((finalBalance ?? 0) - (startingBalance ?? 0)))}
+      <div class="bt-results-summary">
+        <div class="bt-results-primary">
+          <article class="bt-summary-card bt-summary-card--wallet">
+            <div class="bt-summary-card__label">Wallet Change</div>
+            <div class="bt-wallet-flow">
+              <div class="bt-wallet-flow__item">
+                <span class="bt-wallet-flow__tag">Start</span>
+                <span class="bt-wallet-flow__value">${FMT.currency(startingBalance)}</span>
+              </div>
+              <span class="bt-wallet-flow__arrow">→</span>
+              <div class="bt-wallet-flow__item">
+                <span class="bt-wallet-flow__tag">Final</span>
+                <span class="bt-wallet-flow__value ${walletDelta != null ? `text-${FMT.toneProfit(walletDelta)}` : ''}">${FMT.currency(finalBalance)}</span>
+              </div>
+            </div>
+          </article>
+          <article class="bt-summary-card bt-summary-card--net">
+            <div class="bt-summary-card__label">Net Result</div>
+            <div class="bt-summary-card__hero ${totalProfitAbs != null ? `text-${FMT.toneProfit(totalProfitAbs)}` : ''}">${totalProfitAbs != null ? FMT.currency(totalProfitAbs) : '—'}</div>
+            <div class="bt-summary-card__subvalue ${profitPct != null ? `text-${FMT.toneProfit(profitPct)}` : ''}">${profitPct != null ? FMT.pct(profitPct) : '—'}</div>
+          </article>
+        </div>
+        <div class="bt-results-grid">
+          ${_resultSummaryCard('Trading Activity', totalTrades != null ? `${FMT.integer(totalTrades)} trades` : '—', tradeMeta, tradesPerDay != null ? (tradesPerDay >= 4 ? 'amber' : 'muted') : '', 'activity')}
+          ${_resultSummaryCard('Win / Loss Quality', winRate != null ? FMT.pct(winRate, 1, false) : '—', winLossMeta, FMT.toneWinRate(winRate), 'quality')}
+          ${_resultSummaryCard('Risk', drawdownPct != null ? FMT.pct(drawdownPct, 1, false) : '—', _resultRiskMeta(results, drawdownAbs), FMT.toneDrawdown(drawdownPct), 'risk')}
+        </div>
+        ${sharpe != null ? `
+          <div class="bt-results-tech">
+            <span class="bt-results-tech__label">Strategy Efficiency</span>
+            <div class="bt-results-tech__item">
+              <span class="bt-results-tech__metric">Sharpe Ratio</span>
+              <span class="bt-results-tech__value text-${FMT.toneRatio(sharpe, 1)}">${FMT.number(sharpe, 3)}</span>
+            </div>
+          </div>
+        ` : ''}
       </div>`;
-  }
-
-  function _metric(label, value, color = '') {
-    return `<div class="metric-item"><span class="metric-label">${label}</span><span class="metric-value ${color ? 'text-' + color : ''}">${value}</span></div>`;
   }
 
   function _onStop() {

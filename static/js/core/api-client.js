@@ -35,6 +35,8 @@ window.API = (() => {
   /* ---- Strategies ------------------------------------------- */
   const getStrategies      = ()       => get('/strategies');
   const getStrategyParams  = (name)   => get(`/strategies/${encodeURIComponent(name)}/params`);
+  const saveStrategyParams = (name, parameters) =>
+    post(`/strategies/${encodeURIComponent(name)}/params`, { parameters });
 
   /* ---- Pairs ------------------------------------------------- */
   const getPairs = (exchange = 'binance', timeframe = null) => {
@@ -50,6 +52,7 @@ window.API = (() => {
   /* ---- Backtest runs ---------------------------------------- */
   const getRuns         = ()        => get('/runs');
   const getRun          = (id)      => get(`/runs/${id}`);
+  const getRunRaw       = (id)      => get(`/runs/${id}/raw`);
   const startBacktest   = (body)    => post('/run', body);
   const deleteRun       = (id)      => del(`/runs/${id}`);
   const getLastConfig   = ()        => get('/last-config');
@@ -83,10 +86,10 @@ window.API = (() => {
   return {
     request, get, post, del, patch,
     health,
-    getStrategies, getStrategyParams,
+    getStrategies, getStrategyParams, saveStrategyParams,
     getPairs,
     getConfig, patchConfig,
-    getRuns, getRun, startBacktest, deleteRun, getLastConfig,
+    getRuns, getRun, getRunRaw, startBacktest, deleteRun, getLastConfig,
     downloadData, getDownload, dataCoverage,
     getHyperoptRuns, getHyperoptRun, startHyperopt, deleteHyperoptRun,
     getLossFunctions, getHyperoptSpaces, applyHyperoptParams,

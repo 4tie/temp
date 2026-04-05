@@ -4,6 +4,29 @@
     "ETH/USDT"
   ],
   "timeframe": "5m",
-  "timerange": "20251001-20260321",
-  "strategy_params": {}
+  "timerange": "20250102-20260321",
+  "exchange": "binance",
+  "strategy_path": null,
+  "strategy_label": null,
+  "strategy_params": {},
+  "command_override": [
+    "python",
+    "-m",
+    "freqtrade",
+    "backtesting",
+    "-c",
+    "user_data/config.json",
+    "--strategy",
+    "MultiMa",
+    "--timeframe",
+    "5m",
+    "--export",
+    "trades",
+    "--backtest-directory",
+    "user_data/backtest_results/MultiMa",
+    "--timerange",
+    "20250102-20260321",
+    "--pairs",
+    "ETH/USDT"
+  ]
 }

@@ -384,6 +384,34 @@
   flex: 1;
 }
 
+.modal__text {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.65;
+}
+
+.modal__field {
+  display: block;
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-2);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+}
+
+.modal__input {
+  width: 100%;
+}
+
+.modal__textarea {
+  min-height: 180px;
+  height: 260px;
+  resize: vertical;
+  padding: var(--space-3);
+  line-height: 1.45;
+  font-family: var(--font-mono);
+}
+
 .modal__footer {
   display: flex;
   justify-content: flex-end;

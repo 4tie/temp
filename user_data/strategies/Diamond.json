@@ -1,15 +1,15 @@
 {
   "params": {
     "buy": {
-      "buy_fast_key": "ma_fast",
+      "buy_fast_key": "high",
       "buy_horizontal_push": 0,
-      "buy_slow_key": "ma_slow",
+      "buy_slow_key": "volume",
       "buy_vertical_push": 1
     },
     "sell": {
-      "sell_fast_key": "ma_fast",
+      "sell_fast_key": "high",
       "sell_horizontal_push": 0,
-      "sell_slow_key": "ma_slow",
+      "sell_slow_key": "low",
       "sell_vertical_push": 1
     }
   },

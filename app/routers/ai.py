@@ -121,7 +121,7 @@ async def _build_context(run_id: str | None) -> tuple[str, dict | None]:
             ctx_parts.append(f"Strategy: {meta.get('strategy', 'unknown')}")
             ctx_parts.append(f"Timeframe: {meta.get('timeframe', '')}")
         ctx_parts.append(f"Total Profit: {summary.get('profit_total_pct', 0):.2f}%")
-        ctx_parts.append(f"Win Rate: {summary.get('win_rate', 0):.1%}")
+        ctx_parts.append(f"Win Rate: {summary.get('win_rate', 0):.1f}%")
         ctx_parts.append(f"Max Drawdown: {summary.get('max_drawdown_pct', 0):.2f}%")
         ctx_parts.append(f"Total Trades: {summary.get('total_trades', 0)}")
         ctx_parts.append(f"Sharpe Ratio: {summary.get('sharpe_ratio', 'N/A')}")

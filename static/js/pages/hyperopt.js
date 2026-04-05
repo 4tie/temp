@@ -153,6 +153,91 @@ window.HyperoptPage = (() => {
     return [...document.querySelectorAll(`#${listId} .pairs-row__check:checked`)].map(c => c.value);
   }
 
+  function _buildDownloadCommand() {
+    const get = id => { const el = DOM.$(`#${id}`, _el); return el ? el.value : ''; };
+    const timeframe = get('ho-timeframe') || '5m';
+    const timerange = get('ho-timerange') || '';
+    const pairs = _getSelectedPairs('ho-pairs-list');
+    const cmd = [
+      'python', '-m', 'freqtrade', 'download-data',
+      '-c', 'user_data/config.json',
+      '--timeframes', timeframe,
+    ];
+    if (timerange) cmd.push('--timerange', timerange);
+    if (pairs.length) cmd.push('--pairs', ...pairs);
+    return cmd;
+  }
+
+  function _sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  function _buildHyperoptCommand() {
+    const get = id => { const el = DOM.$(`#${id}`, _el); return el ? el.value : ''; };
+    const strategy = get('ho-strategy') || '';
+    const timeframe = get('ho-timeframe') || '5m';
+    const timerange = get('ho-timerange') || '';
+    const epochs = get('ho-epochs') || '100';
+    const jobs = get('ho-jobs') || '1';
+    const lossFunction = get('ho-loss') || 'SharpeHyperOptLossDaily';
+    const minTrades = get('ho-min-trades') || '1';
+    const wallet = get('ho-wallet') || '1000';
+    const spacesEls = _el ? [..._el.querySelectorAll('#ho-spaces input[type="checkbox"]')] : [];
+    const spaces = spacesEls.filter(c => c.checked).map(c => c.value);
+    const pairs = _getSelectedPairs('ho-pairs-list');
+
+    const cmd = [
+      'freqtrade', 'hyperopt',
+      '--strategy', strategy || '<strategy>',
+      '--timeframe', timeframe,
+      '--epochs', String(epochs),
+      '--spaces', ...(spaces.length ? spaces : ['default']),
+      '--hyperopt-loss', lossFunction,
+      '-j', String(jobs),
+      '--min-trades', String(minTrades),
+      '--dry-run-wallet', String(wallet),
+    ];
+    if (timerange) cmd.push('--timerange', timerange);
+    if (pairs.length) cmd.push('--pairs', ...pairs);
+    return cmd;
+  }
+
+  function _tokenizeEditedCommand(text) {
+    const src = String(text || '').trim();
+    if (!src) return [];
+    const tokens = src.match(/"[^"]*"|'[^']*'|\S+/g) || [];
+    return tokens.map(t => t.replace(/^['"]|['"]$/g, ''));
+  }
+
+  async function _editCommandBeforeRun(defaultCmd) {
+    const initial = defaultCmd.join(' ');
+    let edited = null;
+    try {
+      if (window.Modal && typeof window.Modal.codePrompt === 'function') {
+        edited = await window.Modal.codePrompt({
+          title: 'Edit Command',
+          message: 'Review or modify the command before execution.',
+          label: 'Command',
+          value: initial,
+          confirmLabel: 'Run',
+          cancelLabel: 'Cancel',
+        });
+      } else {
+        edited = window.prompt('Edit command before run:', initial);
+      }
+    } catch (err) {
+      Toast.error('Command editor failed to open: ' + (err?.message || String(err)));
+      return null;
+    }
+    if (edited === null) return null;
+    const tokens = _tokenizeEditedCommand(edited);
+    if (!tokens.length) {
+      Toast.warning('Command cannot be empty.');
+      return null;
+    }
+    return tokens;
+  }
+
   function init() {
     _el = DOM.$('[data-view="hyperopt"]');
     if (!_el) return;
@@ -361,7 +446,8 @@ window.HyperoptPage = (() => {
       const favs      = _getFavs();
       const selected  = preSelected ? new Set(preSelected) : new Set();
 
-      const allFavs        = [...local, ...config, ...popular].filter(p => favs.has(p));
+      const uniq = (arr) => [...new Set(arr)];
+      const allFavs        = uniq([...local, ...config, ...popular].filter(p => favs.has(p)));
       const nonFavLocal    = local.filter(p => !favs.has(p));
       const nonFavConfig   = config.filter(p => !favs.has(p));
       const nonFavPopular  = popular.filter(p => !favs.has(p));
@@ -389,10 +475,10 @@ window.HyperoptPage = (() => {
   let _dlPollTimer = null;
 
   async function _onDownload() {
-    const tf       = DOM.$('#ho-timeframe', _el)?.value || '5m';
     const selected = _getSelectedPairs('ho-pairs-list');
-
     if (!selected.length) { Toast.warning('Select at least one pair to download.'); return; }
+    const commandOverride = await _editCommandBeforeRun(_buildDownloadCommand());
+    if (!commandOverride) return;
 
     const formBtn = DOM.$('#ho-dl-form-btn', _el);
     const logEl   = DOM.$('#ho-dl-logs', _el);
@@ -402,7 +488,9 @@ window.HyperoptPage = (() => {
     if (logWrap) DOM.show(logWrap);
 
     try {
-      const res = await API.downloadData({ pairs: selected, timeframe: tf });
+      const tf = DOM.$('#ho-timeframe', _el)?.value || '5m';
+      const timerange = DOM.$('#ho-timerange', _el)?.value || null;
+      const res = await API.downloadData({ pairs: selected, timeframe: tf, timerange, command_override: commandOverride });
       _pollDownload(res.job_id || res.run_id, logEl, formBtn);
       Toast.info('Download started…');
     } catch (err) {
@@ -456,6 +544,60 @@ window.HyperoptPage = (() => {
     } catch {}
   }
 
+  async function _validateSelectedPairData({ pairs, timeframe, exchange, timerange }) {
+    const data = await API.dataCoverage({ pairs, timeframe, exchange, timerange });
+    const missingPairs = data.missing_pairs || (data.coverage || [])
+      .filter(item => !item.available || ((item.missing_days || []).length > 0) || ((item.incomplete_days || []).length > 0))
+      .map(item => item.pair);
+
+    return {
+      ok: !missingPairs.length,
+      missingPairs,
+      details: (data.issue_details || []).slice(0, 3).join(' | '),
+    };
+  }
+
+  async function _waitForDownloadCompletion(jobId) {
+    const maxChecks = 480;
+    for (let i = 0; i < maxChecks; i++) {
+      const data = await API.getDownload(jobId);
+      if (data.status === 'completed') return data;
+      if (data.status === 'failed') {
+        const tail = (data.logs || []).slice(-3).join(' | ');
+        throw new Error(tail || 'Download job failed.');
+      }
+      await _sleep(2500);
+    }
+    throw new Error('Download timed out.');
+  }
+
+  async function _ensureCoverageWithAutoDownload({ pairs, timeframe, exchange, timerange }) {
+    let coverage = await _validateSelectedPairData({ pairs, timeframe, exchange, timerange });
+    if (coverage.ok) return true;
+
+    Toast.info(`Missing/incomplete data detected for ${coverage.missingPairs.join(', ')}. Auto-downloading now…`);
+    const res = await API.downloadData({
+      pairs,
+      timeframe,
+      timerange: timerange || null,
+    });
+    const jobId = res.job_id || res.run_id;
+    await _waitForDownloadCompletion(jobId);
+
+    await _loadPairs(exchange || 'binance');
+
+    coverage = await _validateSelectedPairData({ pairs, timeframe, exchange, timerange });
+    if (coverage.ok) {
+      Toast.success('Market data auto-downloaded and validated.');
+      return true;
+    }
+
+    Toast.error(
+      `Missing/incomplete local data for: ${coverage.missingPairs.join(', ')}.${coverage.details ? ` ${coverage.details}` : ''}`
+    );
+    return false;
+  }
+
   async function _onSubmit(e) {
     e.preventDefault();
     const fd      = new FormData(e.target);
@@ -477,6 +619,17 @@ window.HyperoptPage = (() => {
       dry_run_wallet: parseFloat(fd.get('dry_run_wallet')) || 1000,
       exchange:       fd.get('exchange') || 'binance',
     };
+    const commandOverride = await _editCommandBeforeRun(_buildHyperoptCommand());
+    if (!commandOverride) return;
+    body.command_override = commandOverride;
+
+    try {
+      const hasCoverage = await _ensureCoverageWithAutoDownload(body);
+      if (!hasCoverage) return;
+    } catch (err) {
+      Toast.error('Failed to validate/download pair data: ' + err.message);
+      return;
+    }
 
     _setRunning(true);
     try {
@@ -564,13 +717,14 @@ window.HyperoptPage = (() => {
     if (data.progress && progressEl) {
       const p = data.progress;
       const pct = p.total_epochs > 0 ? Math.round((p.current_epoch / p.total_epochs) * 100) : 0;
+      const bestProfitPct = FMT.resultProfitPercent({ profit_pct: p.best_profit_pct });
       progressEl.innerHTML = `
         <div class="progress-bar-wrap">
           <div class="progress-bar" style="width:${pct}%"></div>
         </div>
         <div class="progress-meta">
           <span>Epoch ${p.current_epoch} / ${p.total_epochs}</span>
-          ${p.best_profit_pct != null ? `<span>Best profit: <strong class="text-green">${FMT.pct(p.best_profit_pct)}</strong></span>` : ''}
+          ${bestProfitPct != null ? `<span>Best profit: <strong class="text-green">${FMT.pct(bestProfitPct)}</strong></span>` : ''}
           ${p.best_trades ? `<span>Best trades: ${p.best_trades}</span>` : ''}
         </div>`;
     }
@@ -589,15 +743,20 @@ window.HyperoptPage = (() => {
 
   function _renderHoResults(el, results, meta) {
     if (!el) return;
-    const best = Array.isArray(results) ? results[0] : results;
+    const best = Array.isArray(results)
+      ? results[0]
+      : (results.best || (results.epochs || [])[0] || results);
     if (!best) { el.innerHTML = '<div class="empty-state">No results.</div>'; return; }
     const params = best.params || best.parameters || {};
+    const profitPct = FMT.resultProfitPercent(best);
+    const winRate = FMT.resultWinRate(best.win_rate);
+    const drawdownPct = FMT.resultDrawdownPercent(best.drawdown_pct);
     el.innerHTML = `
       <div class="results-overview" style="margin-bottom:var(--space-4)">
-        ${_metric('Profit %',   FMT.pct(best.profit_percent ?? best.profit ?? 0), (best.profit_percent||0)>0?'green':'red')}
-        ${_metric('Trades',     best.trade_count ?? best.total_trades ?? '—')}
-        ${_metric('Win Rate',   best.win_rate != null ? FMT.pct((best.win_rate||0)*100,1,false) : '—')}
-        ${_metric('Drawdown',   best.max_drawdown != null ? FMT.pct(Math.abs((best.max_drawdown||0)*100),1,false) : '—', 'red')}
+        ${_metric('Profit %',   profitPct != null ? FMT.pct(profitPct) : '—', (profitPct||0)>0?'green':'red')}
+        ${_metric('Trades',     best.trades ?? best.trade_count ?? best.total_trades ?? '—')}
+        ${_metric('Win Rate',   winRate != null ? FMT.pct(winRate,1,false) : '—')}
+        ${_metric('Drawdown',   drawdownPct != null ? FMT.pct(drawdownPct,1,false) : '—', 'red')}
       </div>
       ${Object.keys(params).length ? `
         <div class="section-heading">Best Parameters</div>

@@ -100,19 +100,19 @@ class Diamond(IStrategy):
                                          #  populate an indicator for them and set
                                          #  the same key name for it
                                          #  'ma_fast', 'ma_slow', {...}
-                                         ], default='ma_fast', space='buy')
+                                         ], default='high', space='buy')
     buy_slow_key = CategoricalParameter(['open', 'high', 'low', 'close', 'volume',
                                          #  'ma_fast', 'ma_slow', {...}
-                                         ], default='ma_slow', space='buy')
+                                         ], default='volume', space='buy')
 
     sell_vertical_push = DecimalParameter(0.5, 1.5, decimals=3,  default=1, space='sell')
     sell_horizontal_push = IntParameter(0, 10, default=0, space='sell')
     sell_fast_key = CategoricalParameter(['open', 'high', 'low', 'close', 'volume',
                                           #  'ma_fast', 'ma_slow', {...}
-                                          ], default='ma_fast', space='sell')
+                                          ], default='high', space='sell')
     sell_slow_key = CategoricalParameter(['open', 'high', 'low', 'close', 'volume',
                                           #  'ma_fast', 'ma_slow', {...}
-                                          ], default='ma_slow', space='sell')
+                                          ], default='low', space='sell')
 
     def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         # you can add new indicators and enable them inside

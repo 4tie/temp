@@ -15,6 +15,8 @@ from math import sqrt
 from pathlib import Path
 from typing import Any
 
+from app.services.result_normalizer import normalize_backtest_result
+
 logger = logging.getLogger(__name__)
 
 INSUFFICIENT = "insufficient evidence"
@@ -70,6 +72,7 @@ def _narrative_cache_load_from_disk(run_id: str) -> dict | None:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def analyze(run: dict, run_id: str = "") -> dict:
+    run = normalize_backtest_result(run)
     trades: list[dict] = run.get("trades") or []
     summary: dict = run.get("summary") or {}
     strategy_name: str = run.get("strategy", "")

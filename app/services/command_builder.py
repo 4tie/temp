@@ -1,5 +1,26 @@
+import re
+from datetime import datetime, timezone
 from typing import Any, Optional
 from app.core.config import STRATEGIES_DIR, DATA_DIR, FREQTRADE_CONFIG_DIR, HYPEROPT_RESULTS_DIR, BASE_DIR, PYTHON_EXECUTABLE
+
+
+_TIMERANGE_RE = re.compile(r"^(\d{8})-(\d{8})$")
+_DEFAULT_DOWNLOAD_START = "20251001"
+
+
+def _today_yyyymmdd() -> str:
+    return datetime.now(timezone.utc).strftime("%Y%m%d")
+
+
+def _effective_download_timerange(timerange: Optional[str]) -> str:
+    today = _today_yyyymmdd()
+    if not timerange:
+        return f"{_DEFAULT_DOWNLOAD_START}-{today}"
+
+    value = timerange.strip()
+    if not _TIMERANGE_RE.match(value):
+        return value
+    return value
 
 
 def build_backtest_command(
@@ -8,14 +29,21 @@ def build_backtest_command(
     timeframe: str,
     timerange: Optional[str],
     strategy_params: dict[str, Any],
+    strategy_path: Optional[str] = None,
+    backtest_directory: Optional[str] = None,
 ) -> list[str]:
+    output_directory = backtest_directory or f"user_data/backtest_results/{strategy}"
     cmd = [
         PYTHON_EXECUTABLE, "-m", "freqtrade", "backtesting",
         "-c", "user_data/config.json",
+        "--strategy", strategy,
         "--timeframe", timeframe,
         "--export", "trades",
-        "--export-filename", f"user_data/backtest_results/{strategy}/result.json",
+        "--backtest-directory", output_directory,
     ]
+
+    if strategy_path:
+        cmd.extend(["--strategy-path", strategy_path])
 
     if timerange:
         cmd.extend(["--timerange", timerange])
@@ -32,12 +60,13 @@ def build_backtest_command(
 def build_download_data_command(
     pairs: list[str],
     timeframe: str,
+    timerange: Optional[str],
 ) -> list[str]:
     cmd = [
         PYTHON_EXECUTABLE, "-m", "freqtrade", "download-data",
         "-c", "user_data/config.json",
-        "--timeframe", timeframe,
-        "--timerange", "20251001-20260321",
+        "--timeframes", timeframe,
+        "--timerange", _effective_download_timerange(timerange),
     ]
 
     if pairs:

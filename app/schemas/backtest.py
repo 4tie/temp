@@ -7,7 +7,11 @@ class BacktestRequest(BaseModel):
     pairs: list[str]
     timeframe: str = "5m"
     timerange: Optional[str] = None
+    exchange: Optional[str] = None
+    strategy_path: Optional[str] = None
+    strategy_label: Optional[str] = None
     strategy_params: dict[str, Any] = Field(default_factory=dict)
+    command_override: Optional[list[str]] = None
 
 
 class ConfigPatchRequest(BaseModel):
@@ -21,6 +25,8 @@ class ConfigPatchRequest(BaseModel):
 class DownloadDataRequest(BaseModel):
     pairs: list[str]
     timeframe: str = "5m"
+    timerange: Optional[str] = None
+    command_override: Optional[list[str]] = None
 
 
 class PresetSaveRequest(BaseModel):
@@ -68,6 +74,7 @@ class HyperoptRequest(BaseModel):
     max_open_trades: int = 3
     stake_amount: str = "unlimited"
     random_state: Optional[int] = None
+    command_override: Optional[list[str]] = None
 
 
 class ApplyParamsRequest(BaseModel):
@@ -79,3 +86,5 @@ class ApplyParamsRequest(BaseModel):
 class DataCoverageRequest(BaseModel):
     pairs: list[str]
     timeframe: str = "5m"
+    exchange: Optional[str] = None
+    timerange: Optional[str] = None

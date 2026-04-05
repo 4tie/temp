@@ -12,6 +12,7 @@ LAST_CONFIG_FILE = BASE_DIR / "last_config.json"
 FREQTRADE_CONFIG_DIR = BASE_DIR
 
 AI_CONVERSATIONS_DIR = BASE_DIR / "ai_conversations"
+AI_THREADS_DIR = BASE_DIR / "ai_threads"
 AI_EVOLUTION_DIR = BASE_DIR / "ai_evolution"
 
 BACKTEST_RESULTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -19,6 +20,7 @@ HYPEROPT_RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 STRATEGIES_DIR.mkdir(parents=True, exist_ok=True)
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 AI_CONVERSATIONS_DIR.mkdir(parents=True, exist_ok=True)
+AI_THREADS_DIR.mkdir(parents=True, exist_ok=True)
 AI_EVOLUTION_DIR.mkdir(parents=True, exist_ok=True)
 
 PORT = int(os.environ.get("BACKTEST_API_PORT", "8000"))

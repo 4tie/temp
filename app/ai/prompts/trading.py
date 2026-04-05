@@ -3,6 +3,8 @@ System prompts and goal directives for the trading AI pipelines.
 """
 from __future__ import annotations
 
+from app.ai.goals import GOAL_DIRECTIVES as CANONICAL_GOAL_DIRECTIVES
+
 REASONER_SYSTEM_PROMPT = """You are an expert quantitative trading strategy analyst with deep expertise in systematic trading, risk management, and FreqTrade.
 
 Provide thorough, evidence-based analysis with specific numbers. Reference these institutional benchmarks:
@@ -120,3 +122,7 @@ For each code block:
 4. Highlight potential risks or improvements
 5. Estimate expected impact on: win rate, profit factor, drawdown
 6. Note any FreqTrade-specific best practices followed or violated"""
+
+
+# Canonical goal model used by the live AI stack and evolution flows.
+GOAL_DIRECTIVES = CANONICAL_GOAL_DIRECTIVES

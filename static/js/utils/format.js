@@ -4,12 +4,23 @@
    ================================================================= */
 
 window.FMT = (() => {
+  function toNumber(value) {
+    if (value === null || value === undefined || value === '') return null;
+    const n = parseFloat(value);
+    return Number.isFinite(n) ? n : null;
+  }
 
   function pct(value, decimals = 2, showSign = true) {
-    if (value === null || value === undefined || isNaN(value)) return '—';
-    const n = parseFloat(value);
+    const n = toNumber(value);
+    if (n === null) return '—';
     const sign = showSign && n > 0 ? '+' : '';
     return `${sign}${n.toFixed(decimals)}%`;
+  }
+
+  function pctRatio(value, decimals = 2, showSign = true) {
+    const n = toNumber(value);
+    if (n === null) return '—';
+    return pct(n * 100, decimals, showSign);
   }
 
   function currency(value, decimals = 2, symbol = '$') {
@@ -23,16 +34,97 @@ window.FMT = (() => {
   }
 
   function number(value, decimals = 4) {
-    if (value === null || value === undefined || isNaN(value)) return '—';
-    return parseFloat(value).toLocaleString('en-US', {
+    const n = toNumber(value);
+    if (n === null) return '—';
+    return n.toLocaleString('en-US', {
       minimumFractionDigits: 0,
       maximumFractionDigits: decimals,
     });
   }
 
   function integer(value) {
-    if (value === null || value === undefined || isNaN(value)) return '—';
-    return parseInt(value, 10).toLocaleString('en-US');
+    const n = toNumber(value);
+    if (n === null) return '—';
+    return parseInt(n, 10).toLocaleString('en-US');
+  }
+
+  function resultProfitPercent(metrics = {}) {
+    const raw = toNumber(
+      metrics.profit_percent ?? metrics.profit_total_pct ?? metrics.totalProfitPct ?? metrics.profit_pct
+    );
+    const ratio = toNumber(metrics.profit_total);
+    const absProfit = toNumber(metrics.profit_total_abs ?? metrics.totalProfit ?? metrics.profit_abs);
+    const starting = toNumber(metrics.starting_balance ?? metrics.startingBalance);
+    const ending = toNumber(metrics.final_balance ?? metrics.finalBalance);
+
+    let derived = null;
+    if (starting && ending !== null) derived = ((ending - starting) / starting) * 100;
+    else if (starting && absProfit !== null) derived = (absProfit / starting) * 100;
+    else if (ratio !== null) derived = ratio * 100;
+
+    if (raw === null) return derived;
+    if (derived === null) {
+      if (Math.abs(raw) > 1000 && Math.abs(raw / 100) <= 1000) return raw / 100;
+      return raw;
+    }
+
+    const tolerance = Math.max(0.5, Math.abs(derived) * 0.05);
+    if (Math.abs(raw - derived) <= tolerance) return raw;
+    if (Math.abs(raw / 100 - derived) <= tolerance) return raw / 100;
+    if (Math.abs(raw) > Math.max(250, Math.abs(derived) * 3 + 25)) return derived;
+    return raw;
+  }
+
+  function resultWinRate(value) {
+    const raw = toNumber(value);
+    if (raw === null) return null;
+    if (Math.abs(raw) <= 1) return raw * 100;
+    if (Math.abs(raw) > 100 && Math.abs(raw / 100) <= 100) return raw / 100;
+    return raw;
+  }
+
+  function resultDrawdownPercent(value) {
+    const raw = toNumber(value);
+    if (raw === null) return null;
+    if (Math.abs(raw) <= 1) return Math.abs(raw) * 100;
+    if (Math.abs(raw) > 100 && Math.abs(raw / 100) <= 100) return Math.abs(raw / 100);
+    return Math.abs(raw);
+  }
+
+  function toneSigned(value, positive = 'green', negative = 'red', zero = 'muted') {
+    const n = toNumber(value);
+    if (n === null) return zero;
+    if (n > 0) return positive;
+    if (n < 0) return negative;
+    return zero;
+  }
+
+  function toneProfit(value) {
+    return toneSigned(value, 'green', 'red', 'muted');
+  }
+
+  function toneWinRate(value) {
+    const n = resultWinRate(value);
+    if (n === null) return 'muted';
+    if (n >= 55) return 'green';
+    if (n >= 45) return 'amber';
+    return 'red';
+  }
+
+  function toneRatio(value, goodThreshold = 1) {
+    const n = toNumber(value);
+    if (n === null) return 'muted';
+    if (n >= goodThreshold) return 'green';
+    if (n > 0) return 'amber';
+    return 'red';
+  }
+
+  function toneDrawdown(value) {
+    const n = resultDrawdownPercent(value);
+    if (n === null) return 'muted';
+    if (n <= 0) return 'muted';
+    if (n >= 20) return 'red';
+    return 'amber';
   }
 
   function ts(value) {
@@ -88,5 +180,11 @@ window.FMT = (() => {
     return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
   }
 
-  return { pct, currency, number, integer, ts, tsShort, duration, truncate, statusColor, statusLabel };
+  return {
+    toNumber,
+    pct, pctRatio, currency, number, integer,
+    resultProfitPercent, resultWinRate, resultDrawdownPercent,
+    toneSigned, toneProfit, toneWinRate, toneRatio, toneDrawdown,
+    ts, tsShort, duration, truncate, statusColor, statusLabel
+  };
 })();

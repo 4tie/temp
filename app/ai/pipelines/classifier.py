@@ -11,7 +11,7 @@ from enum import Enum
 
 from pydantic import BaseModel
 
-from ..models.provider_dispatch import chat_complete
+from ..models.provider_dispatch import chat_complete, get_last_dispatch_meta
 from ..models.registry import fetch_free_models, get_model_for_role
 
 logger = logging.getLogger(__name__)
@@ -121,7 +121,29 @@ async def classify(
     used_model = model_id
 
     try:
-        raw = await chat_complete(messages, model=model_id)
+        raw = await chat_complete(messages, model=model_id, provider=provider)
+        dispatch_meta = get_last_dispatch_meta()
+        if dispatch_meta:
+            used_model = dispatch_meta.get("model") or used_model
+            actual_provider = dispatch_meta.get("provider")
+            key_slot = dispatch_meta.get("key_slot")
+            attempt_count = dispatch_meta.get("attempt_count")
+            fallback_chain = dispatch_meta.get("fallback_chain") or []
+            meta_bits = [selection_reason]
+            if actual_provider:
+                meta_bits.append(f"actual_provider={actual_provider}")
+            if key_slot:
+                meta_bits.append(f"key_slot={key_slot}")
+            if attempt_count:
+                meta_bits.append(f"attempts={attempt_count}")
+            if fallback_chain:
+                meta_bits.append(f"chain={' -> '.join(fallback_chain)}")
+            selection_reason = " | ".join(meta_bits)
+            fallback_used = bool(dispatch_meta.get("fallback_used"))
+            if fallback_used and not fallback_reason:
+                provider_attempts = dispatch_meta.get("provider_attempts") or []
+                if provider_attempts:
+                    fallback_reason = provider_attempts[-1].get("error")
         cleaned = raw.strip()
         if cleaned.startswith("```"):
             lines = cleaned.split("\n")

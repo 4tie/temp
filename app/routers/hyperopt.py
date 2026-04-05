@@ -47,11 +47,29 @@ def _checked_id(value: str) -> str:
 
 @router.post("/run")
 async def run_hyperopt(req: HyperoptRequest):
-    from app.routers.backtest import _read_config_json
+    from app.routers.backtest import _read_config_json, _validate_selected_pair_data
     cfg = _read_config_json()
     exchange_name = cfg.get("exchange", {})
     if isinstance(exchange_name, dict):
         exchange_name = exchange_name.get("name", "binance")
+
+    _, missing_pairs, issue_details = _validate_selected_pair_data(
+        pairs=req.pairs,
+        timeframe=req.timeframe,
+        exchange=exchange_name,
+        timerange=req.timerange,
+    )
+    if missing_pairs:
+        detail_suffix = " | ".join(issue_details[:5])
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Missing local market data for selected pairs: "
+                f"{', '.join(missing_pairs)}. "
+                "Download data for those pairs before hyperopt. "
+                f"Details: {detail_suffix}"
+            ),
+        )
     
     run_id = start_hyperopt(
         strategy=req.strategy,
@@ -69,6 +87,7 @@ async def run_hyperopt(req: HyperoptRequest):
         stake_amount=req.stake_amount,
         exchange=exchange_name,
         random_state=req.random_state,
+        command_override=req.command_override,
     )
     return {"run_id": run_id, "status": "running"}
 

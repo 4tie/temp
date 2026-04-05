@@ -1,4 +1,3 @@
-import asyncio
 import json
 import shutil
 import subprocess
@@ -14,12 +13,33 @@ from app.core.processes import (
     get_logs, remove_process, get_process
 )
 from app.services.command_builder import build_backtest_command, build_download_data_command, build_hyperopt_command
-from app.services.result_parser import parse_backtest_results
+from app.services.result_parser import parse_backtest_results, find_run_local_result_artifact
 from app.services.storage import save_run_meta, save_run_results, save_run_logs, get_run_dir, load_run_meta
 from app.services.hyperopt_storage import save_hyperopt_meta, save_hyperopt_results, save_hyperopt_logs, get_hyperopt_run_dir
 
 
 _JSON_SCALAR_TYPES = (str, int, float, bool, type(None))
+
+
+def _normalized_command(default_cmd: list[str], command_override: Optional[list[str]]) -> list[str]:
+    if not command_override:
+        return default_cmd
+
+    cmd = [str(token) for token in command_override]
+    if not cmd:
+        return default_cmd
+
+    # If user override uses generic python launcher with -m freqtrade,
+    # force the same interpreter as the app runtime.
+    if (
+        cmd[0].lower() in {"python", "python3"}
+        and "-m" in cmd
+        and "freqtrade" in cmd
+        and default_cmd
+    ):
+        cmd[0] = default_cmd[0]
+
+    return cmd
 
 
 def wait_for_run(run_id: str, timeout_s: int = 600) -> dict:
@@ -37,8 +57,27 @@ def wait_for_run(run_id: str, timeout_s: int = 600) -> dict:
     return load_run_meta(run_id) or {"run_id": run_id, "status": "timeout"}
 
 
-def _ensure_valid_strategy_json(strategy: str, run_id: str) -> None:
-    json_path = STRATEGIES_DIR / f"{strategy}.json"
+def _read_runtime_config() -> dict[str, Any]:
+    config_file = BACKTEST_RESULTS_DIR.parent / "config.json"
+    if not config_file.exists():
+        return {}
+    try:
+        return json.loads(config_file.read_text())
+    except Exception:
+        return {}
+
+
+def _exchange_name_from_config(cfg: dict[str, Any]) -> str | None:
+    exchange = cfg.get("exchange")
+    if isinstance(exchange, dict):
+        return exchange.get("name")
+    if isinstance(exchange, str):
+        return exchange
+    return None
+
+
+def _ensure_valid_strategy_json(strategy: str, run_id: str, strategy_dir: Path | None = None) -> None:
+    json_path = (strategy_dir or STRATEGIES_DIR) / f"{strategy}.json"
     if not json_path.exists():
         return
     try:
@@ -57,12 +96,12 @@ def _ensure_valid_strategy_json(strategy: str, run_id: str) -> None:
                 space = "sell" if k.startswith("sell_") else "buy"
                 nested[space][k] = v
             data = {"strategy_name": strategy, "params": nested}
-            json_path.write_text(json.dumps(data, indent=2))
+            json_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
             append_log(run_id, f"INFO: {strategy}.json migrated to nested params format.")
             return
         if "strategy_name" not in data:
             data["strategy_name"] = strategy
-            json_path.write_text(json.dumps(data, indent=2))
+            json_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
         params = data["params"]
         if not isinstance(params, dict):
             raise ValueError("params is not a dict")
@@ -73,7 +112,7 @@ def _ensure_valid_strategy_json(strategy: str, run_id: str) -> None:
                 if not isinstance(v, _JSON_SCALAR_TYPES):
                     raise ValueError(f"non-scalar value: {type(v).__name__}")
     except Exception as exc:
-        json_path.write_text(json.dumps({"strategy_name": strategy, "params": {}}, indent=2))
+        json_path.write_text(json.dumps({"strategy_name": strategy, "params": {}}, indent=2), encoding="utf-8")
         append_log(
             run_id,
             f"WARNING: {strategy}.json was invalid ({exc}); reset so FreqTrade uses class defaults.",
@@ -86,49 +125,56 @@ def start_backtest(
     timeframe: str,
     timerange: Optional[str],
     strategy_params: dict[str, Any],
+    exchange: Optional[str] = None,
+    strategy_path: Optional[str] = None,
+    strategy_label: Optional[str] = None,
+    command_override: Optional[list[str]] = None,
+    extra_meta: Optional[dict[str, Any]] = None,
 ) -> str:
     run_id = datetime.utcnow().strftime("%Y%m%d_%H%M%S") + "_" + uuid.uuid4().hex[:8]
-    run_dir = BACKTEST_RESULTS_DIR / strategy
-    run_dir.mkdir(parents=True, exist_ok=True)
+    run_dir = get_run_dir(run_id)
+    strategy_dir = Path(strategy_path) if strategy_path else STRATEGIES_DIR
 
-    _ensure_valid_strategy_json(strategy, run_id)
+    _ensure_valid_strategy_json(strategy, run_id, strategy_dir=strategy_dir)
 
-    cmd = build_backtest_command(
+    default_cmd = build_backtest_command(
         strategy=strategy,
         pairs=pairs,
         timeframe=timeframe,
         timerange=timerange,
         strategy_params=strategy_params,
+        strategy_path=str(strategy_dir) if strategy_path else None,
+        backtest_directory=str(run_dir),
     )
+    cmd = _normalized_command(default_cmd, command_override)
 
-    config_file = BACKTEST_RESULTS_DIR.parent / "config.json"
-    dry_run_wallet = None
-    max_open_trades = None
-    stake_amount = None
-    if config_file.exists():
-        try:
-            cfg = json.loads(config_file.read_text())
-            dry_run_wallet = cfg.get("dry_run_wallet")
-            max_open_trades = cfg.get("max_open_trades")
-            stake_amount = cfg.get("stake_amount")
-        except Exception:
-            pass
-
-    meta = {
+    cfg = _read_runtime_config()
+    dry_run_wallet = cfg.get("dry_run_wallet")
+    max_open_trades = cfg.get("max_open_trades")
+    stake_amount = cfg.get("stake_amount")
+    display_strategy = strategy_label or strategy
+    meta: dict[str, Any] = {
         "run_id": run_id,
-        "strategy": strategy,
+        "strategy": display_strategy,
+        "strategy_class": strategy,
+        "base_strategy": strategy,
         "pairs": pairs,
         "timeframe": timeframe,
         "timerange": timerange,
         "dry_run_wallet": dry_run_wallet,
         "max_open_trades": max_open_trades,
         "stake_amount": stake_amount,
+        "exchange": exchange or _exchange_name_from_config(cfg),
         "strategy_params": strategy_params,
+        "strategy_path": str(strategy_dir) if strategy_path else None,
         "command": cmd,
         "status": "running",
         "started_at": datetime.utcnow().isoformat(),
         "completed_at": None,
     }
+    if extra_meta:
+        meta.update(extra_meta)
+
     save_run_meta(run_id, meta)
 
     _run_subprocess(run_id, cmd, run_dir, meta)
@@ -138,13 +184,17 @@ def start_backtest(
 def start_download(
     pairs: list[str],
     timeframe: str,
+    timerange: Optional[str],
+    command_override: Optional[list[str]] = None,
 ) -> str:
     job_id = "dl_" + datetime.utcnow().strftime("%Y%m%d_%H%M%S") + "_" + uuid.uuid4().hex[:8]
 
-    cmd = build_download_data_command(
+    default_cmd = build_download_data_command(
         pairs=pairs,
         timeframe=timeframe,
+        timerange=timerange,
     )
+    cmd = _normalized_command(default_cmd, command_override)
 
     set_status(job_id, "running")
     set_process(job_id, None)
@@ -191,24 +241,69 @@ def _run_subprocess(run_id: str, cmd: list[str], run_dir: Path, meta: dict):
     thread.start()
 
 
-def _copy_latest_result(run_dir: Path):
+def _try_import_fresh_global_result(run_dir: Path, meta: dict[str, Any]) -> bool:
+    """
+    Import the newest global backtest artifact into this run folder only when it can be
+    attributed to this run (fresh + strategy/timeframe match).
+    """
     last_result_file = BACKTEST_RESULTS_DIR / ".last_result.json"
     if not last_result_file.exists():
-        return
+        return False
+
     try:
         last_ref = json.loads(last_result_file.read_text())
-        latest_name = last_ref.get("latest_backtest", "")
-        if not latest_name:
-            return
-        latest_path = BACKTEST_RESULTS_DIR / latest_name
-        if latest_path.exists():
-            shutil.copy2(latest_path, run_dir / latest_path.name)
-            meta_name = latest_name.replace(".zip", ".meta.json")
-            meta_path = BACKTEST_RESULTS_DIR / meta_name
-            if meta_path.exists():
-                shutil.copy2(meta_path, run_dir / meta_path.name)
     except (json.JSONDecodeError, OSError):
-        pass
+        return False
+
+    latest_name = str(last_ref.get("latest_backtest") or "").strip()
+    if not latest_name:
+        return False
+
+    source_artifact = BACKTEST_RESULTS_DIR / latest_name
+    if not source_artifact.exists() or not source_artifact.is_file():
+        return False
+
+    # Freshness guard: artifact must be newer than this run start.
+    started_at = meta.get("started_at")
+    start_ts = None
+    if isinstance(started_at, str) and started_at:
+        try:
+            start_ts = datetime.fromisoformat(started_at).timestamp()
+        except ValueError:
+            start_ts = None
+
+    source_mtime = source_artifact.stat().st_mtime
+    if start_ts is not None and source_mtime + 1 < start_ts:
+        return False
+
+    # Strategy/timeframe guard via companion .meta.json when available.
+    strategy_expected = str(meta.get("strategy_class") or meta.get("base_strategy") or meta.get("strategy") or "")
+    timeframe_expected = str(meta.get("timeframe") or "")
+    if source_artifact.suffix.lower() == ".zip":
+        source_meta = source_artifact.with_name(source_artifact.name.replace(".zip", ".meta.json"))
+        if not source_meta.exists():
+            return False
+        try:
+            meta_payload = json.loads(source_meta.read_text())
+        except (json.JSONDecodeError, OSError):
+            return False
+        if not isinstance(meta_payload, dict) or not meta_payload:
+            return False
+
+        strategy_key = strategy_expected if strategy_expected in meta_payload else next(iter(meta_payload.keys()))
+        strat_meta = meta_payload.get(strategy_key) if isinstance(meta_payload.get(strategy_key), dict) else None
+        if strat_meta is None:
+            return False
+
+        if strategy_expected and strategy_expected not in meta_payload:
+            return False
+        if timeframe_expected and str(strat_meta.get("timeframe") or "") != timeframe_expected:
+            return False
+
+        shutil.copy2(source_meta, run_dir / source_meta.name)
+
+    shutil.copy2(source_artifact, run_dir / source_artifact.name)
+    return True
 
 
 def _backtest_worker(run_id: str, cmd: list[str], run_dir: Path, meta: dict):
@@ -230,10 +325,30 @@ def _backtest_worker(run_id: str, cmd: list[str], run_dir: Path, meta: dict):
         proc.wait()
 
         if proc.returncode == 0:
-            set_status(run_id, "completed")
-            _copy_latest_result(run_dir)
-            results = parse_backtest_results(run_dir)
-            save_run_results(run_id, results)
+            artifact = find_run_local_result_artifact(run_dir)
+            if not artifact.get("available"):
+                imported = _try_import_fresh_global_result(run_dir, meta)
+                if imported:
+                    artifact = find_run_local_result_artifact(run_dir)
+
+            if not artifact.get("available"):
+                set_status(run_id, "failed")
+                append_log(
+                    run_id,
+                    "ERROR: Backtest completed but no attributable result artifact was found for this run.",
+                )
+                meta["error"] = "missing run-local result artifact"
+                meta["raw_artifact"] = {"available": False, "run_local": False}
+            else:
+                results = parse_backtest_results(run_dir)
+                if results.get("error"):
+                    set_status(run_id, "failed")
+                    append_log(run_id, f"ERROR: Failed to parse run-local result artifact: {results.get('error')}")
+                    meta["error"] = f"result parse error: {results.get('error')}"
+                else:
+                    set_status(run_id, "completed")
+                save_run_results(run_id, results)
+                meta["raw_artifact"] = results.get("raw_artifact", {"available": False})
         else:
             set_status(run_id, "failed")
             append_log(run_id, f"Process exited with code {proc.returncode}")
@@ -279,11 +394,12 @@ def start_hyperopt(
     stake_amount: str,
     exchange: str,
     random_state: Optional[int],
+    command_override: Optional[list[str]] = None,
 ) -> str:
     run_id = "ho_" + datetime.utcnow().strftime("%Y%m%d_%H%M%S") + "_" + uuid.uuid4().hex[:8]
     run_dir = get_hyperopt_run_dir(run_id)
 
-    cmd = build_hyperopt_command(
+    default_cmd = build_hyperopt_command(
         strategy=strategy,
         pairs=pairs,
         timeframe=timeframe,
@@ -300,6 +416,7 @@ def start_hyperopt(
         exchange=exchange,
         random_state=random_state,
     )
+    cmd = _normalized_command(default_cmd, command_override)
 
     meta = {
         "run_id": run_id,

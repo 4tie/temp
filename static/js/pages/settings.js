@@ -334,7 +334,15 @@ window.SettingsPage = (() => {
   }
 
   async function _onSavePreset() {
-    const name = prompt('Preset name:');
+    const rawName = await Modal.prompt({
+      title: 'Save Preset',
+      message: 'Enter a name for this settings preset.',
+      label: 'Preset Name',
+      placeholder: 'My preset',
+      confirmLabel: 'Save Preset',
+      value: '',
+    });
+    const name = rawName?.trim();
     if (!name) return;
     const config = {
       exchange:        _val('s-exchange'),
@@ -366,7 +374,12 @@ window.SettingsPage = (() => {
   }
 
   async function _deletePreset(name) {
-    if (!confirm(`Delete preset "${name}"?`)) return;
+    const confirmed = await Modal.confirm({
+      title: 'Delete Preset',
+      message: `Delete preset "${name}"?`,
+      confirmLabel: 'Delete Preset',
+    });
+    if (!confirmed) return;
     try {
       await API.deletePreset(name);
       Toast.success(`Preset "${name}" deleted.`);

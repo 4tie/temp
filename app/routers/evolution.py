@@ -13,6 +13,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from typing import Optional
 
+from app.ai.goals import normalize_goal_id
 from app.services.storage import load_run_meta
 from app.ai.evolution.evolver import (
     start_evolution,
@@ -55,9 +56,10 @@ async def evolution_start(req: EvolutionStartRequest):
         raise HTTPException(status_code=400, detail="Run must be completed before evolving.")
 
     loop_id = str(uuid.uuid4())
+    goal_id = normalize_goal_id(req.goal_id)
     start_evolution(
         run_id=req.run_id,
-        goal_id=req.goal_id,
+        goal_id=goal_id,
         max_generations=req.max_generations,
         provider=req.provider,
         model=req.model,

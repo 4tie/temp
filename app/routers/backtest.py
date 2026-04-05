@@ -10,7 +10,7 @@ from app.schemas.backtest import BacktestRequest, DownloadDataRequest, DataCover
 from app.services.runner import start_backtest, start_download
 from app.services.storage import (
     load_run_meta, load_run_results, list_runs, delete_run,
-    save_last_config, load_last_config, save_run_logs,
+    save_last_config, load_last_config, save_run_logs, load_run_raw_payload,
 )
 from app.services.data_coverage import check_data_coverage
 from app.services.ohlcv_loader import load_ohlcv
@@ -54,6 +54,71 @@ def _checked_id(value: str) -> str:
     return value
 
 
+def _resolve_exchange_name(explicit_exchange: Optional[str] = None) -> str:
+    if explicit_exchange:
+        return explicit_exchange
+
+    cfg = _read_config_json()
+    exchange_name = cfg.get("exchange", {})
+    if isinstance(exchange_name, dict):
+        exchange_name = exchange_name.get("name")
+
+    if isinstance(exchange_name, str) and exchange_name:
+        return exchange_name
+
+    return "binance"
+
+
+def _validate_selected_pair_data(
+    pairs: list[str],
+    timeframe: str,
+    exchange: str,
+    timerange: Optional[str] = None,
+) -> tuple[list[dict], list[str], list[str]]:
+    coverage = check_data_coverage(
+        pairs=pairs,
+        timeframe=timeframe,
+        exchange=exchange,
+        timerange=timerange,
+    )
+    missing_pairs: list[str] = []
+    issue_details: list[str] = []
+
+    for item in coverage:
+        pair = item.get("pair", "unknown")
+        available = bool(item.get("available"))
+        missing_days = list(item.get("missing_days") or [])
+        incomplete_days = list(item.get("incomplete_days") or [])
+        daily_applied = bool(item.get("daily_validation_applied"))
+
+        has_issue = (not available) or (daily_applied and (missing_days or incomplete_days))
+        if not has_issue:
+            continue
+
+        missing_pairs.append(pair)
+        if not available:
+            issue_details.append(f"{pair}: data file missing")
+            continue
+
+        details: list[str] = []
+        if missing_days:
+            preview = ", ".join(missing_days[:3])
+            if len(missing_days) > 3:
+                preview += f" (+{len(missing_days) - 3} more)"
+            details.append(f"missing days [{preview}]")
+        if incomplete_days:
+            short = ", ".join(
+                f"{d.get('date')} ({d.get('actual')}/{d.get('expected')})"
+                for d in incomplete_days[:3]
+            )
+            if len(incomplete_days) > 3:
+                short += f" (+{len(incomplete_days) - 3} more)"
+            details.append(f"incomplete days [{short}]")
+        issue_details.append(f"{pair}: " + "; ".join(details))
+
+    return coverage, missing_pairs, issue_details
+
+
 @router.get("/config")
 async def get_config():
     cfg = _read_config_json()
@@ -84,6 +149,25 @@ async def patch_config(req: ConfigPatchRequest):
 
 @router.post("/run")
 async def run_backtest(req: BacktestRequest):
+    exchange_name = _resolve_exchange_name(req.exchange)
+    _, missing_pairs, issue_details = _validate_selected_pair_data(
+        pairs=req.pairs,
+        timeframe=req.timeframe,
+        exchange=exchange_name,
+        timerange=req.timerange,
+    )
+    if missing_pairs:
+        detail_suffix = " | ".join(issue_details[:5])
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Missing local market data for selected pairs: "
+                f"{', '.join(missing_pairs)}. "
+                "Download data for those pairs before backtesting. "
+                f"Details: {detail_suffix}"
+            ),
+        )
+
     save_last_config(req.model_dump())
 
     run_id = start_backtest(
@@ -92,6 +176,10 @@ async def run_backtest(req: BacktestRequest):
         timeframe=req.timeframe,
         timerange=req.timerange,
         strategy_params=req.strategy_params,
+        exchange=exchange_name,
+        strategy_path=req.strategy_path,
+        strategy_label=req.strategy_label,
+        command_override=req.command_override,
     )
     return {"run_id": run_id, "status": "running"}
 
@@ -134,6 +222,27 @@ async def get_run(run_id: str):
     }
 
 
+@router.get("/runs/{run_id}/raw")
+async def get_run_raw(run_id: str):
+    _checked_id(run_id)
+    status = get_status(run_id)
+    meta = load_run_meta(run_id)
+    if not meta and status == "unknown":
+        raise HTTPException(status_code=404, detail="Run not found")
+
+    payload = load_run_raw_payload(run_id)
+    if payload is None:
+        raise HTTPException(status_code=404, detail="Raw payload not available")
+
+    effective_status = status if status != "unknown" else (meta.get("status", "unknown") if meta else "unknown")
+    return {
+        "run_id": run_id,
+        "status": effective_status,
+        "meta": meta,
+        **payload,
+    }
+
+
 @router.delete("/runs/{run_id}")
 async def remove_run(run_id: str):
     _checked_id(run_id)
@@ -150,6 +259,8 @@ async def download_data(req: DownloadDataRequest):
     job_id = start_download(
         pairs=req.pairs,
         timeframe=req.timeframe,
+        timerange=req.timerange,
+        command_override=req.command_override,
     )
     return {"job_id": job_id, "status": "running"}
 
@@ -168,16 +279,14 @@ async def get_download_status(job_id: str):
 
 @router.post("/data-coverage")
 async def data_coverage(req: DataCoverageRequest):
-    cfg = _read_config_json()
-    exchange_name = cfg.get("exchange", {})
-    if isinstance(exchange_name, dict):
-        exchange_name = exchange_name.get("name", "binance")
-    coverage = check_data_coverage(
+    exchange_name = _resolve_exchange_name(req.exchange)
+    coverage, missing_pairs, issue_details = _validate_selected_pair_data(
         pairs=req.pairs,
         timeframe=req.timeframe,
         exchange=exchange_name,
+        timerange=req.timerange,
     )
-    return {"coverage": coverage}
+    return {"coverage": coverage, "missing_pairs": missing_pairs, "issue_details": issue_details}
 
 
 @router.get("/last-config")

@@ -8,7 +8,7 @@ window.AIDiagPage = (() => {
   let _state = {
     provider: 'openrouter',
     model: null,
-    goal: 'auto',
+    goal: 'balanced',
     conversationId: null,
     contextRunId: null,
     contextStrategyName: null,
@@ -136,16 +136,10 @@ window.AIDiagPage = (() => {
 
       <!-- Goal select -->
       <select class="ai-goal-select" id="ai-goal-select">
-        <option value="auto">Goal: Auto</option>
-        <option value="lower_drawdown">Lower Drawdown</option>
-        <option value="higher_win_rate">Higher Win Rate</option>
-        <option value="higher_profit">Higher Profit</option>
-        <option value="more_trades">More Trades</option>
-        <option value="cut_losers">Cut Losers</option>
-        <option value="lower_risk">Lower Risk</option>
-        <option value="scalping">Scalping</option>
-        <option value="swing_trading">Swing Trading</option>
-        <option value="compound_growth">Compound Growth</option>
+        <option value="balanced">Balanced</option>
+        <option value="maximize_profit">Maximize Profit</option>
+        <option value="reduce_drawdown">Reduce Drawdown</option>
+        <option value="improve_win_rate">Improve Win Rate</option>
       </select>
 
       <!-- Deep Analyse button -->
@@ -433,7 +427,9 @@ window.AIDiagPage = (() => {
       _el.modelSelect.appendChild(opt);
     });
 
-    _state.model = models[0].id;
+    const selectedId = _state.model;
+    const matched = selectedId && models.some(m => m.id === selectedId);
+    _state.model = matched ? selectedId : models[0].id;
     _el.modelSelect.value = _state.model;
     _checkSendReady();
   }
@@ -441,7 +437,7 @@ window.AIDiagPage = (() => {
   /* ---- Load conversations ---------------------------------- */
   async function _loadConversations() {
     try {
-      const convs = await fetch('/ai/conversations').then(r => r.json());
+      const convs = await fetch('/ai/threads').then(r => r.json());
       _renderConvList(convs);
     } catch (e) {
       /* silently ignore */
@@ -482,9 +478,25 @@ window.AIDiagPage = (() => {
     });
 
     try {
-      const conv = await fetch(`/ai/conversations/${convId}`).then(r => r.json());
-      if (conv && conv.messages) {
-        conv.messages.forEach(m => _appendMessage(m.role, m.content, m.meta));
+      const conv = await fetch(`/ai/threads/${convId}`).then(r => r.json());
+      if (conv) {
+        // Restore thread-level state so resumed chats keep their original context.
+        _state.goal = conv.goal_id || _state.goal || 'balanced';
+        _state.provider = conv.provider || _state.provider || 'openrouter';
+        _state.model = conv.model || _state.model || null;
+        _state.contextRunId = conv.context_run_id || null;
+        _state.contextStrategyName = null;
+        _state.contextTimeframe = null;
+
+        if (_el.goalSelect) _el.goalSelect.value = _state.goal;
+        if (_el.btnOllama) _el.btnOllama.classList.toggle('active', _state.provider === 'ollama');
+        if (_el.btnOpenRouter) _el.btnOpenRouter.classList.toggle('active', _state.provider === 'openrouter');
+        _updateModelDropdown();
+        _updateContextBar();
+        _el.deepAnalyseBtn.disabled = !_state.contextRunId;
+        if (_el.evolveBtn) _el.evolveBtn.disabled = !_state.contextRunId;
+
+        (conv.messages || []).forEach(m => _appendMessage(m.role, m.content, m.meta));
       }
     } catch (e) {
       _setStatus('Could not load conversation');
@@ -505,7 +517,8 @@ window.AIDiagPage = (() => {
   /* ---- Inject backtest ------------------------------------- */
   async function _injectLatestBacktest() {
     try {
-      const runs = await fetch('/runs').then(r => r.json());
+      const runsResp = await fetch('/runs').then(r => r.json());
+      const runs = runsResp?.runs || runsResp || [];
       const completed = (runs || []).filter(r => r.status === 'done' || r.status === 'completed');
       if (!completed.length) {
         _setStatus('No completed backtests found');
@@ -550,6 +563,61 @@ window.AIDiagPage = (() => {
     if (_el.evolveBtn) _el.evolveBtn.disabled = true;
   }
 
+  function _formatTraceDuration(ms) {
+    if (!ms && ms !== 0) return '';
+    return ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${ms}ms`;
+  }
+
+  function _traceLabel(evt) {
+    const labels = {
+      classifier_decision: 'Classifier',
+      pipeline_selected: 'Pipeline',
+      step_start: `Start · ${evt.role || 'step'}`,
+      step_complete: evt.role === 'judge' ? 'Judge verdict' : `Done · ${evt.role || 'step'}`,
+      final: 'Final',
+    };
+    return labels[evt.event_type] || evt.event_type || 'Step';
+  }
+
+  function _renderTraceItem(evt) {
+    const label = _traceLabel(evt);
+    const model = evt.model_id ? _escHtml(evt.model_id.split('/').pop()) : '';
+    const provider = evt.provider ? _escHtml(evt.provider) : '';
+    const duration = _formatTraceDuration(evt.duration_ms);
+    const preview = evt.output_preview ? `<div class="ai-thinking-item__preview">${_escHtml(evt.output_preview)}</div>` : '';
+    const chain = evt.fallback_chain?.length ? `<span class="ai-thinking-item__chip">fallback</span>` : '';
+    const attempt = evt.attempt_count && evt.attempt_count > 1 ? `<span class="ai-thinking-item__chip">${evt.attempt_count} attempts</span>` : '';
+    return `
+      <div class="ai-thinking-item ai-thinking-item--${evt.event_type || 'step'}">
+        <div class="ai-thinking-item__row">
+          <span class="ai-thinking-item__title">${_escHtml(label)}</span>
+          ${provider ? `<span class="ai-thinking-item__meta">${provider}</span>` : ''}
+          ${model ? `<span class="ai-thinking-item__meta">${model}</span>` : ''}
+          ${duration ? `<span class="ai-thinking-item__meta">${duration}</span>` : ''}
+          ${chain}
+          ${attempt}
+        </div>
+        ${preview}
+      </div>
+    `;
+  }
+
+  function _renderThinkingPanel(trace, open = false) {
+    if (!trace || !trace.length) return '';
+    const stepCount = trace.filter(evt => evt.event_type === 'step_complete').length;
+    return `
+      <div class="ai-thinking ${open ? 'open' : ''}">
+        <button class="ai-thinking__toggle" type="button">
+          <span>Thinking</span>
+          <span class="ai-thinking__summary">${stepCount} steps</span>
+        </button>
+        <div class="ai-thinking__body">
+          <div class="ai-thinking__list">${trace.map(_renderTraceItem).join('')}</div>
+        </div>
+      </div>
+    `;
+  }
+
   /* ---- Message rendering ----------------------------------- */
   function _appendMessage(role, content, meta) {
     // Hide empty state
@@ -579,10 +647,13 @@ window.AIDiagPage = (() => {
     const bubbleContent = role === 'assistant'
       ? _renderMarkdown(content)
       : `<p>${_escHtml(content).replace(/\n/g, '<br>')}</p>`;
+    const trace = meta?.pipeline?.trace || meta?.trace || [];
+    const thinkingHtml = role === 'assistant' ? _renderThinkingPanel(trace) : '';
 
     div.innerHTML = `
       ${headerHtml}
       <div class="ai-message__bubble">${bubbleContent}</div>
+      ${thinkingHtml}
     `;
 
     _el.thread.appendChild(div);
@@ -622,20 +693,43 @@ window.AIDiagPage = (() => {
     const bubble = document.createElement('div');
     bubble.className = 'ai-message__bubble';
     bubble.innerHTML = '<span class="ai-streaming-cursor"></span>';
+    const thinking = document.createElement('div');
+    thinking.className = 'ai-thinking open';
+    thinking.innerHTML = `
+      <button class="ai-thinking__toggle" type="button">
+        <span>Thinking</span>
+        <span class="ai-thinking__summary">starting...</span>
+      </button>
+      <div class="ai-thinking__body">
+        <div class="ai-thinking__list"></div>
+      </div>
+    `;
+    const thinkingList = thinking.querySelector('.ai-thinking__list');
+    const thinkingSummary = thinking.querySelector('.ai-thinking__summary');
     assistantDiv.appendChild(headerDiv);
     assistantDiv.appendChild(bubble);
+    assistantDiv.appendChild(thinking);
     _el.thread.appendChild(assistantDiv);
     _scrollThread();
 
     let fullText = '';
     let aborted = false;
+    let traceEvents = [];
+
+    const renderTrace = () => {
+      if (!thinkingList || !thinkingSummary) return;
+      thinkingList.innerHTML = traceEvents.map(_renderTraceItem).join('');
+      const stepCount = traceEvents.filter(evt => evt.event_type === 'step_complete').length;
+      thinkingSummary.textContent = stepCount ? `${stepCount} steps` : `${traceEvents.length} events`;
+    };
 
     const body = JSON.stringify({
       message: text,
+      thread_id: _state.conversationId,
       conversation_id: _state.conversationId,
       provider: _state.provider,
       model: _state.model || undefined,
-      goal_id: _state.goal !== 'auto' ? _state.goal : undefined,
+      goal_id: _state.goal || 'balanced',
       context_run_id: _state.contextRunId || undefined,
     });
 
@@ -656,6 +750,13 @@ window.AIDiagPage = (() => {
         signal: controller.signal,
       });
 
+      if (!resp.ok) {
+        throw new Error(`HTTP ${resp.status}`);
+      }
+      if (!resp.body) {
+        throw new Error('AI stream did not return a response body');
+      }
+
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
@@ -672,6 +773,26 @@ window.AIDiagPage = (() => {
           if (!line.startsWith('data: ')) continue;
           try {
             const evt = JSON.parse(line.slice(6));
+
+            if (evt.event_type && evt.event_type !== 'final') {
+              traceEvents.push(evt);
+              renderTrace();
+            }
+
+            if (evt.event_type === 'classifier_decision' || evt.event_type === 'pipeline_selected') {
+              const badge = document.getElementById('ai-streaming-badge');
+              if (badge) {
+                const pipelineType = evt.pipeline_type || 'simple';
+                badge.className = `ai-pipeline-badge ai-pipeline-badge--${pipelineType}`;
+                badge.textContent = pipelineType;
+              }
+              if (evt.pipeline_type) _setStatus(`Pipeline: ${evt.pipeline_type}...`);
+            }
+
+            if (evt.status === 'judging') _setStatus('Judging analyst arguments...');
+            if (evt.status === 'generating_code') _setStatus('Generating code...');
+            if (evt.status === 'validating_code') _setStatus('Validating code...');
+            if (evt.status === 'explaining') _setStatus('Explaining changes...');
 
             if (evt.status === 'classified') {
               const badge = document.getElementById('ai-streaming-badge');
@@ -691,21 +812,31 @@ window.AIDiagPage = (() => {
               _scrollThread();
             }
 
-            if (evt.done && !evt.delta) {
-              if (evt.conversation_id) {
-                _state.conversationId = evt.conversation_id;
-              }
-              const pipeline = evt.pipeline || {};
-              _finishStream(bubble, headerDiv, evt.fullText || fullText, pipeline);
-              await _loadConversations();
-              aborted = true; // prevent double-finish
-              break;
-            }
-
             if (evt.error) {
               bubble.innerHTML = `<span style="color:var(--red)">${_escHtml(evt.error)}</span>`;
               _finishStream(bubble, headerDiv, '', null);
               aborted = true;
+              break;
+            }
+
+            if (evt.done && !evt.delta) {
+              if (evt.thread_id || evt.conversation_id) {
+                _state.conversationId = evt.thread_id || evt.conversation_id;
+              }
+              const pipeline = evt.pipeline || {};
+              if (pipeline.trace?.length) {
+                traceEvents = pipeline.trace;
+                renderTrace();
+              }
+              const finalText = evt.fullText || fullText;
+              if (!finalText) {
+                bubble.innerHTML = '<span style="color:var(--amber)">No response received from the AI provider.</span>';
+                _finishStream(bubble, headerDiv, '', null);
+              } else {
+                _finishStream(bubble, headerDiv, finalText, pipeline);
+              }
+              await _loadConversations();
+              aborted = true; // prevent double-finish
               break;
             }
           } catch (_) {}
@@ -744,8 +875,10 @@ window.AIDiagPage = (() => {
       }
       if (modelSpan) {
         modelSpan.id = '';
-        const modelName = (pipeline.model || '').split('/').pop();
-        const dur = pipeline.duration_ms ? ` · ${(pipeline.duration_ms/1000).toFixed(1)}s` : '';
+        const finalStep = (pipeline.steps || []).slice().reverse().find(step => step.role !== 'classifier') || {};
+        const modelName = (finalStep.model_id || '').split('/').pop();
+        const totalMs = pipeline.total_duration_ms || pipeline.duration_ms || 0;
+        const dur = totalMs ? ` · ${(totalMs/1000).toFixed(1)}s` : '';
         modelSpan.textContent = `${modelName}${dur}`;
       }
     }
@@ -1502,7 +1635,7 @@ window.AIDiagPage = (() => {
       if (deleteBtn) {
         e.stopPropagation();
         const id = deleteBtn.dataset.convId;
-        fetch(`/ai/conversations/${id}`, { method: 'DELETE' }).then(() => {
+        fetch(`/ai/threads/${id}`, { method: 'DELETE' }).then(() => {
           if (_state.conversationId === id) _newChat();
           _loadConversations();
         });
@@ -1515,6 +1648,13 @@ window.AIDiagPage = (() => {
         _el.sidebar.classList.remove('mobile-open');
         _el.sidebarOverlay.classList.remove('active');
       }
+    });
+
+    _el.thread.addEventListener('click', e => {
+      const toggle = e.target.closest('.ai-thinking__toggle');
+      if (!toggle) return;
+      const panel = toggle.closest('.ai-thinking');
+      if (panel) panel.classList.toggle('open');
     });
 
     // Inject buttons

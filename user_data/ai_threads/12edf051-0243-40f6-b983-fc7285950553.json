@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "thread_id": "12edf051-0243-40f6-b983-fc7285950553",
+  "conversation_id": "12edf051-0243-40f6-b983-fc7285950553",
+  "title": "test",
+  "preview": "test",
+  "created_at": "2026-04-03T17:13:18Z",
+  "updated_at": "2026-04-03T17:13:18Z",
+  "goal_id": "balanced",
+  "provider": "openrouter",
+  "model": null,
+  "context_run_id": null,
+  "context_mode": "migrated",
+  "context_snapshot": {},
+  "messages": [
+    {
+      "id": "0d6262f5-847b-4781-a233-0bcc78c6ad52",
+      "role": "user",
+      "content": "test",
+      "created_at": "2026-04-03T17:13:18Z",
+      "meta": {}
+    }
+  ],
+  "migrated_from": "ai_conversations"
+}

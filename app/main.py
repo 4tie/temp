@@ -1,9 +1,8 @@
-import os
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 
 from app.routers import backtest, strategies, presets, compare, hyperopt, ai_chat, evolution, settings
 
@@ -43,3 +42,14 @@ async def health():
 @app.get("/", response_class=HTMLResponse)
 async def serve_index(request: Request):
     return templates.TemplateResponse(request=request, name="layouts/base.html")
+
+
+@app.get("/sw.js")
+async def service_worker() -> Response:
+    # No-op service worker to satisfy browsers that still request /sw.js.
+    return Response(
+        content="self.addEventListener('install', () => self.skipWaiting());\n"
+                "self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()));\n",
+        media_type="application/javascript",
+        headers={"Cache-Control": "no-store"},
+    )

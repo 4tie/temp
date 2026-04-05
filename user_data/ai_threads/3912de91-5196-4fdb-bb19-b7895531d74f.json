@@ -1,0 +1,174 @@
+{
+  "schema_version": 1,
+  "thread_id": "3912de91-5196-4fdb-bb19-b7895531d74f",
+  "conversation_id": "3912de91-5196-4fdb-bb19-b7895531d74f",
+  "title": "Give a patch-style suggestion for MultiMa.py and matching Mu",
+  "preview": "Give a patch-style suggestion for MultiMa.py and matching MultiMa.json params.",
+  "created_at": "2026-04-05T21:19:57.547441+00:00",
+  "updated_at": "2026-04-05T21:19:57.561826+00:00",
+  "goal_id": "balanced",
+  "provider": "openrouter",
+  "model": "qwen/qwen3.6-plus:free",
+  "context_run_id": "20260405_211735_9a5d3c4c",
+  "context_mode": "pinned",
+  "context_snapshot": {
+    "schema_version": 1,
+    "captured_at": "2026-04-05T21:19:57.554638+00:00",
+    "goal_id": "balanced",
+    "goal_label": "Balanced",
+    "context_run_id": "20260405_211735_9a5d3c4c",
+    "context_source": "explicit",
+    "backtest": {
+      "run_id": "20260405_211735_9a5d3c4c",
+      "strategy": "MultiMa",
+      "pairs": [
+        "ETH/USDT"
+      ],
+      "timeframe": "5m",
+      "timerange": "20250102-20260321",
+      "overview": {
+        "total_trades": 144,
+        "profit_percent": 6.5008,
+        "profit_factor": 1.0967399238464268,
+        "win_rate": 38.89,
+        "max_drawdown": 0.11052653955303482,
+        "starting_balance": 50.0,
+        "final_balance": 53.25038845,
+        "timeframe": "5m",
+        "stake_amount": "unlimited",
+        "max_open_trades": 1
+      },
+      "per_pair": [
+        {
+          "pair": "ETH/USDT",
+          "key": "***REDACTED***",
+          "trades": 144,
+          "profit_mean": 0.0005497061988000587,
+          "profit_mean_pct": 0.05,
+          "profit_sum_pct": 6.5,
+          "profit_total": 0.06500776899999999,
+          "profit_total_abs": 3.25038845,
+          "profit_factor": 1.0967399238464268,
+          "max_drawdown": 11.052653955303482,
+          "max_drawdown_abs": 5.725792169999997,
+          "wins": 56,
+          "losses": 88,
+          "draws": 0,
+          "winrate": 38.88888888888889,
+          "cagr": 7.424184637370268,
+          "expectancy": 0.02257214201388888,
+          "expectancy_ratio": 0.05911884235059417,
+          "sortino": 0.43874222189754114,
+          "sharpe": 0.2643696499959651,
+          "calmar": 3.500580655858573,
+          "sqn": 0.3689,
+          "duration_avg": "3:33:00",
+          "label": "ETH/USDT",
+          "profit_percent": 6.5,
+          "profit_total_pct": 6.5,
+          "max_drawdown_account": null,
+          "win_rate": 38.88888888888889
+        },
+        {
+          "pair": "TOTAL",
+          "key": "***REDACTED***",
+          "trades": 144,
+          "profit_mean": 0.0005497061988000587,
+          "profit_mean_pct": 0.05,
+          "profit_sum_pct": 6.5,
+          "profit_total": 0.06500776899999999,
+          "profit_total_abs": 3.25038845,
+          "profit_factor": 1.0967399238464268,
+          "max_drawdown": 11.052653955303482,
+          "max_drawdown_abs": 5.725792169999997,
+          "wins": 56,
+          "losses": 88,
+          "draws": 0,
+          "winrate": 38.88888888888889,
+          "cagr": 7.424184637370268,
+          "expectancy": 0.02257214201388888,
+          "expectancy_ratio": 0.05911884235059417,
+          "sortino": 0.43874222189754114,
+          "sharpe": 0.2643696499959651,
+          "calmar": 3.500580655858573,
+          "sqn": 0.3689,
+          "duration_avg": "3:33:00",
+          "label": "TOTAL",
+          "profit_percent": 6.5,
+          "profit_total_pct": 6.5,
+          "max_drawdown_account": null,
+          "win_rate": 38.88888888888889
+        }
+      ],
+      "warnings": []
+    },
+    "strategy_config": {
+      "strategy_name": "MultiMa",
+      "params": {
+        "buy": {
+          "buy_ma_count": 4,
+          "buy_ma_gap": 8
+        },
+        "sell": {
+          "sell_ma_count": 12,
+          "sell_ma_gap": 68
+        }
+      }
+    },
+    "settings": {
+      "active_config": {
+        "strategy": "MultiMa",
+        "timeframe": "5m",
+        "stake_currency": "USDT",
+        "stake_amount": "unlimited",
+        "max_open_trades": 1,
+        "dry_run": false,
+        "trading_mode": "spot",
+        "exchange": {
+          "name": "binance",
+          "pair_whitelist": [
+            "ETH/USDT"
+          ]
+        },
+        "pairlists": [
+          {
+            "method": "StaticPairList",
+            "pair_whitelist": [
+              "ETH/USDT",
+              "ADA/USDT",
+              "PEOPLE/USDT",
+              "WIF/USDT",
+              "ETC/USDT",
+              "OP/USDT",
+              "DOGE/USDT",
+              "DOT/USDT"
+            ],
+            "pair_blacklist": []
+          }
+        ],
+        "freqai": {
+          "enabled": false,
+          "identifier": "qs_v9_scalp_5m1h_l2"
+        }
+      },
+      "last_backtest_request": {
+        "strategy": "MultiMa",
+        "pairs": [
+          "ETH/USDT"
+        ],
+        "timeframe": "5m",
+        "timerange": "20250102-20260321",
+        "strategy_params": {}
+      }
+    }
+  },
+  "messages": [
+    {
+      "id": "a2376d6d-a3d0-4db9-8cab-fa75c19320d5",
+      "role": "user",
+      "content": "Give a patch-style suggestion for MultiMa.py and matching MultiMa.json params.",
+      "created_at": "2026-04-05T21:19:57.561826+00:00",
+      "meta": {}
+    }
+  ]
+}
