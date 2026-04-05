@@ -6,13 +6,36 @@
 window.BacktestPage = (() => {
   let _el = null;
   let _pollTimer = null;
-  let _currentRunId = null;
+  let _activeRunId = null;
+  let _resultRunId = null;
+  let _loadedResult = null;
+  let _quickParamsState = _createQuickParamsState();
 
   /* ── Favourites ── */
   const _FAV_KEY  = '4tie_fav_pairs';
   const _FORM_KEY = '4tie_bt_form';
+  const _QUICK_PARAM_GROUP_ORDER = ['buy', 'sell'];
   function _getFavs() { try { return new Set(JSON.parse(localStorage.getItem(_FAV_KEY) || '[]')); } catch { return new Set(); } }
   function _saveFavs(s) { localStorage.setItem(_FAV_KEY, JSON.stringify([...s])); }
+
+  function _createQuickParamsState() {
+    return {
+      runId: null,
+      strategyName: null,
+      strategyLabel: null,
+      strategyPath: null,
+      mode: 'editable',
+      meta: null,
+      parameters: [],
+      seedValues: {},
+      currentValues: {},
+      loading: false,
+      saving: false,
+      error: '',
+      empty: '',
+      notice: '',
+    };
+  }
 
   /* ── Form persistence ── */
   function _saveForm() {
@@ -359,9 +382,11 @@ window.BacktestPage = (() => {
             </div>
             <div class="card__body" id="bt-results-body"></div>
           </div>
-          <div class="card" id="bt-history-card">
-            <div class="card__header"><span class="card__title">Recent Runs</span></div>
-            <div class="card__body" id="bt-history-body"><div class="empty-state">No runs yet.</div></div>
+          <div class="card" id="bt-quick-params-card" style="display:none">
+            <div class="card__header">
+              <span class="card__title">Quick Parameter Changes</span>
+            </div>
+            <div class="card__body" id="bt-quick-params-body"></div>
           </div>
         </div>
       </div>
@@ -371,11 +396,29 @@ window.BacktestPage = (() => {
     const exchange = DOM.$('#bt-exchange', _el);
     const stopBtn  = DOM.$('#bt-stop-btn', _el);
     const delBtn   = DOM.$('#bt-delete-btn', _el);
+    const resultCard = DOM.$('#bt-results-card', _el);
+    const quickParamsBody = DOM.$('#bt-quick-params-body', _el);
 
     DOM.on(exchange, 'change', () => _loadPairs(exchange.value));
     DOM.on(form,     'submit', _onSubmit);
     DOM.on(stopBtn,  'click',  _onStop);
     DOM.on(delBtn,   'click',  _onDeleteRun);
+    DOM.on(resultCard, 'click', (e) => {
+      if (!_resultRunId) return;
+      if (e.target.closest('#bt-delete-btn')) return;
+      ResultExplorer.open(_resultRunId);
+    });
+    DOM.on(resultCard, 'keydown', (e) => {
+      if (!_resultRunId) return;
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        ResultExplorer.open(_resultRunId);
+      }
+    });
+    DOM.on(quickParamsBody, 'click', _onQuickParamsAction);
+    DOM.on(quickParamsBody, 'input', _onQuickParamsInput);
+    DOM.on(quickParamsBody, 'change', _onQuickParamsInput);
+    DOM.on(quickParamsBody, 'focusout', _onQuickParamsCommit);
 
     _setupPickerEvents('bt-pairs-list', 'bt-pairs-count', 'bt-pairs-search', 'bt-pairs-all', 'bt-pairs-none', 'bt-pairs-favs');
     _wireSaveEvents();
@@ -385,54 +428,45 @@ window.BacktestPage = (() => {
     const dlFormBtn = DOM.$('#bt-dl-form-btn', _el);
     DOM.on(dlFormBtn, 'click', _onDownload);
 
-    _loadHistory();
+    _syncRunState();
   }
 
-  async function _loadHistory() {
-    const wrap = DOM.$('#bt-history-body', _el);
-    if (!wrap) return;
+  async function _syncRunState() {
     try {
       const data = await API.getRuns();
-      const runs = (data.runs || []).slice(-8).reverse();
-      if (!runs.length) { wrap.innerHTML = '<div class="empty-state">No runs yet.</div>'; return; }
-      wrap.innerHTML = `
-        <table class="data-table data-table--sm">
-          <thead><tr><th>Run ID</th><th>Strategy</th><th>Status</th><th>Started</th><th></th></tr></thead>
-          <tbody>
-            ${runs.map(r => `
-              <tr>
-                <td class="font-mono text-sm">${FMT.truncate(r.run_id || '—', 18)}</td>
-                <td>${r.strategy || '—'}</td>
-                <td><span class="badge badge--${FMT.statusColor(r.status)}">${FMT.statusLabel(r.status)}</span></td>
-                <td class="text-muted text-sm">${FMT.tsShort(r.started_at)}</td>
-                <td><button class="btn btn--danger btn--sm" data-delete-run="${_esc(r.run_id || '')}">Delete</button></td>
-              </tr>`).join('')}
-          </tbody>
-        </table>`;
-      wrap.querySelectorAll('[data-delete-run]').forEach(btn => {
-        DOM.on(btn, 'click', () => _deleteRun(btn.dataset.deleteRun));
-      });
+      const runs = _sortRunsNewest(data.runs || []);
+      await _restoreLatestState(runs);
     } catch {}
   }
 
   async function _onDeleteRun() {
-    if (!_currentRunId) { Toast.warning('No active run to delete.'); return; }
-    await _deleteRun(_currentRunId);
+    if (!_resultRunId) { Toast.warning('No loaded result to delete.'); return; }
+    await _deleteRun(_resultRunId);
   }
 
   async function _deleteRun(runId) {
     if (!runId) return;
-    if (!confirm(`Delete run ${runId}? This cannot be undone.`)) return;
+    const confirmed = await Modal.confirm({
+      title: 'Delete Run',
+      message: `Delete run ${runId}? This cannot be undone.`,
+      confirmLabel: 'Delete Run',
+    });
+    if (!confirmed) return;
     try {
       await API.deleteRun(runId);
       Toast.success(`Run deleted.`);
-      if (runId === _currentRunId) {
-        _currentRunId = null;
+      if (runId === _activeRunId) {
+        _activeRunId = null;
+        _stopPoll();
+        _setRunning(false);
+        Auth.setRunning(false);
         DOM.hide(DOM.$('#bt-status-card', _el));
-        DOM.hide(DOM.$('#bt-results-card', _el));
         AppState.set('stream', 'Run deleted.');
       }
-      _loadHistory();
+      if (runId === _resultRunId) {
+        _clearLoadedResult();
+      }
+      _syncRunState();
     } catch (err) {
       Toast.error('Failed to delete run: ' + err.message);
     }
@@ -535,6 +569,705 @@ window.BacktestPage = (() => {
     }
   }
 
+  function _clearLoadedResult() {
+    _resultRunId = null;
+    _loadedResult = null;
+    DOM.hide(DOM.$('#bt-results-card', _el));
+    _resetQuickParamsState();
+  }
+
+  function _resetQuickParamsState() {
+    _quickParamsState = _createQuickParamsState();
+    _renderQuickParams();
+  }
+
+  function _resolveRunStrategyName(meta = {}) {
+    return meta.strategy_class || meta.base_strategy || meta.strategy || null;
+  }
+
+  function _resolveRunStrategyLabel(meta = {}) {
+    const strategyName = _resolveRunStrategyName(meta);
+    return meta.strategy || strategyName || 'Unknown strategy';
+  }
+
+  function _isDefaultStrategyPath(strategyPath) {
+    if (!strategyPath) return true;
+    return /[\\/]user_data[\\/]strategies[\\/]?$/i.test(String(strategyPath));
+  }
+
+  function _quickParamsMode() {
+    return _quickParamsState.mode || 'editable';
+  }
+
+  function _quickParamsSummaryMetaText() {
+    const mode = _quickParamsMode();
+    if (mode === 'rerun-only') {
+      return 'This run uses an external strategy workspace. Run Again will preserve that context.';
+    }
+    if (mode === 'unavailable') {
+      return 'Strategy parameters are unavailable for this run.';
+    }
+    return 'Seeded from the loaded run first, then saved strategy values, then defaults.';
+  }
+
+  function _quickHasParams() {
+    return Array.isArray(_quickParamsState.parameters) && _quickParamsState.parameters.length > 0;
+  }
+
+  function _quickValuesEqual(a, b) {
+    return a === b;
+  }
+
+  function _quickDirtyCount() {
+    if (!_quickHasParams()) return 0;
+    return _quickParamsState.parameters.reduce((count, param) => {
+      const current = _quickParamsState.currentValues[param.name];
+      const seed = _quickParamsState.seedValues[param.name];
+      return count + (_quickValuesEqual(current, seed) ? 0 : 1);
+    }, 0);
+  }
+
+  function _findQuickParam(name) {
+    return _quickParamsState.parameters.find((param) => param.name === name) || null;
+  }
+
+  function _coerceQuickParamValue(param, rawValue) {
+    if (!param) return rawValue;
+
+    if (param.type === 'bool') {
+      return Boolean(rawValue);
+    }
+
+    if (rawValue == null || rawValue === '') {
+      return param.default ?? null;
+    }
+
+    if (param.type === 'int') {
+      const parsed = Number.parseInt(rawValue, 10);
+      if (!Number.isFinite(parsed)) return param.default ?? param.low ?? 0;
+      return parsed;
+    }
+
+    if (param.type === 'decimal') {
+      const parsed = Number.parseFloat(rawValue);
+      if (!Number.isFinite(parsed)) return param.default ?? param.low ?? 0;
+      return parsed;
+    }
+
+    if (param.type === 'categorical') {
+      const match = (param.options || []).find((option) => String(option) === String(rawValue));
+      return match !== undefined ? match : rawValue;
+    }
+
+    return rawValue;
+  }
+
+  function _seedQuickParamValue(param, meta = {}) {
+    const runParams = meta.strategy_params || {};
+    if (Object.prototype.hasOwnProperty.call(runParams, param.name)) {
+      return _coerceQuickParamValue(param, runParams[param.name]);
+    }
+    if (Object.prototype.hasOwnProperty.call(param, 'value')) {
+      return _coerceQuickParamValue(param, param.value);
+    }
+    return _coerceQuickParamValue(param, param.default);
+  }
+
+  function _quickParamStep(param) {
+    if (param.type !== 'decimal') return null;
+    const decimals = Number.isInteger(param.decimals) ? Math.max(param.decimals, 0) : 3;
+    if (decimals === 0) return '1';
+    return (1 / (10 ** decimals)).toFixed(decimals);
+  }
+
+  function _quickParamLabel(name) {
+    return String(name || '')
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+  }
+
+  function _quickParamDescription(param) {
+    if (!param) return '';
+    if (param.type === 'int') return `Integer · ${param.low} to ${param.high}`;
+    if (param.type === 'decimal') return `Decimal · ${param.low} to ${param.high} · ${param.decimals ?? 3} dp`;
+    if (param.type === 'categorical') return `Categorical · ${param.options?.length || 0} options`;
+    if (param.type === 'bool') return 'Boolean';
+    return param.type || 'Parameter';
+  }
+
+  function _groupQuickParams(parameters) {
+    const groups = new Map();
+    const sorted = [...parameters].sort((a, b) => {
+      const aSpace = String(a.space || '');
+      const bSpace = String(b.space || '');
+      const aRank = _QUICK_PARAM_GROUP_ORDER.indexOf(aSpace);
+      const bRank = _QUICK_PARAM_GROUP_ORDER.indexOf(bSpace);
+      const normalizedARank = aRank === -1 ? Number.MAX_SAFE_INTEGER : aRank;
+      const normalizedBRank = bRank === -1 ? Number.MAX_SAFE_INTEGER : bRank;
+      if (normalizedARank !== normalizedBRank) return normalizedARank - normalizedBRank;
+      if (aSpace !== bSpace) return aSpace.localeCompare(bSpace);
+      return String(a.name || '').localeCompare(String(b.name || ''));
+    });
+
+    sorted.forEach((param) => {
+      const space = param.space || 'other';
+      if (!groups.has(space)) groups.set(space, []);
+      groups.get(space).push(param);
+    });
+
+    return [...groups.entries()];
+  }
+
+  function _quickGroupLabel(space) {
+    if (!space) return 'Other';
+    return String(space).charAt(0).toUpperCase() + String(space).slice(1);
+  }
+
+  function _quickParamControl(param) {
+    const inputId = `bt-qp-${param.name}`;
+    const currentValue = _quickParamsState.currentValues[param.name];
+    if (param.type === 'bool') {
+      return `
+        <label class="checkbox-label quick-params__checkbox" for="${_esc(inputId)}">
+          <input
+            id="${_esc(inputId)}"
+            type="checkbox"
+            data-quick-param="${_esc(param.name)}"
+            ${currentValue ? 'checked' : ''}
+          >
+          <span>Enabled</span>
+        </label>
+      `;
+    }
+
+    if (param.type === 'categorical') {
+      const options = (param.options || []).map((option) => `
+        <option value="${_esc(option)}"${_quickValuesEqual(currentValue, option) ? ' selected' : ''}>${_esc(option)}</option>
+      `).join('');
+      return `
+        <select
+          class="form-select quick-params__control"
+          id="${_esc(inputId)}"
+          data-quick-param="${_esc(param.name)}"
+        >
+          ${options}
+        </select>
+      `;
+    }
+
+    const min = param.low != null ? ` min="${_esc(param.low)}"` : '';
+    const max = param.high != null ? ` max="${_esc(param.high)}"` : '';
+    const step = param.type === 'decimal' ? ` step="${_esc(_quickParamStep(param))}"` : ' step="1"';
+    return `
+      <input
+        class="form-input form-input--sm quick-params__control"
+        id="${_esc(inputId)}"
+        type="number"
+        value="${_esc(currentValue)}"
+        data-quick-param="${_esc(param.name)}"${min}${max}${step}
+      >
+    `;
+  }
+
+  function _quickParamsNotice(message, tone = '') {
+    const toneClass = tone ? ` quick-params__notice--${tone}` : '';
+    return `<div class="quick-params__notice${toneClass}">${_esc(message)}</div>`;
+  }
+
+  function _setQuickParamControlValue(control, param, value) {
+    if (!control || !param) return;
+    if (param.type === 'bool') {
+      control.checked = Boolean(value);
+      return;
+    }
+    control.value = value == null ? '' : String(value);
+  }
+
+  function _normalizeQuickParamTarget(target) {
+    const name = target?.dataset?.quickParam;
+    const param = _findQuickParam(name);
+    if (!param) return null;
+    const rawValue = target.type === 'checkbox' ? target.checked : target.value;
+    const normalizedValue = _coerceQuickParamValue(param, rawValue);
+    _quickParamsState.currentValues[name] = normalizedValue;
+    _setQuickParamControlValue(target, param, normalizedValue);
+    return normalizedValue;
+  }
+
+  function _normalizeAllQuickParamControls() {
+    if (!_quickHasParams()) return;
+    _quickParamsState.parameters.forEach((param) => {
+      const control = DOM.$(`[data-quick-param="${param.name}"]`, _el);
+      if (!control) return;
+      _normalizeQuickParamTarget(control);
+    });
+    _syncQuickParamsUiState();
+  }
+
+  function _quickParamsSummaryHtml() {
+    const meta = _quickParamsState.meta || {};
+    const mode = _quickParamsMode();
+    const strategyName = _quickParamsState.strategyName || _resolveRunStrategyName(meta) || 'Unknown strategy';
+    const strategyLabel = _quickParamsState.strategyLabel || _resolveRunStrategyLabel(meta);
+    const runId = _quickParamsState.runId || _resultRunId || '—';
+    const dirtyCount = _quickDirtyCount();
+    let dirtyLabel = dirtyCount ? `${dirtyCount} unsaved change${dirtyCount === 1 ? '' : 's'}` : 'Clean';
+    let dirtyTone = dirtyCount ? 'badge--amber' : 'badge--green';
+    if (mode === 'rerun-only') {
+      dirtyLabel = 'Rerun Only';
+      dirtyTone = 'badge--amber';
+    } else if (mode === 'unavailable') {
+      dirtyLabel = 'Unavailable';
+      dirtyTone = 'badge--red';
+    }
+    const subtitle = strategyLabel !== strategyName
+      ? `Run ${runId} · ${strategyLabel} (${strategyName})`
+      : `Run ${runId} · ${strategyName}`;
+
+    return `
+      <div class="quick-params__toolbar">
+        <div class="quick-params__summary">
+          <div class="quick-params__title">${_esc(subtitle)}</div>
+          <div class="quick-params__meta">${_esc(_quickParamsSummaryMetaText())}</div>
+        </div>
+        <div class="quick-params__toolbar-right">
+          <span class="badge ${dirtyTone}" id="bt-quick-dirty-badge">${_esc(dirtyLabel)}</span>
+          <div class="quick-params__actions">
+            <button type="button" class="btn btn--primary btn--sm" data-quick-action="run">Run Again</button>
+            <button type="button" class="btn btn--secondary btn--sm" data-quick-action="save">Save to Strategy</button>
+            <button type="button" class="btn btn--secondary btn--sm" data-quick-action="reset">Reset</button>
+          </div>
+        </div>
+      </div>
+      <div class="quick-params__state" id="bt-quick-params-state"></div>
+    `;
+  }
+
+  function _renderQuickParams() {
+    const card = DOM.$('#bt-quick-params-card', _el);
+    const body = DOM.$('#bt-quick-params-body', _el);
+    if (!card || !body) return;
+
+    if (!_resultRunId || !_loadedResult || _loadedResult.status !== 'completed') {
+      DOM.hide(card);
+      DOM.empty(body);
+      return;
+    }
+
+    DOM.show(card);
+
+    if (_quickParamsMode() === 'rerun-only') {
+      const message = _quickParamsState.notice || 'Run Again will preserve the loaded strategy_path. Save to Strategy is only available for strategies in user_data/strategies.';
+      body.innerHTML = `
+        ${_quickParamsSummaryHtml()}
+        ${_quickParamsNotice(message, 'amber')}
+      `;
+      _syncQuickParamsUiState();
+      return;
+    }
+
+    if (_quickParamsMode() === 'unavailable') {
+      const message = _quickParamsState.notice || _quickParamsState.error || 'Strategy parameters are unavailable for this run.';
+      body.innerHTML = `
+        ${_quickParamsSummaryHtml()}
+        ${_quickParamsNotice(message, 'red')}
+      `;
+      _syncQuickParamsUiState();
+      return;
+    }
+
+    if (_quickParamsState.loading) {
+      body.innerHTML = `
+        ${_quickParamsSummaryHtml()}
+        ${_quickParamsNotice('Loading strategy parameters…')}
+      `;
+      _syncQuickParamsUiState();
+      return;
+    }
+
+    if (_quickParamsState.error) {
+      body.innerHTML = `
+        ${_quickParamsSummaryHtml()}
+        ${_quickParamsNotice(_quickParamsState.error, 'red')}
+      `;
+      _syncQuickParamsUiState();
+      return;
+    }
+
+    if (!_quickHasParams()) {
+      const message = _quickParamsState.empty || 'No detected strategy parameters are available for this run.';
+      body.innerHTML = `
+        ${_quickParamsSummaryHtml()}
+        ${_quickParamsNotice(message)}
+      `;
+      _syncQuickParamsUiState();
+      return;
+    }
+
+    const groupsHtml = _groupQuickParams(_quickParamsState.parameters).map(([space, params]) => `
+      <section class="quick-params__group">
+        <div class="quick-params__group-header">
+          <h3 class="quick-params__group-title">${_esc(_quickGroupLabel(space))}</h3>
+          <span class="quick-params__group-count">${params.length}</span>
+        </div>
+        <div class="quick-params__grid">
+          ${params.map((param) => {
+            const dirty = !_quickValuesEqual(_quickParamsState.currentValues[param.name], _quickParamsState.seedValues[param.name]);
+            return `
+              <div class="quick-params__field${dirty ? ' quick-params__field--dirty' : ''}" data-quick-field="${_esc(param.name)}">
+                <div class="quick-params__field-head">
+                  <label class="quick-params__field-label" for="${_esc(`bt-qp-${param.name}`)}">${_esc(_quickParamLabel(param.name))}</label>
+                  <span class="quick-params__field-badge"${dirty ? '' : ' style="display:none"'}>Edited</span>
+                </div>
+                <div class="quick-params__field-meta">${_esc(_quickParamDescription(param))}</div>
+                ${_quickParamControl(param)}
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </section>
+    `).join('');
+
+    body.innerHTML = `
+      ${_quickParamsSummaryHtml()}
+      <div class="quick-params__groups">${groupsHtml}</div>
+    `;
+    _syncQuickParamsUiState();
+  }
+
+  function _syncQuickParamsUiState() {
+    const body = DOM.$('#bt-quick-params-body', _el);
+    if (!body) return;
+
+    const mode = _quickParamsMode();
+    const isEditable = mode === 'editable';
+    const dirtyCount = _quickDirtyCount();
+    const dirtyBadge = DOM.$('#bt-quick-dirty-badge', body);
+    const stateEl = DOM.$('#bt-quick-params-state', body);
+    const hasParams = _quickHasParams();
+    const hasRunContext = Boolean(_loadedResult?.meta && (_quickParamsState.strategyName || _resolveRunStrategyName(_loadedResult.meta)));
+    const isRunning = Boolean(_activeRunId);
+    const disableRun = !hasRunContext || _quickParamsState.loading || _quickParamsState.saving || isRunning;
+    const disableSave = !isEditable || !hasParams || _quickParamsState.loading || _quickParamsState.saving || dirtyCount === 0;
+    const disableReset = !isEditable || !hasParams || _quickParamsState.loading || _quickParamsState.saving || dirtyCount === 0;
+
+    body.querySelectorAll('[data-quick-field]').forEach((fieldEl) => {
+      const name = fieldEl.dataset.quickField;
+      const dirty = !_quickValuesEqual(_quickParamsState.currentValues[name], _quickParamsState.seedValues[name]);
+      fieldEl.classList.toggle('quick-params__field--dirty', dirty);
+      const badge = fieldEl.querySelector('.quick-params__field-badge');
+      if (badge) badge.style.display = dirty ? '' : 'none';
+    });
+
+    const runBtn = body.querySelector('[data-quick-action="run"]');
+    const saveBtn = body.querySelector('[data-quick-action="save"]');
+    const resetBtn = body.querySelector('[data-quick-action="reset"]');
+    if (runBtn) {
+      runBtn.disabled = disableRun;
+      runBtn.title = isRunning ? 'Run Again is disabled while another backtest is active.' : '';
+    }
+    if (saveBtn) {
+      saveBtn.disabled = disableSave;
+      saveBtn.title = mode === 'rerun-only'
+        ? 'Save to Strategy is only available for strategies in user_data/strategies.'
+        : '';
+    }
+    if (resetBtn) {
+      resetBtn.disabled = disableReset;
+      resetBtn.title = mode === 'rerun-only'
+        ? 'Reset is unavailable because this run is rerun-only.'
+        : '';
+    }
+
+    body.querySelectorAll('[data-quick-param]').forEach((control) => {
+      control.disabled = _quickParamsState.loading || _quickParamsState.saving || !isEditable;
+    });
+
+    if (dirtyBadge) {
+      let badgeTone = dirtyCount ? 'badge--amber' : 'badge--green';
+      let badgeText = dirtyCount ? `${dirtyCount} unsaved change${dirtyCount === 1 ? '' : 's'}` : 'Clean';
+      if (mode === 'rerun-only') {
+        badgeTone = 'badge--amber';
+        badgeText = 'Rerun Only';
+      } else if (mode === 'unavailable') {
+        badgeTone = 'badge--red';
+        badgeText = 'Unavailable';
+      }
+      dirtyBadge.className = `badge ${badgeTone}`;
+      dirtyBadge.textContent = badgeText;
+    }
+
+    if (stateEl) {
+      stateEl.className = 'quick-params__state';
+      let stateText = '';
+      if (_quickParamsState.loading) {
+        stateText = 'Loading strategy parameters…';
+      } else if (_quickParamsState.saving) {
+        stateText = 'Saving strategy parameters…';
+      } else if (isRunning) {
+        stateText = `Backtest ${_activeRunId} is running. Run Again is disabled until it completes.`;
+      } else if (isEditable && hasParams && dirtyCount) {
+        stateText = 'Current values differ from the loaded baseline.';
+        stateEl.classList.add('text-red');
+      } else if (isEditable && hasParams) {
+        stateText = 'Current values match the loaded baseline.';
+      }
+      stateEl.textContent = stateText;
+      stateEl.style.display = stateText ? '' : 'none';
+    }
+  }
+
+  async function _ensureQuickParamsForRun(runData) {
+    const runId = runData?.run_id;
+    const meta = runData?.meta || {};
+    const strategyName = _resolveRunStrategyName(meta);
+    const strategyLabel = _resolveRunStrategyLabel(meta);
+    const strategyPath = meta.strategy_path || null;
+
+    if (!runId) {
+      _resetQuickParamsState();
+      return;
+    }
+
+    if (
+      _quickParamsState.runId === runId &&
+      _quickParamsState.strategyName === strategyName &&
+      (_quickParamsState.loading || _quickHasParams() || _quickParamsState.error || _quickParamsState.empty || _quickParamsState.notice)
+    ) {
+      return;
+    }
+
+    _quickParamsState = {
+      ..._createQuickParamsState(),
+      runId,
+      strategyName,
+      strategyLabel,
+      strategyPath,
+      meta,
+      mode: 'editable',
+      loading: false,
+    };
+
+    if (!strategyName) {
+      _quickParamsState.mode = 'unavailable';
+      _quickParamsState.notice = 'Strategy parameters are unavailable for this run because the strategy class could not be resolved.';
+      _renderQuickParams();
+      return;
+    }
+
+    if (!_isDefaultStrategyPath(strategyPath)) {
+      _quickParamsState.mode = 'rerun-only';
+      _quickParamsState.notice = 'This run used an external strategy workspace. Run Again will preserve that strategy_path, but Save to Strategy is only available for strategies in user_data/strategies.';
+      _renderQuickParams();
+      return;
+    }
+
+    _quickParamsState.loading = true;
+    _renderQuickParams();
+
+    try {
+      const response = await API.getStrategyParams(strategyName);
+      if (_quickParamsState.runId !== runId) return;
+
+      const parameters = response.parameters || [];
+      const seedValues = {};
+      parameters.forEach((param) => {
+        seedValues[param.name] = _seedQuickParamValue(param, meta);
+      });
+
+      _quickParamsState = {
+        ..._quickParamsState,
+        loading: false,
+        mode: 'editable',
+        parameters,
+        seedValues,
+        currentValues: { ...seedValues },
+        error: '',
+        empty: parameters.length ? '' : `No detected strategy parameters were found for ${strategyName}.`,
+        notice: '',
+      };
+    } catch (err) {
+      if (_quickParamsState.runId !== runId) return;
+      _quickParamsState = {
+        ..._quickParamsState,
+        loading: false,
+        mode: 'editable',
+        parameters: [],
+        seedValues: {},
+        currentValues: {},
+        error: `Strategy parameters are unavailable for ${strategyName}. ${err.message}`,
+        empty: '',
+        notice: '',
+      };
+    }
+
+    _renderQuickParams();
+  }
+
+  function _onQuickParamsInput(event) {
+    const target = event.target?.closest?.('[data-quick-param]');
+    if (!target || !_quickHasParams()) return;
+
+    const name = target.dataset.quickParam;
+    const param = _findQuickParam(name);
+    if (!param) return;
+
+    if (event.type === 'change') {
+      _normalizeQuickParamTarget(target);
+      _syncQuickParamsUiState();
+      return;
+    }
+
+    const rawValue = target.type === 'checkbox' ? target.checked : target.value;
+    _quickParamsState.currentValues[name] = _coerceQuickParamValue(param, rawValue);
+    _syncQuickParamsUiState();
+  }
+
+  function _onQuickParamsCommit(event) {
+    const target = event.target?.closest?.('[data-quick-param]');
+    if (!target || !_quickHasParams()) return;
+    _normalizeQuickParamTarget(target);
+    _syncQuickParamsUiState();
+  }
+
+  async function _onQuickParamsAction(event) {
+    const button = event.target.closest('[data-quick-action]');
+    if (!button) return;
+
+    if (button.dataset.quickAction === 'run') {
+      await _runQuickParamsBacktest();
+      return;
+    }
+
+    if (button.dataset.quickAction === 'save') {
+      await _saveQuickParams();
+      return;
+    }
+
+    if (button.dataset.quickAction === 'reset') {
+      _quickParamsState.currentValues = { ..._quickParamsState.seedValues };
+      _renderQuickParams();
+    }
+  }
+
+  function _ensureStrategyOption(value, label) {
+    const select = DOM.$('#bt-strategy', _el);
+    if (!select || !value) return;
+    const existing = [...select.options].find((option) => option.value === value);
+    if (existing) {
+      existing.textContent = label || existing.textContent;
+      select.value = value;
+      return;
+    }
+
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = label || value;
+    option.dataset.temporary = 'true';
+    select.appendChild(option);
+    select.value = value;
+  }
+
+  async function _syncFormToRunContext(meta = {}, strategyName = null, strategyLabel = null) {
+    const strategyValue = strategyName || _resolveRunStrategyName(meta) || '';
+    const displayLabel = strategyLabel || _resolveRunStrategyLabel(meta) || strategyValue;
+    _ensureStrategyOption(strategyValue, displayLabel);
+
+    const setValue = (selector, value) => {
+      const el = DOM.$(selector, _el);
+      if (el && value != null) el.value = value;
+    };
+
+    setValue('#bt-exchange', meta.exchange || 'binance');
+    setValue('#bt-timeframe', meta.timeframe || '5m');
+    setValue('#bt-timerange', meta.timerange || '');
+    setValue('#bt-wallet', meta.dry_run_wallet);
+    setValue('#bt-max-trades', meta.max_open_trades);
+    setValue('#bt-stake', meta.stake_amount);
+
+    await _loadPairs(meta.exchange || 'binance', meta.pairs || []);
+    _saveForm();
+    _refreshCommandPreview();
+  }
+
+  async function _runQuickParamsBacktest() {
+    if (!_loadedResult?.meta) {
+      Toast.warning('No completed run is loaded.');
+      return;
+    }
+    if (_activeRunId) return;
+
+    _normalizeAllQuickParamControls();
+
+    const meta = _loadedResult.meta;
+    const strategyName = _quickParamsState.strategyName || _resolveRunStrategyName(meta);
+    if (!strategyName) {
+      Toast.error('Cannot rerun this result because the strategy class is unavailable.');
+      return;
+    }
+
+    await _syncFormToRunContext(meta, strategyName, _quickParamsState.strategyLabel);
+
+    const body = {
+      strategy: strategyName,
+      strategy_label: meta.strategy && meta.strategy !== strategyName ? meta.strategy : null,
+      strategy_path: meta.strategy_path || null,
+      pairs: Array.isArray(meta.pairs) ? [...meta.pairs] : [],
+      timeframe: meta.timeframe || '5m',
+      timerange: meta.timerange || null,
+      exchange: meta.exchange || 'binance',
+      strategy_params: _quickHasParams()
+        ? { ..._quickParamsState.currentValues }
+        : { ...(meta.strategy_params || {}) },
+    };
+
+    try {
+      const hasCoverage = await _validateSelectedPairData(body);
+      if (!hasCoverage) return;
+    } catch (err) {
+      Toast.error('Failed to validate pair data: ' + err.message);
+      return;
+    }
+
+    _setRunning(true);
+    try {
+      const res = await API.startBacktest(body);
+      _activeRunId = res.run_id;
+      AppState.set('stream', `Backtest started: ${_activeRunId}`);
+      Auth.setRunning(true);
+      _startPoll(_activeRunId);
+      Toast.success('Backtest started from the loaded result context.');
+    } catch (err) {
+      _setRunning(false);
+      Toast.error('Failed to start backtest: ' + err.message);
+    }
+  }
+
+  async function _saveQuickParams() {
+    if (!_quickHasParams()) return;
+    const strategyName = _quickParamsState.strategyName;
+    if (!strategyName) {
+      Toast.error('Cannot save parameters because the strategy class is unavailable.');
+      return;
+    }
+
+    _normalizeAllQuickParamControls();
+
+    _quickParamsState.saving = true;
+    _syncQuickParamsUiState();
+    try {
+      await API.saveStrategyParams(strategyName, { ..._quickParamsState.currentValues });
+      _quickParamsState.seedValues = { ..._quickParamsState.currentValues };
+      _quickParamsState.saving = false;
+      _syncQuickParamsUiState();
+      Toast.success(`Saved parameters to ${strategyName}.json.`);
+    } catch (err) {
+      _quickParamsState.saving = false;
+      _syncQuickParamsUiState();
+      Toast.error('Failed to save strategy parameters: ' + err.message);
+    }
+  }
+
   /* ── Download Data ── */
   let _dlPollTimer = null;
 
@@ -596,6 +1329,20 @@ window.BacktestPage = (() => {
     set('#bt-stake',      cfg.stake_amount);
   }
 
+  async function _validateSelectedPairData({ pairs, timeframe, exchange }) {
+    const data = await API.dataCoverage({ pairs, timeframe, exchange });
+    const missingPairs = data.missing_pairs || (data.coverage || [])
+      .filter(item => !item.available)
+      .map(item => item.pair);
+
+    if (!missingPairs.length) return true;
+
+    Toast.error(
+      `Missing local data for: ${missingPairs.join(', ')}. Download those pairs before backtesting.`
+    );
+    return false;
+  }
+
   async function _onSubmit(e) {
     e.preventDefault();
     const form = e.target;
@@ -612,13 +1359,21 @@ window.BacktestPage = (() => {
       exchange:        fd.get('exchange') || 'binance',
     };
 
+    try {
+      const hasCoverage = await _validateSelectedPairData(body);
+      if (!hasCoverage) return;
+    } catch (err) {
+      Toast.error('Failed to validate pair data: ' + err.message);
+      return;
+    }
+
     _setRunning(true);
     try {
       const res = await API.startBacktest(body);
-      _currentRunId = res.run_id;
-      AppState.set('stream', `Backtest started: ${_currentRunId}`);
+      _activeRunId = res.run_id;
+      AppState.set('stream', `Backtest started: ${_activeRunId}`);
       Auth.setRunning(true);
-      _startPoll(_currentRunId);
+      _startPoll(_activeRunId);
       Toast.success('Backtest started.');
     } catch (err) {
       _setRunning(false);
@@ -627,6 +1382,7 @@ window.BacktestPage = (() => {
   }
 
   function _startPoll(runId) {
+    _activeRunId = runId;
     _stopPoll();
     const card = DOM.$('#bt-status-card', _el);
     DOM.show(card);
@@ -638,9 +1394,11 @@ window.BacktestPage = (() => {
           _stopPoll();
           _setRunning(false);
           Auth.setRunning(false);
+          _activeRunId = null;
           AppState.set('stream', `Backtest ${data.status}: ${runId}`);
           if (data.status === 'completed') Toast.success('Backtest completed.');
           else Toast.error('Backtest failed.');
+          _syncRunState();
         }
       } catch {}
     }, 2000);
@@ -705,22 +1463,39 @@ window.BacktestPage = (() => {
     }
     if (data.status === 'completed' && data.results) {
       DOM.show(resCard);
+      _resultRunId = data.run_id || _activeRunId || _resultRunId;
+      _loadedResult = data;
       _renderResults(resBody, data.results);
+      void _ensureQuickParamsForRun(data);
     }
   }
 
   function _renderResults(el, results) {
     if (!el || !results) return;
     const ov = results.overview || {};
+    const profitPct = FMT.resultProfitPercent(ov);
+    const winRate = FMT.resultWinRate(ov.win_rate);
+    const drawdownPct = FMT.resultDrawdownPercent(ov.max_drawdown);
+    const summary = results.summary || {};
+    const startingBalance = ov.starting_balance ?? summary.startingBalance;
+    const finalBalance = ov.final_balance ?? summary.finalBalance;
+    const resultCard = DOM.$('#bt-results-card', _el);
+    if (resultCard) {
+      resultCard.classList.add('result-explorer-card');
+      resultCard.tabIndex = 0;
+      resultCard.setAttribute('role', 'button');
+      resultCard.setAttribute('aria-label', 'Open result explorer');
+    }
     el.innerHTML = `
+      <div class="result-explorer-card__hint">Click anywhere in this card to open the full explorer.</div>
       <div class="results-overview">
-        ${_metric('Total Profit %',   FMT.pct((ov.profit_percent||0)*100), (ov.profit_percent||0)>0?'green':'red')}
-        ${_metric('Profit (abs)',      FMT.currency(ov.profit_total_abs||0))}
+        ${_metric('Total Profit %',   profitPct != null ? FMT.pct(profitPct) : '—', FMT.toneProfit(profitPct))}
+        ${_metric('Profit (abs)',      FMT.currency(ov.profit_total_abs||0), FMT.toneProfit(ov.profit_total_abs))}
         ${_metric('Total Trades',     ov.total_trades ?? '—')}
-        ${_metric('Win Rate',         ov.win_rate != null ? FMT.pct((ov.win_rate||0)*100,1,false) : '—', 'muted')}
-        ${_metric('Max Drawdown',     ov.max_drawdown != null ? FMT.pct(Math.abs((ov.max_drawdown||0)*100),1,false) : '—', 'red')}
-        ${_metric('Sharpe Ratio',     FMT.number(ov.sharpe_ratio))}
-        ${_metric('Final Balance',    FMT.currency(ov.final_balance))}
+        ${_metric('Win Rate',         winRate != null ? FMT.pct(winRate,1,false) : '—', FMT.toneWinRate(winRate))}
+        ${_metric('Max Drawdown',     drawdownPct != null ? FMT.pct(drawdownPct,1,false) : '—', FMT.toneDrawdown(drawdownPct))}
+        ${_metric('Sharpe Ratio',     FMT.number(summary.sharpeRatio ?? ov.sharpe_ratio), FMT.toneRatio(summary.sharpeRatio ?? ov.sharpe_ratio, 1))}
+        ${_metric('Final Balance',    FMT.currency(ov.final_balance), FMT.toneProfit((finalBalance ?? 0) - (startingBalance ?? 0)))}
       </div>`;
   }
 
@@ -729,7 +1504,7 @@ window.BacktestPage = (() => {
   }
 
   function _onStop() {
-    if (!_currentRunId) return;
+    if (!_activeRunId) return;
     _stopPoll();
     _setRunning(false);
     Auth.setRunning(false);
@@ -741,10 +1516,75 @@ window.BacktestPage = (() => {
     const stopBtn = DOM.$('#bt-stop-btn', _el);
     if (runBtn)  runBtn.disabled = running;
     if (running) DOM.show(stopBtn); else DOM.hide(stopBtn);
+    _syncQuickParamsUiState();
   }
 
   function _stopPoll() {
     if (_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
+  }
+
+  function _sortRunsNewest(runs) {
+    return [...runs].sort((a, b) => {
+      const delta = _runTimestamp(b) - _runTimestamp(a);
+      if (delta !== 0) return delta;
+      return String(b.run_id || '').localeCompare(String(a.run_id || ''));
+    });
+  }
+
+  function _runTimestamp(run) {
+    const candidates = [run?.completed_at, run?.started_at, run?.created_at];
+    for (const value of candidates) {
+      const ts = Date.parse(value || '');
+      if (Number.isFinite(ts)) return ts;
+    }
+    return 0;
+  }
+
+  async function _restoreLatestState(runs) {
+    const latestCompleted = runs.find((run) => run.status === 'completed' && run.run_id);
+    const latestRunning = runs.find((run) => run.status === 'running' && run.run_id);
+
+    if (latestCompleted) {
+      await _loadLatestResult(latestCompleted.run_id);
+    } else {
+      _clearLoadedResult();
+    }
+
+    if (latestRunning) {
+      await _resumeActiveRun(latestRunning.run_id);
+      return;
+    }
+
+    if (!_pollTimer) {
+      _activeRunId = null;
+      _setRunning(false);
+      DOM.hide(DOM.$('#bt-status-card', _el));
+    }
+  }
+
+  async function _loadLatestResult(runId) {
+    if (!runId) return;
+    try {
+      const data = await API.getRun(runId);
+      if (data.status !== 'completed' || !data.results) return;
+      _loadedResult = data;
+      _resultRunId = runId;
+      DOM.show(DOM.$('#bt-results-card', _el));
+      _renderResults(DOM.$('#bt-results-body', _el), data.results);
+      await _ensureQuickParamsForRun(data);
+    } catch {}
+  }
+
+  async function _resumeActiveRun(runId) {
+    if (!runId) return;
+    if (_activeRunId === runId && _pollTimer) return;
+    _activeRunId = runId;
+    _setRunning(true);
+    try {
+      const data = await API.getRun(runId);
+      _updateStatus(data);
+    } catch {}
+    _startPoll(runId);
   }
 
   function _esc(str) {
@@ -753,7 +1593,10 @@ window.BacktestPage = (() => {
     return d.innerHTML;
   }
 
-  function refresh() { _loadFormData(); }
+  function refresh() {
+    _loadFormData();
+    _syncRunState();
+  }
 
   return { init, refresh };
 })();
