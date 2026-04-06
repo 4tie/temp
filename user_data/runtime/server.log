@@ -3587,3 +3587,5 @@ INFO:     127.0.0.1:51728 - "GET /strategies HTTP/1.1" 200 OK
 INFO:     127.0.0.1:59309 - "GET /runs/20260406_105507_c5a46143 HTTP/1.1" 200 OK
 INFO:     127.0.0.1:59309 - "GET /pairs?exchange=binance HTTP/1.1" 200 OK
 INFO:     127.0.0.1:59309 - "GET /strategies/MultiMa/params HTTP/1.1" 200 OK
+[32mINFO[0m:     127.0.0.1:52604 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:52604 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
