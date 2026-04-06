@@ -27,6 +27,7 @@ from app.ai.conversation_store import (
     list_conversations, get_conversation, create_conversation,
     append_message, delete_conversation,
 )
+from app.services.results.metric_registry import AI_CONTEXT_METRICS, build_metric_snapshot, get_metric_def
 from app.services.storage import list_runs, load_run_results, load_run_meta
 
 
@@ -116,17 +117,23 @@ async def _build_context(run_id: str | None) -> tuple[str, dict | None]:
         results = load_run_results(run_id)
         if not results:
             return "", None
-        summary = results.get("summary", {})
+        metrics = results.get("result_metrics") or build_metric_snapshot(results, AI_CONTEXT_METRICS)
         ctx_parts = []
         if meta:
             ctx_parts.append(f"Strategy: {meta.get('strategy', 'unknown')}")
             ctx_parts.append(f"Timeframe: {meta.get('timeframe', '')}")
-        ctx_parts.append(f"Total Profit: {summary.get('profit_total_pct', 0):.2f}%")
-        ctx_parts.append(f"Win Rate: {summary.get('win_rate', 0):.1f}%")
-        ctx_parts.append(f"Max Drawdown: {summary.get('max_drawdown_pct', 0):.2f}%")
-        ctx_parts.append(f"Total Trades: {summary.get('total_trades', 0)}")
-        ctx_parts.append(f"Sharpe Ratio: {summary.get('sharpe_ratio', 'N/A')}")
-        ctx_parts.append(f"Profit Factor: {summary.get('profit_factor', 'N/A')}")
+        for metric_key in AI_CONTEXT_METRICS:
+            metric = get_metric_def(metric_key)
+            value = metrics.get(metric.key)
+            if value is None:
+                continue
+            if metric.format == "percent":
+                rendered = f"{float(value):.{metric.decimals}f}%"
+            elif metric.format == "integer":
+                rendered = str(int(value))
+            else:
+                rendered = f"{float(value):.{metric.decimals}f}"
+            ctx_parts.append(f"{metric.label}: {rendered}")
         return "\n".join(ctx_parts), {"run_id": run_id, "strategy": meta.get("strategy") if meta else ""}
     except Exception as e:
         logger.warning("Could not build context for run %s: %s", run_id, e)

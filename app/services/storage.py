@@ -2,7 +2,7 @@
 Domain storage for backtest runs and presets.
 
 This module is the source of truth for backtest result persistence and retrieval.
-Generic JSON read/write helpers live in app.core.json_store.
+Generic JSON read/write helpers live in app.core.json_io.
 """
 
 import json
@@ -25,6 +25,7 @@ from app.core.config import (
 )
 from app.services.result_normalizer import normalize_backtest_result
 from app.services.result_parser import parse_backtest_results, load_backtest_result_payload
+from app.services.results.metric_registry import build_metric_snapshot
 
 _SAFE_ID_RE = re.compile(r"^[A-Za-z0-9_\-]+$")
 _SAFE_FOLDER_RE = re.compile(r"[^A-Za-z0-9_\-]+")
@@ -114,6 +115,7 @@ def _load_compact_results(run_id: str) -> Optional[dict[str, Any]]:
     return {
         "overview": results.get("overview", {}),
         "summary": results.get("summary", {}),
+        "result_metrics": results.get("result_metrics") or build_metric_snapshot(results),
         "warnings": results.get("warnings", []),
     }
 

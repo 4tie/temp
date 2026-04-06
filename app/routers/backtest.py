@@ -16,6 +16,7 @@ from app.services.execution_context_service import (
     resolve_exchange_name,
     validate_selected_pair_data,
 )
+from app.services.results.metric_registry import metric_registry_payload
 from app.services.storage import (
     load_run_meta, load_run_results, list_runs, delete_run,
     save_last_config, load_last_config, save_run_logs, load_run_raw_payload, get_run_dir,
@@ -143,6 +144,11 @@ async def run_backtest(req: BacktestRequest):
 async def get_runs():
     runs = list_runs()
     return {"runs": runs}
+
+
+@router.get("/result-metrics")
+async def get_result_metrics():
+    return metric_registry_payload()
 
 
 @router.get("/runs/{run_id}")

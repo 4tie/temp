@@ -444,9 +444,9 @@ def loop_worker(loop_id: str) -> None:
             recommendation = "KEEP_OR_ITERATE"
 
         stop_rule_violations: list[str] = []
-        overview = {(r.get("metric"), r.get("section")): r for r in table_rows}
-        profit_delta = overview.get(("profit_percent", "overview"), {}).get("delta")
-        drawdown_delta = overview.get(("max_drawdown", "overview"), {}).get("delta")
+        overview = {r.get("metric"): r for r in table_rows if r.get("section") == "core"}
+        profit_delta = overview.get("profit_percent", {}).get("delta")
+        drawdown_delta = overview.get("max_drawdown", {}).get("delta")
         try:
             min_profit_delta = stop_rules.get("min_profit_delta")
             if min_profit_delta is not None and float(profit_delta) < float(min_profit_delta):

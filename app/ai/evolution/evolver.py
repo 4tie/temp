@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from app.core.config import AI_EVOLUTION_DIR, STRATEGIES_DIR
-from app.core.json_store import read_json, write_json
+from app.core.json_io import read_json, write_json
 from app.services.storage import load_run_meta, load_run_results
 from app.services.runner import start_backtest, wait_for_run
 from app.ai.tools.deep_analysis import analyze

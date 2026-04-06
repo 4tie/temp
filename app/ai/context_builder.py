@@ -9,6 +9,7 @@ from typing import Any
 
 from app.ai.goals import goal_label, normalize_goal_id
 from app.core.config import FREQTRADE_CONFIG_FILE, LAST_CONFIG_FILE, STRATEGIES_DIR
+from app.services.results.metric_registry import AI_CONTEXT_METRICS, build_metric_snapshot, get_metric_def
 from app.services.storage import list_runs, load_run_meta, load_run_results
 
 _SECRET_KEYS = {
@@ -73,18 +74,15 @@ def normalize_backtest_overview(results: dict[str, Any]) -> dict[str, Any]:
                 return overview[key]
         return default
 
-    return {
-        "total_trades": _pick("total_trades", "trade_count", default=0),
-        "profit_percent": _pick("profit_percent", "profit_total_pct", "totalProfitPct", default=0),
-        "profit_factor": _pick("profit_factor", "profitFactor", default=0),
-        "win_rate": _pick("win_rate", "winRate", default=0),
-        "max_drawdown": _pick("max_drawdown", "max_drawdown_pct", "maxDrawdown", default=0),
-        "starting_balance": _pick("starting_balance", default=0),
-        "final_balance": _pick("final_balance", default=0),
-        "timeframe": _pick("timeframe", default=""),
-        "stake_amount": _pick("stake_amount", default=""),
-        "max_open_trades": _pick("max_open_trades", default=0),
-    }
+    normalized = build_metric_snapshot(results, AI_CONTEXT_METRICS + ("starting_balance", "final_balance"))
+    normalized.update(
+        {
+            "timeframe": _pick("timeframe", default=""),
+            "stake_amount": _pick("stake_amount", default=""),
+            "max_open_trades": _pick("max_open_trades", default=0),
+        }
+    )
+    return normalized
 
 
 def latest_completed_run_id() -> str | None:
@@ -196,14 +194,15 @@ def render_context_text(snapshot: dict[str, Any]) -> str:
             f"run_id={backtest.get('run_id')} strategy={backtest.get('strategy')} timeframe={backtest.get('timeframe')}"
         )
     if overview:
-        parts.append(
-            "Key metrics: "
-            f"profit_percent={overview.get('profit_percent')} "
-            f"profit_factor={overview.get('profit_factor')} "
-            f"win_rate={overview.get('win_rate')} "
-            f"max_drawdown={overview.get('max_drawdown')} "
-            f"total_trades={overview.get('total_trades')}"
-        )
+        metric_bits = []
+        for metric_key in AI_CONTEXT_METRICS:
+            metric = get_metric_def(metric_key)
+            value = overview.get(metric.key)
+            if value is None:
+                continue
+            metric_bits.append(f"{metric.key}={value}")
+        if metric_bits:
+            parts.append("Key metrics: " + " ".join(metric_bits))
     per_pair = backtest.get("per_pair") or []
     if per_pair:
         parts.append(f"Per-pair summary JSON: {json.dumps(per_pair[:3], ensure_ascii=True)}")

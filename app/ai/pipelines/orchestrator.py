@@ -17,7 +17,7 @@ from dataclasses import dataclass, field, asdict
 from typing import Any, AsyncGenerator
 
 from app.core.config import AI_PIPELINE_LOGS_DIR
-from ...core.json_store import write_json, ensure_dir
+from ...core.json_io import write_json, ensure_dir
 import app.ai.models.provider_dispatch as _dispatch
 from app.ai.model_metrics_store import record_observation
 from ..models.registry import fetch_free_models, get_model_for_role
@@ -187,7 +187,7 @@ def list_pipeline_logs(limit: int = 50) -> list[dict]:
     ensure_dir(PIPELINE_LOG_DIR)
     logs = []
     for f in sorted(PIPELINE_LOG_DIR.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)[:limit]:
-        from ...core.json_store import read_json
+        from ...core.json_io import read_json
         data = read_json(f, None)
         if data:
             logs.append(data)
@@ -195,7 +195,7 @@ def list_pipeline_logs(limit: int = 50) -> list[dict]:
 
 
 def get_pipeline_log(run_id: str) -> dict | None:
-    from ...core.json_store import read_json
+    from ...core.json_io import read_json
     return read_json(PIPELINE_LOG_DIR / f"{run_id}.json", None)
 
 

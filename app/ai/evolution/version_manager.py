@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from app.core.config import AI_EVOLUTION_DIR, STRATEGIES_DIR
-from app.core.json_store import read_json
+from app.core.json_io import read_json
 
 _EVO_RE = re.compile(r"^(.+)_evo_g(\d+)$")
 _SAFE_RE = re.compile(r"^[A-Za-z0-9_\-]+$")

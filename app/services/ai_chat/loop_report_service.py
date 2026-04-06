@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from app.core.config import AI_LOOP_REPORTS_DIR, BASE_DIR, STRATEGIES_DIR
+from app.services.results.metric_registry import AI_LOOP_REPORT_METRICS, build_metric_delta_rows
 
 
 def utc_now() -> str:
@@ -45,13 +46,12 @@ def summarize_step_metrics(session: dict[str, Any]) -> dict[str, Any]:
 def result_delta_rows(before: dict[str, Any] | None, after: dict[str, Any] | None) -> list[dict[str, Any]]:
     b = before or {}
     a = after or {}
+    rows = build_metric_delta_rows(b, a, AI_LOOP_REPORT_METRICS, section="core")
     sections = [
-        ("overview", ["profit_percent", "win_rate", "max_drawdown", "profit_factor", "total_trades", "final_balance"]),
         ("summary_metrics", sorted(set((a.get("summary_metrics") or {}).keys()) | set((b.get("summary_metrics") or {}).keys()))),
         ("balance_metrics", sorted(set((a.get("balance_metrics") or {}).keys()) | set((b.get("balance_metrics") or {}).keys()))),
         ("risk_metrics", sorted(set((a.get("risk_metrics") or {}).keys()) | set((b.get("risk_metrics") or {}).keys()))),
     ]
-    rows: list[dict[str, Any]] = []
     for section, keys in sections:
         sec_b = b.get(section) or {}
         sec_a = a.get(section) or {}
@@ -64,6 +64,7 @@ def result_delta_rows(before: dict[str, Any] | None, after: dict[str, Any] | Non
                 {
                     "section": section,
                     "metric": key,
+                    "label": key,
                     "before": before_v,
                     "after": after_v,
                     "delta": safe_delta(before_v, after_v),
@@ -151,7 +152,7 @@ def render_loop_markdown(session: dict[str, Any]) -> str:
     lines.extend(["", "## Result Deltas (Full Summary Table)", "", "| Section | Metric | Before | After | Delta |", "|---|---|---:|---:|---:|"])
     for row in rows:
         lines.append(
-            f"| {row.get('section')} | {row.get('metric')} | {row.get('before')} | {row.get('after')} | {row.get('delta')} |"
+            f"| {row.get('section')} | {row.get('label') or row.get('metric')} | {row.get('before')} | {row.get('after')} | {row.get('delta')} |"
         )
     lines.extend(["", "## File Changes"])
     py_change = (file_changes.get("strategy_py") or {}).get("changed")

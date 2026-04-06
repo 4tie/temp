@@ -68,6 +68,7 @@ window.API = (() => {
   const getRuns         = ()        => get('/runs');
   const getRun          = (id)      => get(`/runs/${id}`);
   const getRunRaw       = (id)      => get(`/runs/${id}/raw`);
+  const getResultMetrics = ()       => get('/result-metrics');
   const applyRunConfig  = (id)      => post(`/runs/${id}/apply-config`, {});
   const startBacktest   = (body)    => post('/run', body);
   const deleteRun       = (id)      => del(`/runs/${id}`);
@@ -105,7 +106,7 @@ window.API = (() => {
     getStrategies, getStrategyParams, getStrategySource, saveStrategyParams, saveStrategySource,
     getPairs,
     getConfig, patchConfig,
-    getRuns, getRun, getRunRaw, applyRunConfig, startBacktest, deleteRun, getLastConfig,
+    getRuns, getRun, getRunRaw, getResultMetrics, applyRunConfig, startBacktest, deleteRun, getLastConfig,
     downloadData, getDownload, dataCoverage,
     getHyperoptRuns, getHyperoptRun, startHyperopt, deleteHyperoptRun,
     getLossFunctions, getHyperoptSpaces, applyHyperoptParams,

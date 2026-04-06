@@ -13,6 +13,8 @@ window.ResultsPage = (() => {
   let _lastLoadedAt = null;
   let _latestRunIdSeen = null;
   let _autoOpenedRunId = null;
+  let _metricDefs = {};
+  let _resultsTableMetricKeys = [];
 
   function init() {
     _el = DOM.$('[data-view="results"]');
@@ -55,7 +57,17 @@ window.ResultsPage = (() => {
       if (!silent && wrap && !_runs.length) {
         DOM.setHTML(wrap, '<div class="empty-state">Loading…</div>');
       }
-      const data = await API.getRuns();
+      let data;
+      if (!_resultsTableMetricKeys.length) {
+        const [runsData, registry] = await Promise.all([
+          API.getRuns(),
+          API.getResultMetrics(),
+        ]);
+        data = runsData;
+        _applyMetricRegistry(registry);
+      } else {
+        data = await API.getRuns();
+      }
       _runs = (data.runs || []).filter(r => r.status === 'completed');
       _lastLoadedAt = new Date();
       _renderMeta();
@@ -70,6 +82,12 @@ window.ResultsPage = (() => {
     }
   }
 
+  function _applyMetricRegistry(registry) {
+    const metrics = registry?.metrics || [];
+    _metricDefs = Object.fromEntries(metrics.map(metric => [metric.key, metric]));
+    _resultsTableMetricKeys = registry?.groups?.results_table || [];
+  }
+
   function _renderMeta() {
     const el = DOM.$('#results-last-updated', _el);
     if (!el) return;
@@ -81,17 +99,9 @@ window.ResultsPage = (() => {
   }
 
   function _flat(r) {
-    const ov = r.results?.overview || r.overview || {};
-    const profitPct = FMT.resultProfitPercent(ov);
-    const winRate = FMT.resultWinRate(ov.win_rate);
-    const drawdownPct = FMT.resultDrawdownPercent(ov.max_drawdown);
     return {
       ...r,
-      _profit_pct:    profitPct,
-      _trades:        ov.total_trades ?? null,
-      _win_rate:      winRate,
-      _max_drawdown:  drawdownPct,
-      _sharpe:        ov.sharpe_ratio ?? null,
+      _metrics: r.result_metrics || {},
     };
   }
 
@@ -116,9 +126,12 @@ window.ResultsPage = (() => {
     }
 
     const flat = _runs.map(_flat);
+    const metricDefs = _resultsTableMetricKeys
+      .map(key => _metricDefs[key])
+      .filter(Boolean);
     const sorted = [...flat].sort((a, b) => {
-      const va = a[_sortKey] ?? null;
-      const vb = b[_sortKey] ?? null;
+      const va = _sortValue(a, _sortKey);
+      const vb = _sortValue(b, _sortKey);
       if (va === null && vb === null) return 0;
       if (va === null) return _sortDir;
       if (vb === null) return -_sortDir;
@@ -135,19 +148,11 @@ window.ResultsPage = (() => {
           ${th('run_id',        'Run ID')}
           ${th('strategy',     'Strategy / Version')}
           ${th('started_at',   'Date')}
-          ${th('_profit_pct',  'Profit %')}
-          ${th('_trades',      'Trades')}
-          ${th('_win_rate',    'Win Rate')}
-          ${th('_max_drawdown','Drawdown')}
-          ${th('_sharpe',      'Sharpe')}
+          ${metricDefs.map(metric => th(`metric:${metric.key}`, metric.label)).join('')}
           <th></th>
         </tr></thead>
         <tbody>
           ${sorted.map(r => {
-            const profitTone = FMT.toneProfit(r._profit_pct);
-            const winRateTone = FMT.toneWinRate(r._win_rate);
-            const drawdownTone = FMT.toneDrawdown(r._max_drawdown);
-            const sharpeTone = FMT.toneRatio(r._sharpe, 1);
             return `
               <tr class="cursor-pointer" data-run-id="${r.run_id || ''}">
                 <td class="font-mono text-sm">${FMT.truncate(r.run_id || '—', 18)}</td>
@@ -156,11 +161,7 @@ window.ResultsPage = (() => {
                   <div class="text-muted text-xs">${_esc(r.strategy_class || r.base_strategy || r.strategy || '—')}</div>
                 </td>
                 <td class="text-muted text-sm">${FMT.tsShort(r.started_at)}</td>
-                <td class="text-${profitTone} font-semibold">${r._profit_pct != null ? FMT.pct(r._profit_pct) : '—'}</td>
-                <td>${r._trades ?? '—'}</td>
-                <td class="text-${winRateTone} font-medium">${r._win_rate != null ? FMT.pct(r._win_rate, 1, false) : '—'}</td>
-                <td class="text-${drawdownTone} font-medium">${r._max_drawdown != null ? FMT.pct(r._max_drawdown, 1, false) : '—'}</td>
-                <td class="text-${sharpeTone} font-medium">${r._sharpe != null ? FMT.number(r._sharpe, 2) : '—'}</td>
+                ${metricDefs.map(metric => _renderMetricCell(metric, r._metrics?.[metric.key])).join('')}
                 <td>
                   <button class="btn btn--ghost btn--sm" data-detail-btn data-run-id="${r.run_id || ''}">View</button>
                   <button class="btn btn--secondary btn--sm" data-apply-btn data-run-id="${r.run_id || ''}">Apply Config</button>
@@ -188,6 +189,57 @@ window.ResultsPage = (() => {
     wrap.querySelectorAll('tr[data-run-id]').forEach(row => {
       DOM.on(row, 'click', () => _showDetail(row.dataset.runId));
     });
+  }
+
+  function _sortValue(row, key) {
+    if (!key) return null;
+    if (key.startsWith('metric:')) {
+      return row._metrics?.[key.slice(7)] ?? null;
+    }
+    return row[key] ?? null;
+  }
+
+  function _renderMetricCell(metric, value) {
+    const tone = _metricTone(metric, value);
+    const rendered = _formatMetric(metric, value);
+    const cls = tone ? ` class="text-${tone} font-medium"` : '';
+    return `<td${cls}>${rendered}</td>`;
+  }
+
+  function _formatMetric(metric, value) {
+    if (value === null || value === undefined || value === '') return '—';
+    const decimals = metric?.decimals ?? 2;
+    switch (metric?.format) {
+      case 'percent':
+        return FMT.pct(value, decimals, !!metric.show_sign);
+      case 'integer':
+        return FMT.integer(value);
+      case 'currency':
+        return FMT.currency(value, decimals);
+      case 'ratio':
+      case 'number':
+        return FMT.number(value, decimals);
+      default:
+        return String(value);
+    }
+  }
+
+  function _metricTone(metric, value) {
+    if (value === null || value === undefined || value === '') return '';
+    switch (metric?.key) {
+      case 'profit_percent':
+      case 'profit_total_abs':
+        return FMT.toneProfit(value);
+      case 'win_rate':
+        return FMT.toneWinRate(value);
+      case 'max_drawdown':
+        return FMT.toneDrawdown(value);
+      case 'profit_factor':
+      case 'sharpe_ratio':
+        return FMT.toneRatio(value, 1);
+      default:
+        return '';
+    }
   }
 
   async function _showDetail(runId) {
