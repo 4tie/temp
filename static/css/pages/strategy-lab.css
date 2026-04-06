@@ -146,6 +146,7 @@
   font-family: var(--font-mono);
   font-size: var(--text-sm);
   line-height: 1.5;
+  overflow: hidden;
 }
 
 .sl-source-editor .cm-s-4tie.CodeMirror {
@@ -218,6 +219,38 @@
 
 .sl-source-editor .CodeMirror-merge {
   border: none;
+  background: var(--surface-1);
+}
+
+.sl-source-editor .CodeMirror-merge,
+.sl-source-editor .CodeMirror-merge-pane {
+  height: min(62vh, 640px);
+}
+
+.sl-source-editor .CodeMirror-merge-scrolllock {
+  height: 100%;
+}
+
+.sl-source-editor .CodeMirror-scroll {
+  overflow: auto !important;
+  overscroll-behavior: contain;
+}
+
+.sl-source-editor .CodeMirror-merge-gap {
+  background: color-mix(in srgb, var(--surface-3) 70%, transparent);
+  border-left: 1px solid var(--border-subtle);
+  border-right: 1px solid var(--border-subtle);
+}
+
+.sl-source-editor .CodeMirror-merge-copy,
+.sl-source-editor .CodeMirror-merge-copy-reverse {
+  display: none !important;
+}
+
+.sl-source-editor .CodeMirror pre,
+.sl-source-editor .CodeMirror-line {
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .sl-source-fallback {
@@ -286,6 +319,11 @@
   .sl-source-editor .CodeMirror {
     height: min(56vh, 520px);
   }
+
+  .sl-source-editor .CodeMirror-merge,
+  .sl-source-editor .CodeMirror-merge-pane {
+    height: min(56vh, 520px);
+  }
 }
 
 @media (max-width: 720px) {
@@ -299,6 +337,11 @@
   }
 
   .sl-source-editor .CodeMirror {
+    height: min(50vh, 420px);
+  }
+
+  .sl-source-editor .CodeMirror-merge,
+  .sl-source-editor .CodeMirror-merge-pane {
     height: min(50vh, 420px);
   }
 }

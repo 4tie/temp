@@ -650,7 +650,7 @@ window.ResultExplorer = (() => {
           ${_detailItem('Confidence', _esc(primary.confidence || '—'))}
           ${_detailItem('Why It Matters', _esc(primary.explanation || '—'))}
         </div>
-        <div class="result-explorer__stack" style="margin-top:12px">
+        <div class="result-explorer__stack result-explorer__stack--spaced">
           <article class="result-explorer__insight-card result-explorer__insight-card--${_severityTone(primary.severity)}">
             <div class="result-explorer__insight-title">Metric Evidence</div>
             <div class="result-explorer__insight-body">${_esc(primaryEvidence)}</div>
@@ -678,7 +678,12 @@ window.ResultExplorer = (() => {
         </div>
       </div>
       <div class="result-explorer__section">
-        <div class="section-heading">Quick Parameter Actions</div>
+        <div class="section-heading">Next Moves</div>
+        <div class="result-explorer__meta-chips">
+          <span class="result-explorer__meta-chip">${_esc(`${quickParams.length} quick action${quickParams.length === 1 ? '' : 's'}`)}</span>
+          <span class="result-explorer__meta-chip">${_esc(`${manualGuidance.length} manual item${manualGuidance.length === 1 ? '' : 's'}`)}</span>
+        </div>
+        <div class="result-explorer__subheading">Quick Parameter Actions</div>
         <div class="result-explorer__stack">
           ${quickParams.length ? quickParams.map((item) => `
             <article class="result-explorer__insight-card">
@@ -689,9 +694,7 @@ window.ResultExplorer = (() => {
             </article>
           `).join('') : '<div class="empty-state">No direct quick-parameter changes were identified for this run.</div>'}
         </div>
-      </div>
-      <div class="result-explorer__section">
-        <div class="section-heading">Manual Guidance</div>
+        <div class="result-explorer__subheading result-explorer__subheading--spaced">Manual Guidance</div>
         <div class="result-explorer__stack">
           ${manualGuidance.length ? manualGuidance.map((item) => `
             <article class="result-explorer__insight-card">

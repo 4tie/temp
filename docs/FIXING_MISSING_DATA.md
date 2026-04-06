@@ -1,5 +1,7 @@
 # Fixing Missing/Incomplete Data Issues
 
+Last verified: 2026-04-07 (Asia/Riyadh)
+
 ## Problem
 When running backtests, you may encounter errors like:
 ```
@@ -52,11 +54,11 @@ freqtrade download-data --exchange binance --pairs ETH/USDT --timeframe 5m --tim
 freqtrade download-data --exchange binance --pairs ETH/USDT BTC/USDT SOL/USDT --timeframe 5m --timerange 20250102-20260404 --prepend
 ```
 
-### Option 3: Using the API
+### Option 3: Using the API (current routes)
 
 ```bash
 # Trigger download via API
-curl -X POST http://localhost:8000/api/backtest/download-data \
+curl -X POST http://127.0.0.1:5000/download-data \
   -H "Content-Type: application/json" \
   -d '{
     "pairs": ["ETH/USDT", "BTC/USDT"],
@@ -65,7 +67,7 @@ curl -X POST http://localhost:8000/api/backtest/download-data \
   }'
 
 # Check download status
-curl http://localhost:8000/api/backtest/download-data/{job_id}
+curl http://127.0.0.1:5000/download-data/{job_id}
 ```
 
 ## Understanding the Error
@@ -73,7 +75,7 @@ curl http://localhost:8000/api/backtest/download-data/{job_id}
 ### Incomplete Days
 `ETH/USDT: incomplete days [2026-04-05 (221/288)]` means:
 - **221/288**: Only 221 candles found, but 288 expected for a full day
-- For 5-minute timeframe: 1440 minutes/day ÷ 5 = 288 candles/day
+- For 5-minute timeframe: 1440 minutes/day / 5 = 288 candles/day
 - Missing 67 candles for that day
 
 ### Common Causes
@@ -84,9 +86,9 @@ curl http://localhost:8000/api/backtest/download-data/{job_id}
 
 ## Data Validation
 
-Check data coverage before backtesting:
+Check data coverage before backtesting (current route):
 ```bash
-curl -X POST http://localhost:8000/api/backtest/data-coverage \
+curl -X POST http://127.0.0.1:5000/data-coverage \
   -H "Content-Type: application/json" \
   -d '{
     "pairs": ["ETH/USDT"],
@@ -105,14 +107,14 @@ Response shows:
 ## Troubleshooting
 
 ### System Clock Issue
-If you see dates in 2026 but it's actually 2025:
+If you see dates that do not match your local date:
 ```bash
 # Windows
 date
 time
 
-# Fix if needed (run as Administrator)
-# Set correct date and time
+# Fix if needed (run as Administrator):
+# Set correct date and time/timezone
 ```
 
 ### Data Still Missing After Download
@@ -136,7 +138,7 @@ Default download settings in `app/services/command_builder.py`:
 
 ## File Locations
 
-- **Data files**: `user_data/data/binance/ETH_USDT-5m.json` (or .feather, .json.gz)
+- **Data files**: `user_data/data/binance/ETH_USDT-5m.*` (json/feather/json.gz depending on setup)
 - **Download script**: `scripts/download_missing_data.py`
 - **Config**: `user_data/config.json`
 - **Backtest results**: `user_data/backtest_results/`

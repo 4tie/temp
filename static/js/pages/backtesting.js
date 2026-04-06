@@ -11,6 +11,7 @@ window.BacktestPage = (() => {
   let _resultRunId = null;
   let _loadedResult = null;
   let _strategyRerunStarting = false;
+  let _strategyRerunPhase = 'idle';
   let _quickParamsState = _createQuickParamsState();
   let _intelligenceEventBound = false;
   let _pendingStrategyRerunConsuming = false;
@@ -683,6 +684,8 @@ window.BacktestPage = (() => {
   function _clearLoadedResult() {
     _resultRunId = null;
     _loadedResult = null;
+    _strategyRerunStarting = false;
+    _strategyRerunPhase = 'idle';
     DOM.hide(DOM.$('#bt-results-card', _el));
     _resetQuickParamsState();
     _syncIntelligenceRerunUiState();
@@ -1399,7 +1402,7 @@ window.BacktestPage = (() => {
     }
     if (fromIntelligence) {
       _strategyRerunStarting = true;
-      _syncIntelligenceRerunUiState();
+      _setStrategyRerunPhase('starting');
     }
 
     try {
@@ -1454,7 +1457,7 @@ window.BacktestPage = (() => {
     } finally {
       if (fromIntelligence) {
         _strategyRerunStarting = false;
-        _syncIntelligenceRerunUiState();
+        _setStrategyRerunPhase('idle');
       }
     }
   }
@@ -1952,6 +1955,18 @@ window.BacktestPage = (() => {
     return parts.join(' · ');
   }
 
+  function _strategyRerunStatusLabel(phase) {
+    if (phase === 'preparing') return 'Preparing...';
+    if (phase === 'applying') return 'Applying Changes...';
+    if (phase === 'starting') return 'Starting Rerun...';
+    return 'Improve & Run';
+  }
+
+  function _setStrategyRerunPhase(phase) {
+    _strategyRerunPhase = phase || 'idle';
+    _syncIntelligenceRerunUiState();
+  }
+
   function _renderIntelligenceSummary(results) {
     const intelligence = results.strategy_intelligence || {};
     const diagnosis = intelligence.diagnosis || {};
@@ -1971,10 +1986,14 @@ window.BacktestPage = (() => {
           <div class="bt-intelligence__copy">
             <div class="bt-intelligence__eyebrow">Strategy Intelligence</div>
             <div class="bt-intelligence__title">Diagnosis and next moves</div>
-            <div class="bt-intelligence__subtitle">Review the primary issue, quick-parameter actions, and manual guidance before rerunning.</div>
+            <div class="bt-intelligence__subtitle">Review the primary diagnosis, quick-parameter actions, and manual guidance before rerunning.</div>
+            <div class="bt-intelligence__meta">
+              <span class="bt-intelligence__meta-chip">${_esc(`${quickParams.length} quick action${quickParams.length === 1 ? '' : 's'}`)}</span>
+              <span class="bt-intelligence__meta-chip">${_esc(`${manualGuidance.length} manual item${manualGuidance.length === 1 ? '' : 's'}`)}</span>
+            </div>
           </div>
           <div class="bt-intelligence__actions">
-            <button type="button" class="btn btn--primary btn--sm" data-intelligence-action="rerun">Improve & Run</button>
+            <button type="button" class="btn btn--primary btn--sm" data-intelligence-action="rerun" data-state="idle">Improve & Run</button>
             <button type="button" class="btn btn--secondary btn--sm" data-intelligence-action="explore">Open Full Explorer</button>
           </div>
         </div>
@@ -2016,7 +2035,7 @@ window.BacktestPage = (() => {
                   ${suggestion.evidence ? `<div class="bt-intelligence__item-evidence">${_esc(suggestion.evidence)}</div>` : ''}
                 </div>
               `).join('')}
-              ${manualGuidance.length ? `<div class="bt-intelligence__item-title" style="margin-top:8px">Manual Guidance</div>` : ''}
+              ${manualGuidance.length ? `<div class="bt-intelligence__item-title bt-intelligence__item-title--subsection">Manual Guidance</div>` : ''}
               ${manualGuidance.slice(0, 3).map((suggestion) => `
                 <div class="bt-intelligence__item">
                   <div class="bt-intelligence__item-title">${_esc(suggestion.title || 'Suggestion')}</div>
@@ -2080,35 +2099,48 @@ window.BacktestPage = (() => {
       Toast.warning('No strategy intelligence is available for this run yet.');
       return;
     }
-    const runId = _loadedResult.run_id || _resultRunId || null;
-    await _ensureQuickParamsForRun(_loadedResult);
-    if (runId && _quickParamsState.runId === runId && _quickParamsState.loading) {
-      await _waitForQuickParamsReady(runId);
+    _setStrategyRerunPhase('preparing');
+    try {
+      const runId = _loadedResult.run_id || _resultRunId || null;
+      await _ensureQuickParamsForRun(_loadedResult);
+      if (runId && _quickParamsState.runId === runId && _quickParamsState.loading) {
+        await _waitForQuickParamsReady(runId);
+      }
+
+      _setStrategyRerunPhase('applying');
+      const rerunPlan = intelligence.rerun_plan || {};
+      const autoChanges = Array.isArray(rerunPlan.auto_param_changes) ? rerunPlan.auto_param_changes : [];
+      let appliedChanges = 0;
+      autoChanges.forEach((change) => {
+        const param = _findQuickParam(change.name);
+        if (!param) return;
+        _quickParamsState.currentValues[change.name] = _coerceQuickParamValue(param, change.value);
+        appliedChanges += 1;
+      });
+      if (appliedChanges > 0) _renderQuickParams();
+
+      const improvementItems = (Array.isArray(intelligence.suggestions) ? intelligence.suggestions : [])
+        .slice(0, 4)
+        .map((item) => item.title)
+        .filter(Boolean);
+
+      const manualCount = Math.max(0, improvementItems.length - appliedChanges);
+      const summaryParts = [];
+      if (appliedChanges > 0) summaryParts.push(`applied ${appliedChanges} quick change${appliedChanges === 1 ? '' : 's'}`);
+      if (manualCount > 0) summaryParts.push(`recorded ${manualCount} manual item${manualCount === 1 ? '' : 's'}`);
+      if (summaryParts.length) Toast.info(`Strategy intelligence ${summaryParts.join(' and ')}.`);
+
+      _setStrategyRerunPhase('starting');
+      await _runQuickParamsBacktest({
+        improvementSource: 'strategy_intelligence',
+        improvementItems,
+        toastMessage: appliedChanges > 0
+          ? `Applied ${appliedChanges} suggested change${appliedChanges === 1 ? '' : 's'} and started a rerun.`
+          : 'Started a rerun from the diagnosed run context. Manual guidance was recorded, and no strategy code was changed.',
+      });
+    } finally {
+      if (!_strategyRerunStarting) _setStrategyRerunPhase('idle');
     }
-
-    const rerunPlan = intelligence.rerun_plan || {};
-    const autoChanges = Array.isArray(rerunPlan.auto_param_changes) ? rerunPlan.auto_param_changes : [];
-    let appliedChanges = 0;
-    autoChanges.forEach((change) => {
-      const param = _findQuickParam(change.name);
-      if (!param) return;
-      _quickParamsState.currentValues[change.name] = _coerceQuickParamValue(param, change.value);
-      appliedChanges += 1;
-    });
-    if (appliedChanges > 0) _renderQuickParams();
-
-    const improvementItems = (Array.isArray(intelligence.suggestions) ? intelligence.suggestions : [])
-      .slice(0, 4)
-      .map((item) => item.title)
-      .filter(Boolean);
-
-    await _runQuickParamsBacktest({
-      improvementSource: 'strategy_intelligence',
-      improvementItems,
-      toastMessage: appliedChanges > 0
-        ? `Applied ${appliedChanges} suggested change${appliedChanges === 1 ? '' : 's'} and started a rerun.`
-        : 'Started a rerun from the diagnosed run context. Manual guidance was recorded, and no strategy code was changed.',
-    });
   }
 
   function _renderResults(el, results) {
@@ -2194,6 +2226,7 @@ window.BacktestPage = (() => {
         ` : ''}
         ${_renderIntelligenceSummary(results)}
       </div>`;
+    _syncIntelligenceRerunUiState();
   }
 
   function _onStop() {
@@ -2219,7 +2252,17 @@ window.BacktestPage = (() => {
     if (!resultCard) return;
     const rerunBtn = resultCard.querySelector('[data-intelligence-action="rerun"]');
     if (!rerunBtn) return;
-    rerunBtn.disabled = Boolean(_activeRunId) || Boolean(_strategyRerunStarting);
+    const blockedByActiveRun = Boolean(_activeRunId);
+    const phase = blockedByActiveRun ? 'blocked' : (_strategyRerunPhase || 'idle');
+    rerunBtn.disabled = blockedByActiveRun || phase !== 'idle' || Boolean(_strategyRerunStarting);
+    rerunBtn.dataset.state = phase;
+    rerunBtn.setAttribute('aria-busy', phase === 'idle' || phase === 'blocked' ? 'false' : 'true');
+    rerunBtn.textContent = _strategyRerunStatusLabel(phase);
+    if (blockedByActiveRun) {
+      rerunBtn.title = 'A backtest is already running. Wait for it to finish before using Improve & Run.';
+    } else {
+      rerunBtn.title = phase === 'idle' ? '' : 'Preparing strategy-intelligence rerun from this result.';
+    }
   }
 
   function _stopPoll() {

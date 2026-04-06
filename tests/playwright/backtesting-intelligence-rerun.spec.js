@@ -285,14 +285,33 @@ test.describe('Backtesting Strategy Intelligence rerun', () => {
     expect(body.strategy_params.trailing_stop).toBe(true);
   });
 
+  test('Strategy Intelligence panel shows diagnosis and next-move summary counts', async ({ page }) => {
+    await installBacktestingMocks(page);
+
+    await page.goto('/#backtesting');
+    const panel = page.locator('.bt-intelligence');
+    await expect(panel).toBeVisible();
+    await expect(panel.locator('.bt-intelligence__panel-title', { hasText: 'Primary Diagnosis' })).toBeVisible();
+    await expect(panel.locator('.bt-intelligence__panel-title', { hasText: 'Detected Issues' })).toBeVisible();
+    await expect(panel.locator('.bt-intelligence__panel-title', { hasText: 'Next Moves' })).toBeVisible();
+
+    const chips = panel.locator('.bt-intelligence__meta-chip');
+    await expect(chips).toHaveCount(2);
+    await expect(chips.nth(0)).toHaveText('2 quick actions');
+    await expect(chips.nth(1)).toHaveText('1 manual item');
+  });
+
   test('Improve & Run still applies auto-changes when quick params are still loading', async ({ page }) => {
     const mocks = await installBacktestingMocks(page, { strategyParamsDelayMs: 1250 });
 
     await page.goto('/#backtesting');
-    await page.waitForSelector('[data-intelligence-action="rerun"]');
+    const rerunBtn = page.locator('[data-intelligence-action="rerun"]');
+    await rerunBtn.waitFor();
 
     // Click before strategy params finish loading to validate race-safety.
-    await page.click('[data-intelligence-action="rerun"]');
+    await rerunBtn.click();
+    await expect(rerunBtn).toHaveAttribute('data-state', 'preparing');
+    await expect(rerunBtn).toHaveText('Preparing...');
 
     await expect.poll(() => mocks.getStartBacktestBodies().length).toBe(1);
     const body = mocks.getStartBacktestBodies()[0];

@@ -283,10 +283,12 @@ window.StrategyLabPage = (() => {
         lineNumbers: true,
         mode: 'python',
         theme: '4tie',
+        lineWrapping: true,
         matchBrackets: true,
         highlightDifferences: true,
-        connect: 'align',
+        connect: null,
         collapseIdentical: false,
+        revertButtons: false,
       });
       _mergeView.editor().on('change', _onEditorChanged);
       _scheduleParamHighlights();
@@ -298,7 +300,7 @@ window.StrategyLabPage = (() => {
       mode: 'python',
       theme: '4tie',
       lineNumbers: true,
-      lineWrapping: false,
+      lineWrapping: true,
       matchBrackets: true,
       indentUnit: 4,
       tabSize: 4,
