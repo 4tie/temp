@@ -16,6 +16,7 @@ from pathlib import Path
 
 from app.core.config import AI_EVOLUTION_DIR, STRATEGIES_DIR
 from app.core.json_io import read_json
+from app.services.strategies import read_strategy_sidecar_payload
 
 _EVO_RE = re.compile(r"^(.+)_evo_g(\d+)$")
 _SAFE_RE = re.compile(r"^[A-Za-z0-9_\-]+$")
@@ -52,15 +53,7 @@ def _atomic_copy(src: Path, dst: Path) -> None:
 
 
 def _effective_params_payload(strategy_name: str) -> dict:
-    src_json = STRATEGIES_DIR / f"{strategy_name}.json"
-    payload: dict = {}
-    if src_json.exists():
-        try:
-            raw = json.loads(src_json.read_text(encoding="utf-8"))
-            if isinstance(raw, dict):
-                payload = dict(raw)
-        except Exception:
-            payload = {}
+    payload: dict = read_strategy_sidecar_payload(strategy_name, strategies_dir=STRATEGIES_DIR)
     payload["strategy_name"] = strategy_name
     payload["params"] = {}
     return payload

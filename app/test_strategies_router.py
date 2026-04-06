@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import tempfile
 import unittest
+import json
 from pathlib import Path
 from unittest.mock import patch
 
@@ -68,6 +69,55 @@ class StrategiesRouterTests(unittest.TestCase):
 
             self.assertEqual(response.status_code, 404)
             self.assertIn("Strategy source not found", response.json().get("detail", ""))
+
+    def test_get_params_uses_editable_context_contract(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            strategy_dir = Path(tmpdir)
+            (strategy_dir / "MultiMa.py").write_text(
+                "from freqtrade.strategy import IntParameter, IStrategy\n"
+                "class MultiMa(IStrategy):\n"
+                "    buy_length = IntParameter(1, 10, default=5, space='buy')\n",
+                encoding="utf-8",
+            )
+            (strategy_dir / "MultiMa.json").write_text(
+                json.dumps({"strategy_name": "MultiMa", "params": {"buy": {"buy_length": 8}}}, indent=2),
+                encoding="utf-8",
+            )
+
+            with patch("app.routers.strategies.STRATEGIES_DIR", strategy_dir):
+                response = self.client.get("/strategies/MultiMa/params")
+
+            self.assertEqual(response.status_code, 200)
+            payload = response.json()
+            self.assertEqual(payload["strategy"], "MultiMa")
+            self.assertEqual(payload["current_values"]["buy_length"], 8)
+            self.assertTrue(payload["validation"]["source_syntax_ok"])
+            params = {param["name"]: param for param in payload["parameters"]}
+            self.assertEqual(params["buy_length"]["value"], 8)
+
+    def test_save_params_writes_nested_sidecar_using_metadata_spaces(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            strategy_dir = Path(tmpdir)
+            (strategy_dir / "MultiMa.py").write_text(
+                "from freqtrade.strategy import BooleanParameter, IntParameter, IStrategy\n"
+                "class MultiMa(IStrategy):\n"
+                "    buy_length = IntParameter(1, 10, default=5, space='buy')\n"
+                "    sell_enabled = BooleanParameter(default=True, space='sell')\n",
+                encoding="utf-8",
+            )
+
+            with patch("app.routers.strategies.STRATEGIES_DIR", strategy_dir):
+                response = self.client.post(
+                    "/strategies/MultiMa/params",
+                    json={"parameters": {"buy_length": 9, "sell_enabled": False}},
+                )
+
+            self.assertEqual(response.status_code, 200)
+            payload = response.json()
+            self.assertTrue(payload["ok"])
+            sidecar = json.loads((strategy_dir / "MultiMa.json").read_text(encoding="utf-8"))
+            self.assertEqual(sidecar["params"]["buy"]["buy_length"], 9)
+            self.assertEqual(sidecar["params"]["sell"]["sell_enabled"], False)
 
 
 if __name__ == "__main__":

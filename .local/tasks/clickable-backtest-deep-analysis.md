@@ -25,7 +25,7 @@ Every backtest run row across the dashboard (and results page) should be clickab
 - Any hyperopt run detail (backtest runs only)
 
 ## Tasks
-1. **Backend: ensure full run data API** — Verify the `GET /api/runs/{run_id}` endpoint returns all needed fields (trades list with MAE/MFE, equity_curve daily data, per_pair extended stats, exit reasons). Extend `result_parser.py` and the route to include gap analysis data (a list of idle day ranges) and any missing streak/risk metrics computed server-side.
+1. **Backend: ensure full run data API** — Verify the `GET /api/runs/{run_id}` endpoint returns all needed fields (trades list with MAE/MFE, equity_curve daily data, per_pair extended stats, exit reasons). Extend the canonical results stack under `app/services/results/` (`result_service.py`, normalizers/builders) and the route to include gap analysis data (a list of idle day ranges) and any missing streak/risk metrics computed server-side. The legacy parser shim is not the canonical entrypoint now.
 
 2. **Frontend: analysis page scaffold** — Create a new page module (`static/js/pages/analysis.js`) and its HTML template (`templates/pages/analysis/index.html`). Register it in the router so navigating to `/analysis/{run_id}` loads it. The page fetches the run via API and renders all 8 phases in order with a sticky tab bar at the top.
 
@@ -46,6 +46,8 @@ Every backtest run row across the dashboard (and results page) should be clickab
 - `static/js/pages/results.js`
 - `templates/pages/dashboard/index.html`
 - `templates/pages/results/index.html`
-- `app/services/result_parser.py`
+- `app/services/results/result_service.py`
+- `app/services/results/trade_normalizer.py`
+- `app/services/results/risk_normalizer.py`
 - `app/routers/backtest.py`
 - `templates/layouts/base.html`

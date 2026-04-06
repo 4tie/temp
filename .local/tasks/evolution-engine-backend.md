@@ -169,14 +169,23 @@ Loop:
 15. Repeat for max_generations
 ```
 
-Progress events (streamed via SSE):
+Progress events (streamed via SSE) now use the shared envelope from `app/ai/events.py`:
 ```json
-{"step": "analyzing", "generation": 1, "message": "Running deep analysis..."}
-{"step": "mutating", "generation": 1, "message": "AI editing strategy code..."}
-{"step": "backtesting", "generation": 1, "message": "Running backtest on MultiMa_evo_g1..."}
-{"step": "comparing", "generation": 1, "fitness_before": 42.1, "fitness_after": 57.8, "delta": "+15.7", "accepted": true}
-{"step": "done", "generation": 3, "best_version": "MultiMa_evo_g2", "best_fitness": 61.3}
+{"event_type": "analysis_started", "status": "running", "stream": "evolution", "loop_id": "abc123", "cycle_index": 1, "payload": {"generation": 1, "message": "Running deep analysis..."}, "timestamp": "2026-04-06T12:00:00+00:00"}
+{"event_type": "mutation_started", "status": "running", "stream": "evolution", "loop_id": "abc123", "cycle_index": 1, "payload": {"generation": 1, "message": "AI editing strategy code..."}, "timestamp": "2026-04-06T12:00:02+00:00"}
+{"event_type": "backtest_started", "status": "running", "stream": "evolution", "loop_id": "abc123", "cycle_index": 1, "payload": {"generation": 1, "message": "Running backtest on MultiMa_evo_g1..."}, "timestamp": "2026-04-06T12:00:10+00:00"}
+{"event_type": "comparison_done", "status": "ok", "stream": "evolution", "loop_id": "abc123", "cycle_index": 1, "payload": {"generation": 1, "fitness_before": 42.1, "fitness_after": 57.8, "delta": "+15.7", "accepted": true}, "timestamp": "2026-04-06T12:01:12+00:00"}
+{"event_type": "loop_completed", "status": "completed", "stream": "evolution", "loop_id": "abc123", "cycle_index": 3, "payload": {"generation": 3, "best_version": "MultiMa_evo_g2", "best_fitness": 61.3}, "timestamp": "2026-04-06T12:05:00+00:00"}
 ```
+
+Canonical envelope fields:
+- `event_type`
+- `status`
+- `payload`
+- `timestamp`
+- `loop_id`
+- `cycle_index`
+- `stream`
 
 Evolution run saved to `user_data/ai_evolution/{loop_id}.json`.
 

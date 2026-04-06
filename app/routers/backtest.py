@@ -21,6 +21,7 @@ from app.services.storage import (
     load_run_meta, load_run_results, list_runs, delete_run,
     save_last_config, load_last_config, save_run_logs, load_run_raw_payload, get_run_dir,
 )
+from app.services.strategies import save_strategy_current_values
 from app.services.runs.base_run_service import run_logs_path
 from app.services.ohlcv_loader import load_ohlcv
 from app.services.indicator_calculator import calculate_indicators
@@ -59,18 +60,6 @@ def _is_default_strategy_path(strategy_path: Optional[str]) -> bool:
         return SysPath(strategy_path).resolve() == STRATEGIES_DIR.resolve()
     except Exception:
         return False
-
-
-def _write_strategy_sidecar(strategy: str, params: dict) -> None:
-    space_map: dict[str, dict] = {}
-    for key, value in params.items():
-        if not isinstance(key, str):
-            continue
-        space = "sell" if key.startswith("sell_") else "buy"
-        space_map.setdefault(space, {})[key] = value
-    target = STRATEGIES_DIR / f"{strategy}.json"
-    target.write_text(json.dumps({"strategy_name": strategy, "params": space_map}, indent=2), encoding="utf-8")
-
 
 @router.get("/config")
 async def get_config():
@@ -255,7 +244,11 @@ async def apply_run_config(run_id: str):
     if isinstance(strategy_params, dict) and strategy_params:
         if strategy and _is_default_strategy_path(meta.get("strategy_path")):
             try:
-                _write_strategy_sidecar(strategy, strategy_params)
+                save_strategy_current_values(
+                    strategy,
+                    strategy_params,
+                    strategies_dir=STRATEGIES_DIR,
+                )
                 applied.append("strategy_params")
             except Exception as exc:
                 warnings.append(f"Failed to write {strategy}.json sidecar: {exc}")

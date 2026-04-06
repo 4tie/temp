@@ -10,6 +10,7 @@ from typing import Any
 from app.ai.goals import goal_label, normalize_goal_id
 from app.core.config import FREQTRADE_CONFIG_FILE, LAST_CONFIG_FILE, STRATEGIES_DIR
 from app.services.results.metric_registry import AI_CONTEXT_METRICS, build_metric_snapshot, get_metric_def
+from app.services.strategies import load_strategy_sidecar_record
 from app.services.storage import list_runs, load_run_meta, load_run_results
 
 _SECRET_KEYS = {
@@ -95,7 +96,10 @@ def latest_completed_run_id() -> str | None:
 def _load_strategy_sidecar(strategy_name: str | None) -> dict[str, Any]:
     if not strategy_name:
         return {}
-    return _read_json(STRATEGIES_DIR / f"{strategy_name}.json")
+    record = load_strategy_sidecar_record(strategy_name, strategies_dir=STRATEGIES_DIR)
+    if not record.get("exists"):
+        return {}
+    return dict(record.get("normalized_payload") or {})
 
 
 def _load_relevant_settings() -> dict[str, Any]:

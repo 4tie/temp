@@ -2,32 +2,29 @@ from __future__ import annotations
 
 import ast
 import difflib
-import os
 import re
-import tempfile
-from pathlib import Path
 from typing import Any
 
 from fastapi import HTTPException
 
 from app.ai.memory.threads import load_thread
 from app.core.config import STRATEGIES_DIR
+from app.services.strategies import (
+    atomic_write_text,
+    resolve_strategy_sidecar_path,
+    resolve_strategy_source_path,
+    validate_strategy_name as validate_strategy_identifier,
+)
 
-_SAFE_STRATEGY_RE = re.compile(r"^[A-Za-z0-9_\-]+$")
 _CODE_FENCE_RE = re.compile(r"```([A-Za-z0-9_\-]*)\n?([\s\S]*?)```")
 _PY_FILE_RE = re.compile(r"\b([A-Za-z0-9_\-]+\.py)\b")
 
 
 def validate_strategy_name(name: str) -> str:
-    value = str(name or "").strip()
-    if value.lower().endswith(".py"):
-        value = value[:-3]
-    if not value or not _SAFE_STRATEGY_RE.match(value):
-        raise HTTPException(status_code=400, detail="Invalid strategy name")
-    resolved = (STRATEGIES_DIR / f"{value}.py").resolve()
-    if not str(resolved).startswith(str(STRATEGIES_DIR.resolve())):
-        raise HTTPException(status_code=400, detail="Invalid strategy name")
-    return value
+    try:
+        return validate_strategy_identifier(name, strategies_dir=STRATEGIES_DIR)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 def extract_code_blocks_with_hints(text: str) -> list[dict[str, Any]]:
@@ -49,21 +46,6 @@ def extract_code_blocks_with_hints(text: str) -> list[dict[str, Any]]:
             }
         )
     return blocks
-
-
-def atomic_write_text(path: Path, content: str) -> int:
-    encoded = content.encode("utf-8")
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp_path = tempfile.mkstemp(prefix=f"{path.name}.", suffix=".tmp", dir=str(path.parent))
-    try:
-        with os.fdopen(fd, "wb") as handle:
-            handle.write(encoded)
-        os.replace(tmp_path, path)
-    finally:
-        if os.path.exists(tmp_path):
-            os.unlink(tmp_path)
-    return len(encoded)
-
 
 def apply_code_impl(
     *,
@@ -115,10 +97,10 @@ def apply_code_impl(
             detail=f"Python syntax error at line {line}, column {col}: {exc.msg}",
         )
 
-    py_path = STRATEGIES_DIR / f"{strategy_name}.py"
+    py_path = resolve_strategy_source_path(strategy_name, strategies_dir=STRATEGIES_DIR)
     if not py_path.exists():
         raise HTTPException(status_code=404, detail=f"Strategy source not found: {strategy_name}.py")
-    json_path = STRATEGIES_DIR / f"{strategy_name}.json"
+    json_path = resolve_strategy_sidecar_path(strategy_name, strategies_dir=STRATEGIES_DIR)
 
     old_py = py_path.read_text(encoding="utf-8")
     old_json = json_path.read_text(encoding="utf-8") if json_path.exists() else None

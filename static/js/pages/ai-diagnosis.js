@@ -1273,7 +1273,7 @@ window.AIDiagPage = (() => {
   }
 
   function _handleLoopEvent(evt) {
-    const step = String(evt.step || '');
+    const step = String(evt.event_type || evt.step || '');
     if (step === 'loop_started') {
       const planned = (evt.planned_steps || []).map((s, i) => `${i + 1}. ${s}`).join('\n');
       _appendMessage('assistant', `Loop started${_durationSuffix(evt)}.\n\nPlanned workflow:\n${planned || '1. apply\n2. validate\n3. rerun\n4. compare\n5. test\n6. report'}`, { auto_loop: true });
@@ -1285,7 +1285,7 @@ window.AIDiagPage = (() => {
       _appendMessage('assistant', `Applied update to **${applyResult.strategy || evt.strategy || 'strategy'}**${_durationSuffix(evt)}.\n\n${_renderLoopFileChanges(evt.file_changes || applyResult.file_changes || {})}`, { auto_loop: true });
       return;
     }
-    if (step === 'ai_validate_done') {
+    if (step === 'validate_done' || step === 'ai_validate_done') {
       _appendMessage('assistant', `Validation complete${_durationSuffix(evt)}:\n\n${evt.validation_text || '_No validation text._'}`, { auto_loop: true });
       if (_state.loopEnabled && _state.loopId === evt.loop_id) {
         _state.pendingRerunPrompt = true;
@@ -1350,6 +1350,10 @@ window.AIDiagPage = (() => {
       _state.loopId = null;
       _closeLoopStream();
       _updateLoopButton();
+      return;
+    }
+    if (step === 'loop_recovered') {
+      _appendMessage('assistant', `Loop recovered:\n\n${evt.message || 'Recovered after restart.'}`, { auto_loop: true });
     }
   }
 
@@ -1682,26 +1686,30 @@ window.AIDiagPage = (() => {
   }
 
   function _handleEvoEvent(evt, maxGen) {
-    const step = evt.step;
+    const step = String(evt.event_type || evt.step || '');
 
-    if (step === 'comparing') {
+    if (step === 'comparison_done' || step === 'comparing') {
       _evo.generations.push(evt);
       const gen = evt.generation || _evo.generations.length;
       _updateEvoProgress(gen, maxGen);
       if (_evo.activeTab === 'running') _renderGenerationCard(evt);
     }
 
-    if (step === 'analyzing' || step === 'mutating' || step === 'backtesting') {
+    if (
+      step === 'analysis_started' || step === 'analyzing' ||
+      step === 'mutation_started' || step === 'mutating' ||
+      step === 'backtest_started' || step === 'backtesting'
+    ) {
       _updateActiveGenStep(evt);
     }
 
-    if (step === 'done' || evt.done) {
+    if (step === 'loop_completed' || step === 'done' || evt.done) {
       if (_evo.activeTab === 'running') {
         setTimeout(() => _evoSwitchTab('results'), 1200);
       }
     }
 
-    if (step === 'error') {
+    if (step === 'loop_failed' || step === 'error' || step === 'mutation_failed' || step === 'backtest_failed') {
       _showEvoToast(`Evolution error: ${evt.message}`, true);
     }
   }
@@ -1753,8 +1761,15 @@ window.AIDiagPage = (() => {
       container.appendChild(card);
     }
 
-    const stepMap = { analyzing: 'analyzing', mutating: 'mutating', backtesting: 'backtesting' };
-    const stepKey = stepMap[evt.step];
+    const stepMap = {
+      analyzing: 'analyzing',
+      analysis_started: 'analyzing',
+      mutating: 'mutating',
+      mutation_started: 'mutating',
+      backtesting: 'backtesting',
+      backtest_started: 'backtesting',
+    };
+    const stepKey = stepMap[evt.event_type || evt.step];
     if (stepKey) {
       // Mark previous steps done
       const order = ['analyzing', 'mutating', 'backtesting', 'comparing'];

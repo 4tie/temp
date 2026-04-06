@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-import json
 from typing import Any
 
+from app.ai.events import sse_event_line as _sse_event_line
 
 def sse_line(data: dict[str, Any]) -> str:
-    return f"data: {json.dumps(data)}\\n\\n"
+    return _sse_event_line(data)

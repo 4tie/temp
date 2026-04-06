@@ -84,7 +84,7 @@ def run_validation_tests(strategy_name: str) -> list[dict[str, Any]]:
                 "py_compile",
                 str(STRATEGIES_DIR / f"{strategy_name}.py"),
                 "app/routers/ai_chat/__init__.py",
-                "app/services/strategy_scanner.py",
+                "app/services/strategies/strategy_snapshot_service.py",
             ],
         ),
         ("AI chat router tests", [py, "-m", "unittest", "-q", "app.test_ai_chat_router"]),

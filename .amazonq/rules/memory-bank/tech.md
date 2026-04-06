@@ -35,9 +35,11 @@ pandas>=2.0.0
 ```bash
 python run.py
 ```
-- Starts uvicorn on port `5000` (default) or `$BACKTEST_API_PORT`
+- Starts uvicorn with host/port from `app/core/config.py`
+- Default host: `127.0.0.1` or `$BACKTEST_API_HOST`
+- Default port: `5000` or `$BACKTEST_API_PORT`
 - Hot-reload watches: `app/`, `templates/`, `static/`
-- Host: `0.0.0.0` (accessible externally)
+- `run.py` does not define its own port locally; it imports `HOST` and `PORT` from config
 
 ### No Build Step
 - Frontend is vanilla JS — no bundler, no transpilation
@@ -47,11 +49,13 @@ python run.py
 ## Environment Variables
 | Variable | Default | Purpose |
 |---|---|---|
+| `BACKTEST_API_HOST` | `127.0.0.1` | Server host |
 | `BACKTEST_API_PORT` | `5000` | Server port |
 | `USER_DATA_DIR` | `./user_data` | FreqTrade data directory |
 | `OPENROUTER_API_KEY` | — | Required for OpenRouter AI |
 | `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama server URL |
 | `FREQTRADE_EXCHANGE` | `binance` | Default exchange |
+| `FREQTRADE_PYTHON` | current Python executable | Python used for FreqTrade subprocesses |
 
 ## Data Formats
 - **OHLCV data**: FreqTrade JSON format (`[timestamp, open, high, low, close, volume]`) or `.feather`
@@ -77,7 +81,8 @@ python run.py
 - CSS custom properties (variables) for theming
 
 ## File I/O Conventions
-- All JSON reads use `read_json(path, default)` from `app/core/storage.py` — never raises
-- All JSON writes use `write_json(path, data)` — auto-creates parent dirs
+- Low-level JSON reads/writes live in `app/core/json_io.py`
+- `app/core/json_store.py` is a compatibility shim for legacy imports; new code should import `read_json()` / `write_json()` / `ensure_dir()` from `app.core.json_io`
 - Config writes use atomic pattern: `tempfile.mkstemp` → write → `os.replace`
 - Directory creation: `path.mkdir(parents=True, exist_ok=True)` at startup in `config.py`
+- Run/report filenames (`meta.json`, `parsed_results.json`, `logs.txt`) are defined centrally in `app/core/config.py`

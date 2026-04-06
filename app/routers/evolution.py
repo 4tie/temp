@@ -4,7 +4,6 @@ Evolution API router — 7 endpoints for the strategy evolution engine.
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 import uuid
 
@@ -13,6 +12,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from typing import Optional
 
+from app.ai.events import LoopEventStatus, LoopEventType, serialize_evolution_event, sse_event_line
 from app.ai.goals import normalize_goal_id
 from app.services.storage import load_run_meta
 from app.ai.evolution.evolver import (
@@ -37,12 +37,6 @@ class EvolutionStartRequest(BaseModel):
     max_generations: int = Field(default=3, ge=1, le=10)
     provider: str = "openrouter"
     model: Optional[str] = None
-
-
-# ── Helpers ───────────────────────────────────────────────────────────────────
-
-def _sse(data: dict) -> str:
-    return f"data: {json.dumps(data)}\n\n"
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
@@ -78,14 +72,22 @@ async def evolution_stream(loop_id: str):
         while elapsed < timeout:
             events = drain_events(loop_id)
             for evt in events:
-                yield _sse(evt)
+                yield sse_event_line(evt)
                 if evt.get("done"):
                     return
 
             await asyncio.sleep(poll_interval)
             elapsed += poll_interval
 
-        yield _sse({"step": "error", "message": "Stream timed out.", "done": True})
+        yield sse_event_line(
+            serialize_evolution_event(
+                loop_id,
+                LoopEventType.LOOP_FAILED,
+                status=LoopEventStatus.FAILED,
+                message="Stream timed out.",
+                done=True,
+            )
+        )
 
     return StreamingResponse(
         event_generator(),

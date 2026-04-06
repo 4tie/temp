@@ -6,6 +6,7 @@ from typing import AsyncGenerator
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 
+from app.ai.events import LoopEventStatus, LoopEventType, serialize_ai_loop_event
 from app.schemas.ai_chat import LoopStartRequest, LoopConfirmRequest
 from app.services.ai_chat.loop_service import (
     confirm_rerun,
@@ -48,7 +49,15 @@ async def loop_stream(loop_id: str):
                     return
             await asyncio.sleep(0.4)
             elapsed += 0.4
-        yield sse_line({"loop_id": loop_id, "step": "loop_failed", "status": "failed", "message": "stream timeout", "done": True})
+        yield sse_line(
+            serialize_ai_loop_event(
+                loop_id,
+                LoopEventType.LOOP_FAILED,
+                status=LoopEventStatus.FAILED,
+                message="stream timeout",
+                done=True,
+            )
+        )
 
     return StreamingResponse(
         event_stream(),

@@ -1,9 +1,12 @@
 # Task: Reorganize app/ai/ into clean subdirectory structure
 
 ## Goal
-Move all flat `app/ai/*.py` files into their logical subdirectories and add a `memory/conversations.py` module for conversation management. Update every import to match the new layout. No functional changes — this is a structural refactor.
+Move the old flat `app/ai/*.py` layout into logical subdirectories and keep imports aligned with the package split. This refactor has since been extended: the mounted AI router is also split into `app/routers/ai_chat/`, and router business logic lives in `app/services/ai_chat/`.
 
-## Current flat layout (before)
+## Status
+Completed. The structure below is the current canonical target. Do not use the older monolithic router or pre-split storage references from pre-refactor notes.
+
+## Historical flat layout (migration context only)
 ```
 app/ai/
   __init__.py
@@ -26,6 +29,8 @@ app/ai/
 ```
 app/ai/
   __init__.py                      ← updated re-exports
+  events.py                        ← canonical AI loop/evolution event schema
+  context_builder.py               ← shared run/strategy context assembly
   models/
     __init__.py                    ← re-exports: chat_complete, stream_chat, fetch_free_models, get_model_for_role
     openrouter_client.py           ← moved from app/ai/openrouter_client.py
@@ -47,9 +52,27 @@ app/ai/
     deep_analysis.py               ← moved from app/ai/deep_analysis.py
   memory/
     __init__.py                    ← re-exports: load_conversation, save_conversation, list_conversations, delete_conversation
-    conversations.py               ← NEW: conversation CRUD extracted from app/routers/ai_chat.py
+    conversations.py               ← canonical conversation CRUD
+    threads.py                     ← canonical thread CRUD
   agents/
     __init__.py                    ← placeholder, empty for now
+
+app/routers/ai_chat/
+  __init__.py                      ← mounted /ai router package
+  chat_stream.py                   ← chat + analyze + pipeline logs endpoints
+  providers.py                     ← provider/model availability endpoints
+  threads.py                       ← threads/conversations endpoints
+  apply_code.py                    ← apply-code endpoint
+  loop_sessions.py                 ← loop lifecycle + SSE stream endpoints
+  reports.py                       ← loop report endpoints
+
+app/services/ai_chat/
+  provider_service.py
+  thread_service.py
+  apply_code_service.py
+  loop_service.py
+  loop_report_service.py
+  stream_event_service.py
 ```
 
 ## Step-by-step changes
@@ -68,7 +91,7 @@ app/ai/
 ### 3. app/ai/pipelines/
 - Create `app/ai/pipelines/__init__.py` with re-exports
 - Move `ai_orchestrator.py` → `app/ai/pipelines/orchestrator.py`; update its imports:
-  - `from ..core.storage import write_json, _ensure` → stays (parents[2] is still app/core/storage)
+  - `from ...core.json_io import write_json, ensure_dir`
   - `from .openrouter_client import chat_complete, stream_chat` → `from ..models.provider_dispatch import chat_complete, stream_chat`
   - `from .ai_registry import fetch_free_models, get_model_for_role` → `from ..models.registry import fetch_free_models, get_model_for_role`
   - `from .ai_classifier import classify, Classification, PipelineType, ComplexityLevel` → `from .classifier import classify, Classification, PipelineType, ComplexityLevel`
@@ -83,7 +106,8 @@ app/ai/
 
 ### 5. app/ai/memory/
 - Create `app/ai/memory/__init__.py` with re-exports
-- Create `app/ai/memory/conversations.py` extracting conversation logic currently inlined in `app/routers/ai_chat.py`:
+- Create `app/ai/memory/conversations.py` for canonical conversation CRUD and `app/ai/memory/threads.py` for canonical thread CRUD. HTTP aliases now live in `app/routers/ai_chat/threads.py`.
+- The persistence layer owns:
   - `_SAFE_CONV_ID_RE`
   - `_conv_path(conv_id)`
   - `_load_conversation(conv_id) -> dict | None`
@@ -104,16 +128,23 @@ from .pipelines.classifier import classify
 from .tools.deep_analysis import analyze
 ```
 
-### 8. app/routers/ai_chat.py (imports update)
-Update all imports to use new paths:
-- `from app.ai.pipelines.orchestrator import run, stream_run`
-- `from app.ai.pipelines.classifier import classify`
-- `from app.ai.models.registry import fetch_free_models`
-- `from app.ai.models.openrouter_client import list_models as or_list_models`
-- `from app.ai.models.ollama_client import is_available, list_models as oll_list_models`
-- `from app.ai.tools.deep_analysis import analyze`
-- `from app.ai.memory.conversations import load_conversation, save_conversation, list_conversations, delete_conversation, new_conversation_id`
-- Remove all the inline conversation helpers from `ai_chat.py` (moved to memory/conversations.py)
+### 8. app/routers/ai_chat/ (router package split)
+Use the router package instead of a single flat AI router file:
+- `chat_stream.py` for `/ai/chat`, `/ai/analyze/{run_id}`, `/ai/pipeline-logs`
+- `providers.py` for `/ai/providers`
+- `threads.py` for `/ai/threads/*` and `/ai/conversations/*`
+- `apply_code.py` for `/ai/chat/apply-code`
+- `loop_sessions.py` for `/ai/loop/*`
+- `reports.py` for `/ai/loop/{loop_id}/report*`
+
+Imports point to:
+- `app.ai.pipelines.orchestrator`
+- `app.ai.models.registry`
+- `app.ai.models.openrouter_client`
+- `app.ai.models.ollama_client`
+- `app.ai.tools.deep_analysis`
+- `app.ai.memory.*`
+- `app.services.ai_chat.*` for router-extracted logic
 
 ### 9. Delete old flat files
 After all moves, delete the old flat files:

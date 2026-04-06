@@ -14,6 +14,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
+from app.ai.events import LoopEventStatus, LoopEventType, coerce_loop_event_type, serialize_evolution_event
 from app.core.config import AI_EVOLUTION_DIR, STRATEGIES_DIR
 from app.core.json_io import read_json, write_json
 from app.services.storage import load_run_meta, load_run_results
@@ -108,11 +109,53 @@ def get_run_detail(loop_id: str) -> dict | None:
 
 # ── Internal helpers ──────────────────────────────────────────────────────────
 
-def _emit(loop_id: str, event: dict) -> None:
+def _default_evolution_status(event_type: LoopEventType) -> str:
+    if event_type in {LoopEventType.LOOP_FAILED, LoopEventType.BACKTEST_FAILED, LoopEventType.MUTATION_FAILED}:
+        return LoopEventStatus.FAILED.value
+    if event_type in {LoopEventType.LOOP_COMPLETED, LoopEventType.CYCLE_DONE}:
+        return LoopEventStatus.COMPLETED.value
+    return LoopEventStatus.INFO.value
+
+
+def _emit(loop_id: str, event: dict | LoopEventType | str, **kwargs: Any) -> None:
+    if isinstance(event, dict):
+        raw = dict(event)
+        message = kwargs.pop("message", raw.pop("message", None))
+        done = bool(kwargs.pop("done", raw.pop("done", False)))
+        generation = kwargs.pop("generation", raw.get("generation"))
+        raw_status = kwargs.pop("status", raw.pop("status", None))
+        event_type = kwargs.pop("event_type", raw.pop("event_type", raw.pop("step", LoopEventType.LOOP_STARTED.value)))
+        coerced = coerce_loop_event_type(event_type)
+        status = raw_status or _default_evolution_status(coerced)
+        payload = {**raw, **kwargs}
+        serialized = serialize_evolution_event(
+            loop_id,
+            coerced,
+            status=status,
+            message=message,
+            done=done,
+            generation=generation if isinstance(generation, int) else None,
+            payload=payload,
+        )
+    else:
+        message = kwargs.pop("message", None)
+        done = bool(kwargs.pop("done", False))
+        generation = kwargs.pop("generation", None)
+        coerced = coerce_loop_event_type(event)
+        status = kwargs.pop("status", _default_evolution_status(coerced))
+        serialized = serialize_evolution_event(
+            loop_id,
+            coerced,
+            status=status,
+            message=message,
+            done=done,
+            generation=generation if isinstance(generation, int) else None,
+            payload=kwargs,
+        )
     with _state_lock:
         if loop_id not in _evolution_events:
             _evolution_events[loop_id] = []
-        _evolution_events[loop_id].append(event)
+        _evolution_events[loop_id].append(serialized)
 
 
 def _update_session(loop_id: str, **kwargs: Any) -> None:

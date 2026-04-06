@@ -13,6 +13,7 @@ from typing import Any
 
 from fastapi import HTTPException
 
+from app.ai.events import LoopEventStatus, LoopEventType, serialize_ai_loop_event
 from app.ai.context_builder import build_context_bundle
 from app.ai.goals import normalize_goal_id
 from app.ai.memory.threads import append_message
@@ -118,19 +119,20 @@ def load_loop_state() -> None:
                 session.setdefault("steps", []).append(
                     {
                         "ts": now,
-                        "step": "loop_recovered",
+                        "step": LoopEventType.LOOP_RECOVERED.value,
                         "status": "warning",
                         "message": "Server restarted while loop was running. Session recovered from disk.",
                     }
                 )
-                LOOP_EVENTS.setdefault(loop_id, []).append(
-                    {
-                        "loop_id": loop_id,
-                        "step": "loop_recovered",
-                        "status": "warning",
-                        "message": "Recovered from disk after restart.",
-                        "done": True,
-                    }
+                loop_emit(
+                    loop_id,
+                    serialize_ai_loop_event(
+                        loop_id,
+                        LoopEventType.LOOP_RECOVERED,
+                        status=LoopEventStatus.WARNING,
+                        message="Recovered from disk after restart.",
+                        done=True,
+                    ),
                 )
         persist_loop_state_locked()
 
@@ -242,33 +244,41 @@ def loop_worker(loop_id: str) -> None:
     if not session:
         return
 
-    def mark_step(step: str, status: str, message: str, duration_ms: int | None = None, **extra: Any) -> None:
+    def mark_step(event_type: LoopEventType, status: str, message: str, duration_ms: int | None = None, **extra: Any) -> None:
         now = utc_now()
         with LOOP_LOCK:
             s = LOOP_SESSIONS.get(loop_id)
             if not s:
                 return
             s["updated_at"] = now
-            s.setdefault("steps", []).append({"ts": now, "step": step, "status": status, "message": message})
+            s.setdefault("steps", []).append({"ts": now, "step": event_type.value, "status": status, "message": message})
             if duration_ms is not None:
-                s.setdefault("step_metrics", []).append({"ts": now, "step": step, "duration_ms": duration_ms})
+                s.setdefault("step_metrics", []).append({"ts": now, "step": event_type.value, "duration_ms": duration_ms})
             s.update(extra)
             s["md_report_path"] = write_loop_report(s)
-            payload = {
-                "loop_id": loop_id,
-                "step": step,
-                "status": status,
-                "message": message,
+            event_payload = {
                 "md_report_path": s["md_report_path"],
-                "duration_ms": duration_ms,
                 **extra,
             }
-            LOOP_EVENTS.setdefault(loop_id, []).append(payload)
+            if duration_ms is not None:
+                event_payload["duration_ms"] = duration_ms
+            loop_emit(
+                loop_id,
+                serialize_ai_loop_event(
+                    loop_id,
+                    event_type,
+                    status=status,
+                    message=message,
+                    payload=event_payload,
+                    done=bool(extra.get("done")),
+                    timestamp=now,
+                ),
+            )
             persist_loop_state_locked()
 
     try:
         mark_step(
-            "loop_started",
+            LoopEventType.LOOP_STARTED,
             "ok",
             "Loop started. Planned steps: apply -> AI validate -> wait confirm -> rerun -> compare -> tests -> report.",
             planned_steps=[
@@ -301,7 +311,7 @@ def loop_worker(loop_id: str) -> None:
         original_source = apply_result.pop("_old_source", None)
         strategy_path = Path(apply_result.get("file_path") or "")
         mark_step(
-            "apply_done",
+            LoopEventType.APPLY_DONE,
             "ok",
             f"Applied changes to {apply_result['strategy']}.py",
             duration_ms=apply_duration,
@@ -312,7 +322,7 @@ def loop_worker(loop_id: str) -> None:
 
         with LOOP_LOCK:
             if LOOP_SESSIONS.get(loop_id, {}).get("stop_requested"):
-                mark_step("loop_stopped", "stopped", "Loop stopped by user before validation.", done=True)
+                mark_step(LoopEventType.LOOP_STOPPED, "stopped", "Loop stopped by user before validation.", done=True)
                 return
 
         validate_started = time.perf_counter()
@@ -345,7 +355,7 @@ def loop_worker(loop_id: str) -> None:
         )
 
         mark_step(
-            "ai_validate_done",
+            LoopEventType.VALIDATE_DONE,
             "ok",
             "AI validation completed. Awaiting user rerun confirmation.",
             duration_ms=validate_duration,
@@ -357,14 +367,14 @@ def loop_worker(loop_id: str) -> None:
             with LOOP_LOCK:
                 s = LOOP_SESSIONS.get(loop_id, {})
                 if s.get("stop_requested"):
-                    mark_step("loop_stopped", "stopped", "Loop stopped by user.", done=True)
+                    mark_step(LoopEventType.LOOP_STOPPED, "stopped", "Loop stopped by user.", done=True)
                     return
                 decision = s.get("rerun_confirmed")
             if decision is None:
                 time.sleep(0.4)
                 continue
             if not decision:
-                mark_step("loop_stopped", "stopped", "User declined rerun. Loop closed.", done=True)
+                mark_step(LoopEventType.LOOP_STOPPED, "stopped", "User declined rerun. Loop closed.", done=True)
                 return
             break
 
@@ -380,7 +390,7 @@ def loop_worker(loop_id: str) -> None:
             "exchange": base_meta.get("exchange") or "binance",
             "strategy_params": base_meta.get("strategy_params") or {},
         }
-        mark_step("rerun_started", "ok", "Backtest rerun started.", rerun_request=rerun_body)
+        mark_step(LoopEventType.RERUN_STARTED, "ok", "Backtest rerun started.", rerun_request=rerun_body)
         rerun_started = time.perf_counter()
         run_id = retry_sync(
             label="start_backtest",
@@ -404,7 +414,7 @@ def loop_worker(loop_id: str) -> None:
         rerun_duration = round((time.perf_counter() - rerun_started) * 1000)
         run_status = final_meta.get("status", "unknown")
         mark_step(
-            "rerun_done",
+            LoopEventType.RERUN_DONE,
             "ok" if run_status == "completed" else "failed",
             f"Rerun finished: {run_status}",
             duration_ms=rerun_duration,
@@ -416,7 +426,7 @@ def loop_worker(loop_id: str) -> None:
         diff_started = time.perf_counter()
         table_rows = result_delta_rows(before_results, after_results)
         mark_step(
-            "result_diff",
+            LoopEventType.RESULT_DIFF,
             "ok",
             "Computed full summary table deltas.",
             duration_ms=round((time.perf_counter() - diff_started) * 1000),
@@ -424,13 +434,13 @@ def loop_worker(loop_id: str) -> None:
         )
 
         file_changes = apply_result.get("file_changes") or {}
-        mark_step("file_diff", "ok", "Computed file change summary (.py/.json).", file_changes=file_changes)
+        mark_step(LoopEventType.FILE_DIFF, "ok", "Computed file change summary (.py/.json).", file_changes=file_changes)
 
         tests_started = time.perf_counter()
         tests = run_validation_tests(apply_result["strategy"])
         tests_ok = all(item.get("ok") for item in tests)
         mark_step(
-            "tests_done",
+            LoopEventType.TESTS_DONE,
             "ok" if tests_ok else "warning",
             "Validation test pack completed.",
             duration_ms=round((time.perf_counter() - tests_started) * 1000),
@@ -475,7 +485,7 @@ def loop_worker(loop_id: str) -> None:
             atomic_write_text(strategy_path, original_source)
             rollback_applied = True
             mark_step(
-                "rollback_done",
+                LoopEventType.ROLLBACK_DONE,
                 "warning",
                 "Rollback applied because stop rules were violated.",
                 stop_rule_violations=stop_rule_violations,
@@ -499,24 +509,27 @@ def loop_worker(loop_id: str) -> None:
                 s["updated_at"] = utc_now()
                 s["md_report_path"] = write_loop_report(s)
                 metrics = summarize_step_metrics(s)
-                LOOP_EVENTS.setdefault(loop_id, []).append(
-                    {
-                        "loop_id": loop_id,
-                        "step": "cycle_done",
-                        "status": s["status"],
-                        "message": f"Cycle complete. Recommendation: {recommendation}.",
-                        "run_id": run_id,
-                        "table_rows": table_rows,
-                        "file_changes": file_changes,
-                        "test_results": tests,
-                        "stop_rule_violations": stop_rule_violations,
-                        "rollback_applied": rollback_applied,
-                        "metrics": metrics,
-                        "report_url": f"/ai/loop/{loop_id}/report",
-                        "report_download_url": f"/ai/loop/{loop_id}/report/download",
-                        "md_report_path": s["md_report_path"],
-                        "done": True,
-                    }
+                loop_emit(
+                    loop_id,
+                    serialize_ai_loop_event(
+                        loop_id,
+                        LoopEventType.CYCLE_DONE,
+                        status=s["status"],
+                        message=f"Cycle complete. Recommendation: {recommendation}.",
+                        done=True,
+                        payload={
+                            "run_id": run_id,
+                            "table_rows": table_rows,
+                            "file_changes": file_changes,
+                            "test_results": tests,
+                            "stop_rule_violations": stop_rule_violations,
+                            "rollback_applied": rollback_applied,
+                            "metrics": metrics,
+                            "report_url": f"/ai/loop/{loop_id}/report",
+                            "report_download_url": f"/ai/loop/{loop_id}/report/download",
+                            "md_report_path": s["md_report_path"],
+                        },
+                    ),
                 )
                 persist_loop_state_locked()
     except Exception as exc:
@@ -528,15 +541,16 @@ def loop_worker(loop_id: str) -> None:
                 s["updated_at"] = utc_now()
                 s["error"] = str(exc)
                 s["md_report_path"] = write_loop_report(s)
-                LOOP_EVENTS.setdefault(loop_id, []).append(
-                    {
-                        "loop_id": loop_id,
-                        "step": "loop_failed",
-                        "status": "failed",
-                        "message": str(exc),
-                        "md_report_path": s["md_report_path"],
-                        "done": True,
-                    }
+                loop_emit(
+                    loop_id,
+                    serialize_ai_loop_event(
+                        loop_id,
+                        LoopEventType.LOOP_FAILED,
+                        status=LoopEventStatus.FAILED,
+                        message=str(exc),
+                        done=True,
+                        payload={"md_report_path": s["md_report_path"]},
+                    ),
                 )
                 persist_loop_state_locked()
 
