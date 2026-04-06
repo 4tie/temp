@@ -1,5 +1,7 @@
 # Loop Narration + Delta Reporting + Markdown Audit — Implementation Audit
 
+> Archival note: this report was path-normalized on 2026-04-06 so it reflects the current canonical router/service split and current loop event names.
+
 ## Scope
 Implemented the requested loop behavior for chat-visible narration with backend loop orchestration, result/file/test snippets, and markdown audit reporting.
 
@@ -11,13 +13,14 @@ Implemented the requested loop behavior for chat-visible narration with backend 
 5. Backend stages:
    - `loop_started`
    - `apply_done`
-   - `ai_validate_done` (frontend prompts rerun confirmation)
+   - `validate_done` (frontend prompts rerun confirmation)
    - `rerun_started`
    - `rerun_done`
    - `result_diff`
    - `file_diff`
    - `tests_done`
    - `cycle_done`
+   - `loop_completed` or `loop_stopped`
 6. Frontend renders:
    - planned steps
    - backtest rerun metadata
@@ -29,8 +32,14 @@ Implemented the requested loop behavior for chat-visible narration with backend 
    - `POST /ai/loop/{loop_id}/stop`
    - chat receives `loop_stopped` summary.
 
-## Files changed
-- `app/routers/ai_chat.py`
+## Files changed (canonical current mapping)
+- `app/routers/ai_chat/__init__.py`
+- `app/routers/ai_chat/apply_code.py`
+- `app/routers/ai_chat/loop_sessions.py`
+- `app/routers/ai_chat/reports.py`
+- `app/services/ai_chat/apply_code_service.py`
+- `app/services/ai_chat/loop_service.py`
+- `app/services/ai_chat/loop_report_service.py`
 - `app/schemas/ai_chat.py`
 - `app/test_ai_chat_router.py`
 - `static/js/pages/ai-diagnosis.js`
@@ -43,10 +52,10 @@ Implemented the requested loop behavior for chat-visible narration with backend 
   - `POST /ai/loop/{loop_id}/stop`
   - `GET /ai/loop/{loop_id}/stream`
   - `GET /ai/loop/{loop_id}/report`
-- Reused apply logic via shared `_apply_code_impl(...)`.
-- Added per-stage event emission with `md_report_path` attached.
+- Reused apply logic via shared `app/services/ai_chat/apply_code_service.py`.
+- Added per-stage event emission with `md_report_path` attached, using the shared envelope from `app/ai/events.py`.
 - Added result delta rows generator and file diff summary transport.
-- Added targeted validation test runner stage.
+- Added targeted validation test runner stage in `app/services/ai_chat/loop_report_service.py`.
 - Added incremental markdown writer under `user_data/ai_loop_reports/<loop_id>.md`.
 
 ## Key frontend additions
@@ -60,7 +69,15 @@ Implemented the requested loop behavior for chat-visible narration with backend 
 ### 1) Python compile checks
 Command:
 ```bash
-python -m py_compile app/routers/ai_chat.py app/schemas/ai_chat.py app/test_ai_chat_router.py
+python -m py_compile \
+  app/routers/ai_chat/__init__.py \
+  app/routers/ai_chat/apply_code.py \
+  app/routers/ai_chat/loop_sessions.py \
+  app/routers/ai_chat/reports.py \
+  app/services/ai_chat/loop_service.py \
+  app/services/ai_chat/loop_report_service.py \
+  app/schemas/ai_chat.py \
+  app/test_ai_chat_router.py
 ```
 Result: **PASS**
 
