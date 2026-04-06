@@ -9,11 +9,18 @@ from fastapi import APIRouter, HTTPException, Path, Query
 
 from app.schemas.backtest import BacktestRequest, DownloadDataRequest, DataCoverageRequest, ConfigPatchRequest
 from app.services.runner import start_backtest, start_download
+from app.services.execution_context_service import (
+    build_timerange_context,
+    normalize_pair_selection,
+    read_config_json,
+    resolve_exchange_name,
+    validate_selected_pair_data,
+)
 from app.services.storage import (
     load_run_meta, load_run_results, list_runs, delete_run,
-    save_last_config, load_last_config, save_run_logs, load_run_raw_payload,
+    save_last_config, load_last_config, save_run_logs, load_run_raw_payload, get_run_dir,
 )
-from app.services.data_coverage import check_data_coverage
+from app.services.runs.base_run_service import run_logs_path
 from app.services.ohlcv_loader import load_ohlcv
 from app.services.indicator_calculator import calculate_indicators
 from app.core.processes import get_status, get_logs
@@ -21,24 +28,13 @@ from app.core.config import FREQTRADE_CONFIG_FILE, STRATEGIES_DIR
 
 router = APIRouter(tags=["backtest"])
 
-_CONFIG_FILE = FREQTRADE_CONFIG_FILE
-
-
-def _read_config_json() -> dict:
-    if _CONFIG_FILE.exists():
-        try:
-            return json.loads(_CONFIG_FILE.read_text())
-        except Exception:
-            pass
-    return {}
-
 
 def _write_config_json(cfg: dict) -> None:
-    tmp_fd, tmp_path = tempfile.mkstemp(dir=_CONFIG_FILE.parent, suffix=".tmp")
+    tmp_fd, tmp_path = tempfile.mkstemp(dir=FREQTRADE_CONFIG_FILE.parent, suffix=".tmp")
     try:
         with os.fdopen(tmp_fd, "w") as f:
             json.dump(cfg, f, indent=2)
-        os.replace(tmp_path, _CONFIG_FILE)
+        os.replace(tmp_path, FREQTRADE_CONFIG_FILE)
     except Exception:
         try:
             os.unlink(tmp_path)
@@ -53,21 +49,6 @@ def _checked_id(value: str) -> str:
     if not value or not _SAFE_ID_RE.match(value):
         raise HTTPException(status_code=400, detail="Invalid run/job ID")
     return value
-
-
-def _resolve_exchange_name(explicit_exchange: Optional[str] = None) -> str:
-    if explicit_exchange:
-        return explicit_exchange
-
-    cfg = _read_config_json()
-    exchange_name = cfg.get("exchange", {})
-    if isinstance(exchange_name, dict):
-        exchange_name = exchange_name.get("name")
-
-    if isinstance(exchange_name, str) and exchange_name:
-        return exchange_name
-
-    return "binance"
 
 
 def _is_default_strategy_path(strategy_path: Optional[str]) -> bool:
@@ -90,59 +71,9 @@ def _write_strategy_sidecar(strategy: str, params: dict) -> None:
     target.write_text(json.dumps({"strategy_name": strategy, "params": space_map}, indent=2), encoding="utf-8")
 
 
-def _validate_selected_pair_data(
-    pairs: list[str],
-    timeframe: str,
-    exchange: str,
-    timerange: Optional[str] = None,
-) -> tuple[list[dict], list[str], list[str]]:
-    coverage = check_data_coverage(
-        pairs=pairs,
-        timeframe=timeframe,
-        exchange=exchange,
-        timerange=timerange,
-    )
-    missing_pairs: list[str] = []
-    issue_details: list[str] = []
-
-    for item in coverage:
-        pair = item.get("pair", "unknown")
-        available = bool(item.get("available"))
-        missing_days = list(item.get("missing_days") or [])
-        incomplete_days = list(item.get("incomplete_days") or [])
-        daily_applied = bool(item.get("daily_validation_applied"))
-
-        has_issue = (not available) or (daily_applied and (missing_days or incomplete_days))
-        if not has_issue:
-            continue
-
-        missing_pairs.append(pair)
-        if not available:
-            issue_details.append(f"{pair}: data file missing")
-            continue
-
-        details: list[str] = []
-        if missing_days:
-            preview = ", ".join(missing_days[:3])
-            if len(missing_days) > 3:
-                preview += f" (+{len(missing_days) - 3} more)"
-            details.append(f"missing days [{preview}]")
-        if incomplete_days:
-            short = ", ".join(
-                f"{d.get('date')} ({d.get('actual')}/{d.get('expected')})"
-                for d in incomplete_days[:3]
-            )
-            if len(incomplete_days) > 3:
-                short += f" (+{len(incomplete_days) - 3} more)"
-            details.append(f"incomplete days [{short}]")
-        issue_details.append(f"{pair}: " + "; ".join(details))
-
-    return coverage, missing_pairs, issue_details
-
-
 @router.get("/config")
 async def get_config():
-    cfg = _read_config_json()
+    cfg = read_config_json()
     return {
         "strategy": cfg.get("strategy"),
         "max_open_trades": cfg.get("max_open_trades"),
@@ -154,7 +85,7 @@ async def get_config():
 
 @router.patch("/config")
 async def patch_config(req: ConfigPatchRequest):
-    cfg = _read_config_json()
+    cfg = read_config_json()
     updates = req.model_dump(exclude_none=True)
     for field, value in updates.items():
         cfg[field] = value
@@ -170,9 +101,11 @@ async def patch_config(req: ConfigPatchRequest):
 
 @router.post("/run")
 async def run_backtest(req: BacktestRequest):
-    exchange_name = _resolve_exchange_name(req.exchange)
-    _, missing_pairs, issue_details = _validate_selected_pair_data(
-        pairs=req.pairs,
+    exchange_name = resolve_exchange_name(req.exchange)
+    normalized_pairs = normalize_pair_selection(req.pairs)
+    timerange_context = build_timerange_context(req.timerange)
+    _, missing_pairs, issue_details = validate_selected_pair_data(
+        pairs=normalized_pairs,
         timeframe=req.timeframe,
         exchange=exchange_name,
         timerange=req.timerange,
@@ -185,7 +118,8 @@ async def run_backtest(req: BacktestRequest):
                 "Missing local market data for selected pairs: "
                 f"{', '.join(missing_pairs)}. "
                 "Download data for those pairs before backtesting. "
-                f"Details: {detail_suffix}"
+                f"Details: {detail_suffix}. "
+                f"Timerange context: {timerange_context}"
             ),
         )
 
@@ -193,7 +127,7 @@ async def run_backtest(req: BacktestRequest):
 
     run_id = start_backtest(
         strategy=req.strategy,
-        pairs=req.pairs,
+        pairs=normalized_pairs,
         timeframe=req.timeframe,
         timerange=req.timerange,
         strategy_params=req.strategy_params,
@@ -226,9 +160,7 @@ async def get_run(run_id: str):
     if status in ("completed", "failed") or (meta and meta.get("status") in ("completed", "failed")):
         results = load_run_results(run_id)
         if not logs and meta:
-            log_file = meta.get("run_id", "")
-            from app.core.config import BACKTEST_RESULTS_DIR
-            log_path = BACKTEST_RESULTS_DIR / run_id / "logs.txt"
+            log_path = run_logs_path(get_run_dir(run_id))
             if log_path.exists():
                 logs = log_path.read_text().split("\n")
 
@@ -271,7 +203,7 @@ async def apply_run_config(run_id: str):
     if not meta:
         raise HTTPException(status_code=404, detail="Run not found")
 
-    cfg = _read_config_json()
+    cfg = read_config_json()
     applied: list[str] = []
     skipped: list[str] = []
     warnings: list[str] = []
@@ -374,9 +306,9 @@ async def get_download_status(job_id: str):
 
 @router.post("/data-coverage")
 async def data_coverage(req: DataCoverageRequest):
-    exchange_name = _resolve_exchange_name(req.exchange)
-    coverage, missing_pairs, issue_details = _validate_selected_pair_data(
-        pairs=req.pairs,
+    exchange_name = resolve_exchange_name(req.exchange)
+    coverage, missing_pairs, issue_details = validate_selected_pair_data(
+        pairs=normalize_pair_selection(req.pairs),
         timeframe=req.timeframe,
         exchange=exchange_name,
         timerange=req.timerange,
@@ -413,19 +345,13 @@ def _scan_local_pairs(exchange: str, timeframe: str | None) -> list[str]:
 
 def _read_config_pairs() -> list[str]:
     """Read pair_whitelist from configured Freqtrade config."""
-    import json as _json
-    cfg_file = FREQTRADE_CONFIG_FILE
     pairs: set[str] = set()
-    if cfg_file.exists():
-        try:
-            cfg = _json.loads(cfg_file.read_text())
-            for source in [
-                cfg.get("exchange", {}).get("pair_whitelist", []),
-                *[pl.get("pair_whitelist", []) for pl in cfg.get("pairlists", [])],
-            ]:
-                pairs.update(p for p in source if isinstance(p, str) and "/" in p)
-        except Exception:
-            pass
+    cfg = read_config_json()
+    for source in [
+        cfg.get("exchange", {}).get("pair_whitelist", []),
+        *[pl.get("pair_whitelist", []) for pl in cfg.get("pairlists", [])],
+    ]:
+        pairs.update(p for p in source if isinstance(p, str) and "/" in p)
     return sorted(pairs)
 
 

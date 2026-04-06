@@ -3,9 +3,16 @@ from fastapi import APIRouter, HTTPException
 
 from app.schemas.backtest import HyperoptRequest, ApplyParamsRequest
 from app.services.runner import start_hyperopt
-from app.services.hyperopt_storage import (
-    load_hyperopt_meta, load_hyperopt_results, list_hyperopt_runs, delete_hyperopt_run,
+from app.services.execution_context_service import (
+    build_timerange_context,
+    normalize_pair_selection,
+    resolve_exchange_name,
+    validate_selected_pair_data,
 )
+from app.services.hyperopt_storage import (
+    load_hyperopt_meta, load_hyperopt_results, list_hyperopt_runs, delete_hyperopt_run, get_hyperopt_run_dir,
+)
+from app.services.runs.base_run_service import run_logs_path
 from app.services.hyperopt_parser import save_params_file
 from app.core.processes import get_status, get_logs
 
@@ -47,14 +54,12 @@ def _checked_id(value: str) -> str:
 
 @router.post("/run")
 async def run_hyperopt(req: HyperoptRequest):
-    from app.routers.backtest import _read_config_json, _validate_selected_pair_data
-    cfg = _read_config_json()
-    exchange_name = cfg.get("exchange", {})
-    if isinstance(exchange_name, dict):
-        exchange_name = exchange_name.get("name", "binance")
+    exchange_name = resolve_exchange_name()
+    normalized_pairs = normalize_pair_selection(req.pairs)
+    timerange_context = build_timerange_context(req.timerange)
 
-    _, missing_pairs, issue_details = _validate_selected_pair_data(
-        pairs=req.pairs,
+    _, missing_pairs, issue_details = validate_selected_pair_data(
+        pairs=normalized_pairs,
         timeframe=req.timeframe,
         exchange=exchange_name,
         timerange=req.timerange,
@@ -67,13 +72,14 @@ async def run_hyperopt(req: HyperoptRequest):
                 "Missing local market data for selected pairs: "
                 f"{', '.join(missing_pairs)}. "
                 "Download data for those pairs before hyperopt. "
-                f"Details: {detail_suffix}"
+                f"Details: {detail_suffix}. "
+                f"Timerange context: {timerange_context}"
             ),
         )
     
     run_id = start_hyperopt(
         strategy=req.strategy,
-        pairs=req.pairs,
+        pairs=normalized_pairs,
         timeframe=req.timeframe,
         timerange=req.timerange,
         epochs=req.epochs,
@@ -114,8 +120,7 @@ async def get_run(run_id: str):
     if status in ("completed", "failed") or (meta and meta.get("status") in ("completed", "failed")):
         results = load_hyperopt_results(run_id)
         if not logs and meta:
-            from app.core.config import HYPEROPT_RESULTS_DIR
-            log_path = HYPEROPT_RESULTS_DIR / "runs" / run_id / "logs.txt"
+            log_path = run_logs_path(get_hyperopt_run_dir(run_id))
             if log_path.exists():
                 logs = log_path.read_text().split("\n")
     elif status == "running":
