@@ -11,6 +11,9 @@
   --surface-3: #1d2329;
   --surface-4: #242a31;
   --surface-overlay: rgba(10, 14, 18, 0.92);
+  --surface-panel: color-mix(in srgb, var(--surface-1) 88%, transparent);
+  --surface-panel-strong: color-mix(in srgb, var(--surface-2) 92%, transparent);
+  --surface-panel-soft: color-mix(in srgb, var(--surface-2) 76%, transparent);
   --bg-glow-top: rgba(42, 183, 199, 0.06);
   --bg-glow-bottom: rgba(34, 197, 94, 0.03);
   --bg-gradient-start: #0a0e12;

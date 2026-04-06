@@ -26,12 +26,29 @@ window.ResultsPage = (() => {
 
   function _render() {
     DOM.setHTML(_el, `
-      <div class="page-header">
-        <h1 class="page-header__title">Results</h1>
-        <p class="page-header__subtitle">Completed backtest runs with key performance metrics.</p>
-        <div class="page-header__meta text-muted text-sm" id="results-last-updated">Waiting for data…</div>
+      <div class="results-page">
+        <div class="results-header">
+          <div class="results-header__main">
+            <h1 class="results-header__title">Backtest Results</h1>
+            <p class="results-header__subtitle">Compare and analyze completed backtest runs</p>
+          </div>
+          <div class="results-header__meta">
+            <div class="results-header__status" id="results-last-updated">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+              <span>Waiting for data…</span>
+            </div>
+          </div>
+        </div>
+        <div id="results-table-wrap" class="results-content">
+          <div class="results-loading">
+            <div class="results-loading__spinner"></div>
+            <div class="results-loading__text">Loading results…</div>
+          </div>
+        </div>
       </div>
-      <div id="results-table-wrap"><div class="empty-state">Loading…</div></div>
     `);
   }
 
@@ -92,10 +109,22 @@ window.ResultsPage = (() => {
     const el = DOM.$('#results-last-updated', _el);
     if (!el) return;
     if (!_lastLoadedAt) {
-      DOM.setText(el, 'Waiting for data…');
+      DOM.setHTML(el, `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+        <span>Waiting for data…</span>
+      `);
       return;
     }
-    DOM.setText(el, `Auto-refreshing · last updated ${_lastLoadedAt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`);
+    const timeStr = _lastLoadedAt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    DOM.setHTML(el, `
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+      </svg>
+      <span>Updated ${timeStr}</span>
+    `);
   }
 
   function _flat(r) {
@@ -121,7 +150,17 @@ window.ResultsPage = (() => {
     const wrap = DOM.$('#results-table-wrap', _el);
     if (!wrap) return;
     if (!_runs.length) {
-      DOM.setHTML(wrap, '<div class="empty-state">No completed backtest runs yet.</div>');
+      DOM.setHTML(wrap, `
+        <div class="results-empty">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M9 11l3 3L22 4"/>
+            <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+          </svg>
+          <h3>No Results Yet</h3>
+          <p>Complete a backtest to see results here</p>
+          <button class="btn btn--primary" onclick="window.App?.navigate?.('backtesting')">Run Backtest</button>
+        </div>
+      `);
       return;
     }
 
@@ -143,33 +182,62 @@ window.ResultsPage = (() => {
     const th = (key, label) => `<th class="sortable ${_sortKey === key ? 'sorted' : ''}" data-sort="${key}">${label}${_sortKey === key ? (_sortDir === 1 ? ' ▲' : ' ▼') : ''}</th>`;
 
     DOM.setHTML(wrap, `
-      <table class="data-table data-table--hoverable">
-        <thead><tr>
-          ${th('run_id',        'Run ID')}
-          ${th('strategy',     'Strategy / Version')}
-          ${th('started_at',   'Date')}
-          ${metricDefs.map(metric => th(`metric:${metric.key}`, metric.label)).join('')}
-          <th></th>
-        </tr></thead>
-        <tbody>
-          ${sorted.map(r => {
-            return `
-              <tr class="cursor-pointer" data-run-id="${r.run_id || ''}">
-                <td class="font-mono text-sm">${FMT.truncate(r.run_id || '—', 18)}</td>
-                <td>
-                  <div>${_esc(_displayStrategy(r))}</div>
-                  <div class="text-muted text-xs">${_esc(r.strategy_class || r.base_strategy || r.strategy || '—')}</div>
-                </td>
-                <td class="text-muted text-sm">${FMT.tsShort(r.started_at)}</td>
-                ${metricDefs.map(metric => _renderMetricCell(metric, r._metrics?.[metric.key])).join('')}
-                <td>
-                  <button class="btn btn--ghost btn--sm" data-detail-btn data-run-id="${r.run_id || ''}">View</button>
-                  <button class="btn btn--secondary btn--sm" data-apply-btn data-run-id="${r.run_id || ''}">Apply Config</button>
-                </td>
-              </tr>`;
-          }).join('')}
-        </tbody>
-      </table>`);
+      <div class="results-table-card">
+        <div class="results-table-header">
+          <div class="results-table-count">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 11l3 3L22 4"/>
+              <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+            </svg>
+            <span>${sorted.length} ${sorted.length === 1 ? 'Result' : 'Results'}</span>
+          </div>
+        </div>
+        <div class="results-table-wrap">
+          <table class="results-table">
+            <thead><tr>
+              ${th('run_id', 'Run ID')}
+              ${th('strategy', 'Strategy')}
+              ${th('started_at', 'Date')}
+              ${metricDefs.map(metric => th(`metric:${metric.key}`, metric.label)).join('')}
+              <th class="results-table__actions">Actions</th>
+            </tr></thead>
+            <tbody>
+              ${sorted.map(r => {
+                const profitMetric = r._metrics?.profit_percent ?? r._metrics?.total_profit_pct;
+                const profitTone = _metricTone({ key: 'profit_percent' }, profitMetric);
+                return `
+                  <tr class="results-table__row" data-run-id="${r.run_id || ''}">
+                    <td class="results-table__id">
+                      <span class="results-table__id-text">${FMT.truncate(r.run_id || '—', 12)}</span>
+                    </td>
+                    <td class="results-table__strategy">
+                      <div class="results-table__strategy-name">${_esc(_displayStrategy(r))}</div>
+                      <div class="results-table__strategy-class">${_esc(r.strategy_class || r.base_strategy || r.strategy || '—')}</div>
+                    </td>
+                    <td class="results-table__date">${FMT.tsShort(r.started_at)}</td>
+                    ${metricDefs.map(metric => _renderMetricCell(metric, r._metrics?.[metric.key])).join('')}
+                    <td class="results-table__actions">
+                      <button class="results-table__btn results-table__btn--view" data-detail-btn data-run-id="${r.run_id || ''}" title="View Details">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                          <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        View
+                      </button>
+                      <button class="results-table__btn results-table__btn--apply" data-apply-btn data-run-id="${r.run_id || ''}" title="Apply Configuration">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        Apply
+                      </button>
+                    </td>
+                  </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `);
 
     wrap.querySelectorAll('[data-sort]').forEach(th => {
       DOM.on(th, 'click', () => _sort(th.dataset.sort));
@@ -202,8 +270,8 @@ window.ResultsPage = (() => {
   function _renderMetricCell(metric, value) {
     const tone = _metricTone(metric, value);
     const rendered = _formatMetric(metric, value);
-    const cls = tone ? ` class="text-${tone} font-medium"` : '';
-    return `<td${cls}>${rendered}</td>`;
+    const toneClass = tone ? ` results-table__metric--${tone}` : '';
+    return `<td class="results-table__metric${toneClass}">${rendered}</td>`;
   }
 
   function _formatMetric(metric, value) {

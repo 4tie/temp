@@ -14,14 +14,16 @@
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent 72%),
-    rgba(16, 29, 36, 0.88);
+    linear-gradient(180deg, color-mix(in srgb, var(--text-primary) 2.2%, transparent), transparent 72%),
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 7%, transparent), transparent 42%),
+    var(--surface-panel);
   box-shadow: var(--shadow-xs);
   min-width: 0;
 }
 
 .ai-diagnosis-card--hero {
   min-height: 100%;
+  border-color: color-mix(in srgb, var(--accent-ring) 80%, var(--border-subtle));
 }
 
 .ai-diagnosis-card--hero,
@@ -43,6 +45,7 @@
   font-size: clamp(1.35rem, 1vw + 1rem, 1.85rem);
   line-height: 1.08;
   letter-spacing: -0.03em;
+  color: var(--text-primary);
 }
 
 .ai-diagnosis-card__body {
@@ -72,7 +75,9 @@
   padding: var(--space-3);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.02);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--text-primary) 1.5%, transparent), transparent 100%),
+    color-mix(in srgb, var(--surface-2) 92%, transparent);
   min-width: 0;
 }
 
@@ -105,7 +110,7 @@
   justify-content: space-between;
   gap: var(--space-3);
   padding-bottom: 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .ai-diagnosis-state-row:last-child {
@@ -130,6 +135,10 @@
   color: var(--text-secondary);
   display: grid;
   gap: var(--space-2);
+}
+
+.ai-diagnosis-notes li::marker {
+  color: var(--accent);
 }
 
 @media (max-width: 1380px) {

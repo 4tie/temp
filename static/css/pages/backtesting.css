@@ -14,12 +14,14 @@
 .split-layout__output {
   /* Stick to the top of the grid row so cards don't float */
   align-self: start;
+  min-height: 0;
   /* Cap total column height so it never overflows the page */
   max-height: calc(100vh - var(--topbar-height) - var(--statusbar-height) - 98px);
   max-height: calc(100dvh - var(--topbar-height) - var(--statusbar-height) - 98px);
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   scrollbar-gutter: stable;
   display: flex;
   flex-direction: column;

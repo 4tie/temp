@@ -47,6 +47,8 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .card__body--flush {
@@ -596,10 +598,12 @@
   grid-template-columns: minmax(300px, 0.96fr) minmax(360px, 1.18fr);
   gap: var(--space-3);
   align-items: start;
+  min-height: 0;
 }
 
 .split-layout > * {
   min-width: 0;
+  min-height: 0;
 }
 
 .split-layout--lab {
@@ -607,10 +611,10 @@
   min-height: calc(100vh - var(--topbar-height) - var(--statusbar-height) - 160px);
 }
 
-.split-layout__sidebar { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
+.split-layout__sidebar { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; min-height: 0; }
 .split-layout__main    { display: flex; flex-direction: column; gap: var(--space-3); min-height: 400px; min-width: 0; }
-.split-layout__form    { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
-.split-layout__output  { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
+.split-layout__form    { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; min-height: 0; }
+.split-layout__output  { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; min-height: 0; }
 
 /* ---- Strategy list ---------------------------------------- */
 
