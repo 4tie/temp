@@ -17,11 +17,11 @@ from app.services.data_coverage import check_data_coverage
 from app.services.ohlcv_loader import load_ohlcv
 from app.services.indicator_calculator import calculate_indicators
 from app.core.processes import get_status, get_logs
-from app.core.config import BASE_DIR, STRATEGIES_DIR
+from app.core.config import FREQTRADE_CONFIG_FILE, STRATEGIES_DIR
 
 router = APIRouter(tags=["backtest"])
 
-_CONFIG_FILE = BASE_DIR / "config.json"
+_CONFIG_FILE = FREQTRADE_CONFIG_FILE
 
 
 def _read_config_json() -> dict:
@@ -412,10 +412,9 @@ def _scan_local_pairs(exchange: str, timeframe: str | None) -> list[str]:
 
 
 def _read_config_pairs() -> list[str]:
-    """Read pair_whitelist from user_data/config.json."""
-    from app.core.config import BASE_DIR
+    """Read pair_whitelist from configured Freqtrade config."""
     import json as _json
-    cfg_file = BASE_DIR / "config.json"
+    cfg_file = FREQTRADE_CONFIG_FILE
     pairs: set[str] = set()
     if cfg_file.exists():
         try:

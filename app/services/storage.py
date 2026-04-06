@@ -1,3 +1,10 @@
+"""
+Domain storage for backtest runs and presets.
+
+This module is the source of truth for backtest result persistence and retrieval.
+Generic JSON read/write helpers live in app.core.json_store.
+"""
+
 import json
 import os
 import re
@@ -7,7 +14,15 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
 
-from app.core.config import BACKTEST_RESULTS_DIR, PRESETS_FILE, LAST_CONFIG_FILE
+from app.core.config import (
+    BACKTEST_RESULTS_DIR,
+    LAST_CONFIG_FILE,
+    PARSED_RESULTS_FILENAME,
+    PRESETS_FILE,
+    RAW_ARTIFACT_META_SUFFIX,
+    RUN_LOGS_FILENAME,
+    RUN_META_FILENAME,
+)
 from app.services.result_normalizer import normalize_backtest_result
 from app.services.result_parser import parse_backtest_results, load_backtest_result_payload
 
@@ -30,13 +45,13 @@ def save_run_meta(run_id: str, meta: dict[str, Any]):
     _validate_id(run_id)
     run_dir = BACKTEST_RESULTS_DIR / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
-    meta_file = run_dir / "meta.json"
+    meta_file = run_dir / RUN_META_FILENAME
     meta_file.write_text(json.dumps(meta, indent=2, default=str))
 
 
 def load_run_meta(run_id: str) -> Optional[dict[str, Any]]:
     _validate_id(run_id)
-    meta_file = BACKTEST_RESULTS_DIR / run_id / "meta.json"
+    meta_file = BACKTEST_RESULTS_DIR / run_id / RUN_META_FILENAME
     if not meta_file.exists():
         return None
     try:
@@ -49,7 +64,7 @@ def save_run_results(run_id: str, results: dict[str, Any]):
     _validate_id(run_id)
     run_dir = BACKTEST_RESULTS_DIR / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
-    results_file = run_dir / "parsed_results.json"
+    results_file = run_dir / PARSED_RESULTS_FILENAME
     normalized = normalize_backtest_result(results)
     results_file.write_text(json.dumps(normalized, indent=2, default=str))
 
@@ -57,7 +72,7 @@ def save_run_results(run_id: str, results: dict[str, Any]):
 def load_run_results(run_id: str) -> Optional[dict[str, Any]]:
     _validate_id(run_id)
     run_dir = BACKTEST_RESULTS_DIR / run_id
-    results_file = run_dir / "parsed_results.json"
+    results_file = run_dir / PARSED_RESULTS_FILENAME
     normalized: Optional[dict[str, Any]] = None
     if not results_file.exists():
         normalized = None
@@ -88,7 +103,7 @@ def save_run_logs(run_id: str, logs: list[str]):
     _validate_id(run_id)
     run_dir = BACKTEST_RESULTS_DIR / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
-    log_file = run_dir / "logs.txt"
+    log_file = run_dir / RUN_LOGS_FILENAME
     log_file.write_text("\n".join(logs))
 
 
@@ -139,7 +154,7 @@ def list_runs() -> list[dict[str, Any]]:
     for d in sorted(BACKTEST_RESULTS_DIR.iterdir(), reverse=True):
         if not d.is_dir():
             continue
-        if not (d / "meta.json").exists():
+        if not (d / RUN_META_FILENAME).exists():
             continue
         meta = load_run_meta(d.name)
         if meta:
@@ -147,7 +162,7 @@ def list_runs() -> list[dict[str, Any]]:
             meta["run_id"] = d.name
             meta.setdefault("display_strategy", meta.get("strategy"))
             meta.setdefault("display_version", meta.get("strategy_version"))
-            has_results_file = (d / "parsed_results.json").exists()
+            has_results_file = (d / PARSED_RESULTS_FILENAME).exists()
             has_local_artifact = _run_dir_has_local_artifact(d)
 
             compact_results = None
@@ -255,7 +270,7 @@ def _run_dir_has_local_artifact(run_dir: Path) -> bool:
             continue
         if path.suffix == ".zip":
             return True
-        if path.suffix == ".json" and path.name not in {"meta.json", "parsed_results.json"} and not path.name.endswith(".meta.json"):
+        if path.suffix == ".json" and path.name not in {RUN_META_FILENAME, PARSED_RESULTS_FILENAME} and not path.name.endswith(RAW_ARTIFACT_META_SUFFIX):
             return True
     return False
 

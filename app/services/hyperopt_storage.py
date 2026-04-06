@@ -4,12 +4,10 @@ import shutil
 from pathlib import Path
 from typing import Any, Optional
 
-from app.core.config import HYPEROPT_RESULTS_DIR
+from app.core.config import HYPEROPT_RUNS_DIR, PARSED_RESULTS_FILENAME, RUN_LOGS_FILENAME, RUN_META_FILENAME
 
 _SAFE_ID_RE = re.compile(r"^[A-Za-z0-9_\-]+$")
-
-_HYPEROPT_RUNS_DIR = HYPEROPT_RESULTS_DIR / "runs"
-_HYPEROPT_RUNS_DIR.mkdir(parents=True, exist_ok=True)
+_HYPEROPT_RUNS_DIR = HYPEROPT_RUNS_DIR
 
 
 def _validate_id(value: str) -> str:
@@ -32,12 +30,12 @@ def save_hyperopt_meta(run_id: str, meta: dict[str, Any]):
     _validate_id(run_id)
     run_dir = _HYPEROPT_RUNS_DIR / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
-    (run_dir / "meta.json").write_text(json.dumps(meta, indent=2, default=str))
+    (run_dir / RUN_META_FILENAME).write_text(json.dumps(meta, indent=2, default=str))
 
 
 def load_hyperopt_meta(run_id: str) -> Optional[dict[str, Any]]:
     _validate_id(run_id)
-    meta_file = _HYPEROPT_RUNS_DIR / run_id / "meta.json"
+    meta_file = _HYPEROPT_RUNS_DIR / run_id / RUN_META_FILENAME
     if not meta_file.exists():
         return None
     try:
@@ -50,12 +48,12 @@ def save_hyperopt_results(run_id: str, results: dict[str, Any]):
     _validate_id(run_id)
     run_dir = _HYPEROPT_RUNS_DIR / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
-    (run_dir / "parsed_results.json").write_text(json.dumps(results, indent=2, default=str))
+    (run_dir / PARSED_RESULTS_FILENAME).write_text(json.dumps(results, indent=2, default=str))
 
 
 def load_hyperopt_results(run_id: str) -> Optional[dict[str, Any]]:
     _validate_id(run_id)
-    results_file = _HYPEROPT_RUNS_DIR / run_id / "parsed_results.json"
+    results_file = _HYPEROPT_RUNS_DIR / run_id / PARSED_RESULTS_FILENAME
     if not results_file.exists():
         return None
     try:
@@ -68,7 +66,7 @@ def save_hyperopt_logs(run_id: str, logs: list[str]):
     _validate_id(run_id)
     run_dir = _HYPEROPT_RUNS_DIR / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
-    (run_dir / "logs.txt").write_text("\n".join(logs))
+    (run_dir / RUN_LOGS_FILENAME).write_text("\n".join(logs))
 
 
 def list_hyperopt_runs() -> list[dict[str, Any]]:
@@ -82,13 +80,13 @@ def list_hyperopt_runs() -> list[dict[str, Any]]:
         meta = load_hyperopt_meta(d.name)
         if meta:
             meta["run_id"] = d.name
-            meta["has_results"] = (d / "parsed_results.json").exists()
+            meta["has_results"] = (d / PARSED_RESULTS_FILENAME).exists()
             runs.append(meta)
         else:
             runs.append({
                 "run_id": d.name,
                 "status": "unknown",
-                "has_results": (d / "parsed_results.json").exists(),
+                "has_results": (d / PARSED_RESULTS_FILENAME).exists(),
             })
     return runs
 

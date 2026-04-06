@@ -1,7 +1,14 @@
 import re
 from datetime import datetime, timezone
 from typing import Any, Optional
-from app.core.config import STRATEGIES_DIR, DATA_DIR, FREQTRADE_CONFIG_DIR, HYPEROPT_RESULTS_DIR, BASE_DIR, PYTHON_EXECUTABLE
+from app.core.config import (
+    BACKTEST_RESULTS_DIR,
+    DATA_DIR,
+    BASE_DIR,
+    FREQTRADE_CONFIG_FILE,
+    PYTHON_EXECUTABLE,
+    STRATEGIES_DIR,
+)
 
 
 _TIMERANGE_RE = re.compile(r"^(\d{8})-(\d{8})$")
@@ -32,10 +39,10 @@ def build_backtest_command(
     strategy_path: Optional[str] = None,
     backtest_directory: Optional[str] = None,
 ) -> list[str]:
-    output_directory = backtest_directory or f"user_data/backtest_results/{strategy}"
+    output_directory = backtest_directory or str(BACKTEST_RESULTS_DIR / strategy)
     cmd = [
         PYTHON_EXECUTABLE, "-m", "freqtrade", "backtesting",
-        "-c", "user_data/config.json",
+        "-c", str(FREQTRADE_CONFIG_FILE),
         "--strategy", strategy,
         "--timeframe", timeframe,
         "--export", "trades",
@@ -64,7 +71,7 @@ def build_download_data_command(
 ) -> list[str]:
     cmd = [
         PYTHON_EXECUTABLE, "-m", "freqtrade", "download-data",
-        "-c", "user_data/config.json",
+        "-c", str(FREQTRADE_CONFIG_FILE),
         "--timeframes", timeframe,
         "--timerange", _effective_download_timerange(timerange),
         "--prepend",
@@ -111,9 +118,8 @@ def build_hyperopt_command(
         "--print-json",
     ]
 
-    config_file = FREQTRADE_CONFIG_DIR / "config.json"
-    if config_file.exists():
-        cmd.extend(["--config", str(config_file)])
+    if FREQTRADE_CONFIG_FILE.exists():
+        cmd.extend(["--config", str(FREQTRADE_CONFIG_FILE)])
 
     if timerange:
         cmd.extend(["--timerange", timerange])

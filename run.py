@@ -21,11 +21,12 @@ if _env_file.exists():
                 os.environ[_k] = _v
 
 if __name__ == "__main__":
-    port = int(os.environ.get("BACKTEST_API_PORT", "5000"))
+    from app.core.config import HOST, PORT
+
     uvicorn.run(
         "app.main:app",
-        host="127.0.0.1",
-        port=port,
+        host=HOST,
+        port=PORT,
         reload=True,
         reload_dirs=["app", "templates", "static"],
     )

@@ -12,9 +12,9 @@ import re
 import statistics
 from collections import defaultdict
 from math import sqrt
-from pathlib import Path
 from typing import Any
 
+from app.core.config import BACKTEST_RESULTS_DIR, STRATEGIES_DIR
 from app.services.result_normalizer import normalize_backtest_result
 
 logger = logging.getLogger(__name__)
@@ -22,8 +22,7 @@ logger = logging.getLogger(__name__)
 INSUFFICIENT = "insufficient evidence"
 LOW_TRADE_THRESHOLD = 30
 
-USER_DATA = Path("user_data")
-STRAT_DIR = USER_DATA / "strategies"
+STRAT_DIR = STRATEGIES_DIR
 
 # ─────────────────────────────────────────────────────────────────────────────
 # AI Narrative Cache (module-level, FIFO eviction at 100 entries)
@@ -32,7 +31,7 @@ STRAT_DIR = USER_DATA / "strategies"
 _NARRATIVE_CACHE: dict[str, dict] = {}
 _NARRATIVE_CACHE_ORDER: list[str] = []
 _NARRATIVE_CACHE_MAX = 100
-_NARRATIVE_CACHE_DIR = USER_DATA / "backtest_results"
+_NARRATIVE_CACHE_DIR = BACKTEST_RESULTS_DIR
 
 
 def _narrative_cache_get(run_id: str) -> dict | None:
@@ -905,7 +904,7 @@ def _audit_code(source: str | None, strategy_name: str) -> list[dict]:
         issues.append({
             "issue": f"Strategy source file not found",
             "severity": "warning",
-            "evidence": f"Could not locate {strategy_name}.py in user_data/strategies/",
+            "evidence": f"Could not locate {strategy_name}.py in {STRAT_DIR}/",
             "recommendation": "Ensure the strategy file is present for full code audit.",
         })
         return issues

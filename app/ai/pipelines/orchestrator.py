@@ -2,7 +2,7 @@
 AI Pipeline Orchestrator — multi-model pipeline engine.
 Supports 6 pipeline types: simple, analysis, debate, code, structured, tool.
 Supports true streaming for the final pipeline step.
-Logs every run to user_data/ai_pipeline_logs/.
+Logs every run to configured AI pipeline logs directory.
 """
 from __future__ import annotations
 
@@ -14,10 +14,10 @@ import logging
 import time
 import uuid
 from dataclasses import dataclass, field, asdict
-from pathlib import Path
 from typing import Any, AsyncGenerator
 
-from ...core.storage import write_json, _ensure
+from app.core.config import AI_PIPELINE_LOGS_DIR
+from ...core.json_store import write_json, ensure_dir
 import app.ai.models.provider_dispatch as _dispatch
 from app.ai.model_metrics_store import record_observation
 from ..models.registry import fetch_free_models, get_model_for_role
@@ -54,7 +54,7 @@ async def stream_chat(messages: list[dict], model: str) -> AsyncGenerator[dict, 
     async for chunk in _dispatch.stream_chat(messages, model, provider=provider):
         yield chunk
 
-PIPELINE_LOG_DIR = Path("user_data/ai_pipeline_logs")
+PIPELINE_LOG_DIR = AI_PIPELINE_LOGS_DIR
 
 
 @dataclass
@@ -68,7 +68,7 @@ class CodeValidation:
 
 
 def _save_log(result: PipelineResult) -> None:
-    _ensure(PIPELINE_LOG_DIR)
+    ensure_dir(PIPELINE_LOG_DIR)
     log_data = {
         "id": result.run_id,
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -184,10 +184,10 @@ def _build_reasoner_msgs(
         {"role": "user", "content": f"{task_prompt}\n\n--- CONTEXT ---\n{context}"},
     ]
 def list_pipeline_logs(limit: int = 50) -> list[dict]:
-    _ensure(PIPELINE_LOG_DIR)
+    ensure_dir(PIPELINE_LOG_DIR)
     logs = []
     for f in sorted(PIPELINE_LOG_DIR.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)[:limit]:
-        from ...core.storage import read_json
+        from ...core.json_store import read_json
         data = read_json(f, None)
         if data:
             logs.append(data)
@@ -195,7 +195,7 @@ def list_pipeline_logs(limit: int = 50) -> list[dict]:
 
 
 def get_pipeline_log(run_id: str) -> dict | None:
-    from ...core.storage import read_json
+    from ...core.json_store import read_json
     return read_json(PIPELINE_LOG_DIR / f"{run_id}.json", None)
 
 

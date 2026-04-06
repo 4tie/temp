@@ -7,7 +7,9 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-CONV_DIR = Path("user_data/ai_conversations")
+from app.core.config import AI_CONVERSATIONS_DIR
+
+CONV_DIR = AI_CONVERSATIONS_DIR
 
 
 def _ensure() -> Path:

@@ -7,7 +7,7 @@ Schema: list of feedback entry dicts, newest last.
 from __future__ import annotations
 
 from app.core.config import AI_EVOLUTION_DIR
-from app.core.storage import read_json, write_json
+from app.core.json_store import read_json, write_json
 
 
 def _path(strategy: str):

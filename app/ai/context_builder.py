@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from app.ai.goals import goal_label, normalize_goal_id
-from app.core.config import BASE_DIR, LAST_CONFIG_FILE, STRATEGIES_DIR
+from app.core.config import FREQTRADE_CONFIG_FILE, LAST_CONFIG_FILE, STRATEGIES_DIR
 from app.services.storage import list_runs, load_run_meta, load_run_results
 
 _SECRET_KEYS = {
@@ -22,7 +22,7 @@ _SECRET_KEYS = {
     "openrouter_api_key",
 }
 
-_CONFIG_PATH = BASE_DIR / "config.json"
+_CONFIG_PATH = FREQTRADE_CONFIG_FILE
 
 
 @dataclass

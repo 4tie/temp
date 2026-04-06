@@ -7,7 +7,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
 
-from app.core.config import BACKTEST_RESULTS_DIR, HYPEROPT_RESULTS_DIR, DATA_DIR, STRATEGIES_DIR
+from app.core.config import (
+    BACKTEST_RESULTS_DIR,
+    DATA_DIR,
+    FREQTRADE_CONFIG_FILE,
+    RAW_ARTIFACT_META_SUFFIX,
+    STRATEGIES_DIR,
+)
 from app.core.processes import (
     set_process, append_log, set_status, get_status,
     get_logs, remove_process, get_process
@@ -64,11 +70,10 @@ def wait_for_run(run_id: str, timeout_s: int = 600) -> dict:
 
 
 def _read_runtime_config() -> dict[str, Any]:
-    config_file = BACKTEST_RESULTS_DIR.parent / "config.json"
-    if not config_file.exists():
+    if not FREQTRADE_CONFIG_FILE.exists():
         return {}
     try:
-        return json.loads(config_file.read_text())
+        return json.loads(FREQTRADE_CONFIG_FILE.read_text())
     except Exception:
         return {}
 
@@ -288,11 +293,11 @@ def _try_import_fresh_global_result(run_dir: Path, meta: dict[str, Any]) -> bool
     if start_ts is not None and source_mtime + 1 < start_ts:
         return False
 
-    # Strategy/timeframe guard via companion .meta.json when available.
+    # Strategy/timeframe guard via companion artifact meta file when available.
     strategy_expected = str(meta.get("strategy_class") or meta.get("base_strategy") or meta.get("strategy") or "")
     timeframe_expected = str(meta.get("timeframe") or "")
     if source_artifact.suffix.lower() == ".zip":
-        source_meta = source_artifact.with_name(source_artifact.name.replace(".zip", ".meta.json"))
+        source_meta = source_artifact.with_name(source_artifact.name.replace(".zip", RAW_ARTIFACT_META_SUFFIX))
         if not source_meta.exists():
             return False
         try:
