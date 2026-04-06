@@ -1,5 +1,5 @@
 /* =================================================================
-   AI DIAGNOSIS — shared AI runtime + shell dock workspace
+   AI DIAGNOSIS ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â shared AI runtime + shell dock workspace
    Exposes: window.AIDiagPage
    ================================================================= */
 
@@ -11,6 +11,7 @@ window.AIDiagPage = (() => {
     goal: 'balanced',
     conversationId: null,
     conversationCount: 0,
+    convListOpen: false,
     contextRunId: null,
     contextStrategyName: null,
     contextTimeframe: null,
@@ -77,7 +78,7 @@ window.AIDiagPage = (() => {
       ].join('');
       return `<div class="cmd-block" data-code-block-index="${blockIndex}" data-assistant-message-id="${_escHtml(assistantMessageId)}" data-inferred-filename="${_escHtml(filename)}" data-code-lang="${_escHtml(String(label).toLowerCase())}">
         <div class="cmd-block__label">
-          <span>${_escHtml(label)}${filename ? ` · ${_escHtml(filename)}` : ''}</span>
+          <span>${_escHtml(label)}${filename ? ` Ãƒâ€šÃ‚Â· ${_escHtml(filename)}` : ''}</span>
           <span class="cmd-block__actions">${actions}</span>
         </div>
         <pre>${escaped}</pre>
@@ -157,12 +158,17 @@ window.AIDiagPage = (() => {
   <!-- ---- Sidebar ----------------------------------------- -->
   <aside class="ai-sidebar" id="ai-sidebar">
     <div class="ai-sidebar__header">
-      <span class="ai-sidebar__title">Conversations</span>
-      <button class="ai-new-chat-btn" id="ai-new-chat">
+      <button class="ai-conv-toggle" id="ai-conv-toggle" type="button" aria-expanded="false" title="Show conversations">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="9 6 15 12 9 18"/>
+        </svg>
+        <span class="ai-conv-toggle__label">Conversations</span>
+      </button>
+      <button class="ai-new-chat-btn" id="ai-new-chat" type="button" title="New conversation">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
         </svg>
-        New
+        <span class="ai-new-chat-btn__label">New</span>
       </button>
     </div>
     <div class="ai-conv-list" id="ai-conv-list">
@@ -191,7 +197,7 @@ window.AIDiagPage = (() => {
 
       <!-- Model select -->
       <select class="ai-model-select" id="ai-model-select">
-        <option value="">Loading models…</option>
+        <option value="">Loading modelsÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦</option>
       </select>
 
       <!-- Goal select -->
@@ -274,7 +280,7 @@ window.AIDiagPage = (() => {
         <textarea
           class="ai-textarea"
           id="ai-textarea"
-          placeholder="Ask about your strategy…"
+          placeholder="Ask about your strategyÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦"
           rows="1"
         ></textarea>
         <button class="ai-send-btn" id="ai-send-btn" disabled title="Send">
@@ -308,7 +314,7 @@ window.AIDiagPage = (() => {
   <div class="ai-deep-panel__body" id="ai-deep-panel-body">
     <div class="ai-deep-panel__loading">
       <div class="ai-deep-panel__loading-spinner"></div>
-      <span>Loading analysis…</span>
+      <span>Loading analysisÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦</span>
     </div>
   </div>
 </div>
@@ -393,7 +399,7 @@ window.AIDiagPage = (() => {
 
   function _buildWorkspace(snapshot = _snapshot()) {
     const contextLabel = snapshot.contextRunId
-      ? `${snapshot.contextStrategyName || snapshot.contextRunId}${snapshot.contextTimeframe ? ` · ${snapshot.contextTimeframe}` : ''}`
+      ? `${snapshot.contextStrategyName || snapshot.contextRunId}${snapshot.contextTimeframe ? ` Ãƒâ€šÃ‚Â· ${snapshot.contextTimeframe}` : ''}`
       : 'No backtest context injected';
     const threadLabel = snapshot.conversationId
       ? `${snapshot.conversationId}`
@@ -402,7 +408,7 @@ window.AIDiagPage = (() => {
       ? (snapshot.statusMessage || 'Streaming response in progress')
       : 'Idle';
     const loopLabel = snapshot.loopBusy
-      ? `Running${snapshot.loopId ? ` · ${snapshot.loopId}` : ''}`
+      ? `Running${snapshot.loopId ? ` Ãƒâ€šÃ‚Â· ${snapshot.loopId}` : ''}`
       : (snapshot.loopEnabled ? 'Armed and waiting for apply' : 'Inactive');
 
     return `
@@ -444,11 +450,11 @@ window.AIDiagPage = (() => {
             <div class="ai-diagnosis-metrics">
               <div class="ai-diagnosis-metric">
                 <span class="ai-diagnosis-metric__label">Provider</span>
-                <span class="ai-diagnosis-metric__value">${_escHtml(snapshot.provider || '—')}</span>
+                <span class="ai-diagnosis-metric__value">${_escHtml(snapshot.provider || 'ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â')}</span>
               </div>
               <div class="ai-diagnosis-metric">
                 <span class="ai-diagnosis-metric__label">Model</span>
-                <span class="ai-diagnosis-metric__value">${_escHtml(snapshot.model || '—')}</span>
+                <span class="ai-diagnosis-metric__value">${_escHtml(snapshot.model || 'ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â')}</span>
               </div>
               <div class="ai-diagnosis-metric">
                 <span class="ai-diagnosis-metric__label">Threads</span>
@@ -550,6 +556,21 @@ window.AIDiagPage = (() => {
     };
   }
 
+  function _setConversationListOpen(open) {
+    const isOpen = !!open;
+    _state.convListOpen = isOpen;
+    if (!_el.sidebar) return;
+
+    _el.sidebar.classList.toggle('ai-sidebar--conv-collapsed', !isOpen);
+    if (_el.convToggle) {
+      _el.convToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      _el.convToggle.setAttribute('title', isOpen ? 'Hide conversations' : 'Show conversations');
+    }
+  }
+
+  function _toggleConversationList() {
+    _setConversationListOpen(!_state.convListOpen);
+  }
   /* ---- Load providers --------------------------------------- */
   async function _loadProviders() {
     try {
@@ -726,6 +747,7 @@ window.AIDiagPage = (() => {
     _showEmpty(true);
     document.querySelectorAll('.ai-conv-item').forEach(el => el.classList.remove('active'));
     _updateLoopButton();
+    _setConversationListOpen(false);
     _el.textarea.focus();
     _publishState();
   }
@@ -764,7 +786,7 @@ window.AIDiagPage = (() => {
 
     if (active) {
       const strat = _state.contextStrategyName || _state.contextRunId;
-      const tf = _state.contextTimeframe ? ` · ${_state.contextTimeframe}` : '';
+      const tf = _state.contextTimeframe ? ` Ãƒâ€šÃ‚Â· ${_state.contextTimeframe}` : '';
       _el.contextBadge.textContent = `${strat}${tf}`;
     }
 
@@ -847,7 +869,7 @@ window.AIDiagPage = (() => {
       const pipeline = evt.pipeline_type || evt.classification?.recommended_pipeline;
       const complexity = evt.classification?.complexity;
       if (pipeline || complexity) {
-        return `Pipeline: ${pipeline || 'simple'}${complexity ? ` · Complexity: ${complexity}` : ''}`;
+        return `Pipeline: ${pipeline || 'simple'}${complexity ? ` Ãƒâ€šÃ‚Â· Complexity: ${complexity}` : ''}`;
       }
     }
 
@@ -890,7 +912,7 @@ window.AIDiagPage = (() => {
         <button class="ai-thinking__toggle" type="button" aria-expanded="${open ? 'true' : 'false'}">
           <span class="ai-thinking__title">Thinking</span>
           <span class="ai-thinking__summary">${_formatStepCount(stepCount)}</span>
-          <span class="ai-thinking__chevron" aria-hidden="true">▾</span>
+          <span class="ai-thinking__chevron" aria-hidden="true">ÃƒÂ¢Ã¢â‚¬â€œÃ‚Â¾</span>
         </button>
         <div class="ai-thinking__body">
           <div class="ai-thinking__list">${trace.map(_renderTraceItem).join('')}</div>
@@ -984,7 +1006,7 @@ window.AIDiagPage = (() => {
       <button class="ai-thinking__toggle" type="button" aria-expanded="true">
         <span class="ai-thinking__title">Thinking</span>
         <span class="ai-thinking__summary">starting...</span>
-        <span class="ai-thinking__chevron" aria-hidden="true">▾</span>
+        <span class="ai-thinking__chevron" aria-hidden="true">ÃƒÂ¢Ã¢â‚¬â€œÃ‚Â¾</span>
       </button>
       <div class="ai-thinking__body">
         <div class="ai-thinking__list"></div>
@@ -1088,11 +1110,11 @@ window.AIDiagPage = (() => {
                 badge.className = `ai-pipeline-badge ai-pipeline-badge--${evt.pipeline_type}`;
                 badge.textContent = evt.pipeline_type;
               }
-              _setStatus(`Pipeline: ${evt.pipeline_type}…`);
+              _setStatus(`Pipeline: ${evt.pipeline_type}ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦`);
             }
 
-            if (evt.status === 'reasoning') _setStatus('Reasoning…');
-            if (evt.status === 'composing') _setStatus('Composing response…');
+            if (evt.status === 'reasoning') _setStatus('ReasoningÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦');
+            if (evt.status === 'composing') _setStatus('Composing responseÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦');
 
             if (evt.delta) {
               fullText += evt.delta;
@@ -1177,7 +1199,7 @@ window.AIDiagPage = (() => {
         const finalStep = (pipeline.steps || []).slice().reverse().find(step => step.role !== 'classifier') || {};
         const modelName = (finalStep.model_id || '').split('/').pop();
         const totalMs = pipeline.total_duration_ms || pipeline.duration_ms || 0;
-        const dur = totalMs ? ` · ${(totalMs/1000).toFixed(1)}s` : '';
+        const dur = totalMs ? ` Ãƒâ€šÃ‚Â· ${(totalMs/1000).toFixed(1)}s` : '';
         modelSpan.textContent = `${modelName}${dur}`;
       }
     }
@@ -1203,7 +1225,7 @@ window.AIDiagPage = (() => {
     _el.deepPanelBody.innerHTML = `
       <div class="ai-deep-panel__loading">
         <div class="ai-deep-panel__loading-spinner"></div>
-        <span>Running deep analysis…</span>
+        <span>Running deep analysisÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦</span>
       </div>
     `;
 
@@ -1494,7 +1516,7 @@ window.AIDiagPage = (() => {
         _updateContextBar();
       }
       const reportLinks = evt.report_download_url
-        ? `\n\n[Download Report](${evt.report_download_url}) · [View Report](${evt.report_url || '#'})`
+        ? `\n\n[Download Report](${evt.report_download_url}) Ãƒâ€šÃ‚Â· [View Report](${evt.report_url || '#'})`
         : (evt.md_report_path ? `\n\nReport: \`${evt.md_report_path}\`` : '');
       const metrics = evt.metrics?.summary || {};
       const metricsLine = Object.keys(metrics).length
@@ -1625,7 +1647,7 @@ window.AIDiagPage = (() => {
         return;
       }
       const currentSrc = await resp.text();
-      _el.evoDiffTitle.textContent = `Code Diff — ${strategyHint}.py (chat proposal)`;
+      _el.evoDiffTitle.textContent = `Code Diff ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â ${strategyHint}.py (chat proposal)`;
       _renderCodeDiff(currentSrc, code);
       _el.evoDiffOverlay.classList.add('open');
       return;
@@ -1773,7 +1795,7 @@ window.AIDiagPage = (() => {
     if (!_state.contextRunId) return;
 
     const startBtn = document.getElementById('evo-start-btn');
-    if (startBtn) { startBtn.disabled = true; startBtn.textContent = 'Starting…'; }
+    if (startBtn) { startBtn.disabled = true; startBtn.textContent = 'StartingÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦'; }
 
     try {
       const resp = await fetch('/evolution/start', {
@@ -1920,20 +1942,20 @@ window.AIDiagPage = (() => {
       card.innerHTML = `
         <div class="evo-gen-card__head">
           <span>Generation ${gen} of ${_evo.maxGenerations}</span>
-          <span style="color:var(--accent);font-size:10px">🔄 Live</span>
+          <span style="color:var(--accent);font-size:10px">ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ¢â‚¬Å¾ Live</span>
         </div>
         <div class="evo-gen-card__body" id="evo-card-body-${gen}">
           <div class="evo-step evo-step--pending" id="evo-step-analyzing-${gen}">
-            <span class="evo-step__icon"></span><span>Analyzing backtest…</span>
+            <span class="evo-step__icon"></span><span>Analyzing backtestÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦</span>
           </div>
           <div class="evo-step evo-step--pending" id="evo-step-mutating-${gen}">
-            <span class="evo-step__icon"></span><span>AI mutating strategy code…</span>
+            <span class="evo-step__icon"></span><span>AI mutating strategy codeÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦</span>
           </div>
           <div class="evo-step evo-step--pending" id="evo-step-backtesting-${gen}">
-            <span class="evo-step__icon"></span><span>Running backtest…</span>
+            <span class="evo-step__icon"></span><span>Running backtestÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦</span>
           </div>
           <div class="evo-step evo-step--pending" id="evo-step-comparing-${gen}">
-            <span class="evo-step__icon"></span><span>Comparing results…</span>
+            <span class="evo-step__icon"></span><span>Comparing resultsÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦</span>
           </div>
         </div>
       `;
@@ -2035,7 +2057,7 @@ window.AIDiagPage = (() => {
       return;
     }
 
-    _el.evoPanelBody.innerHTML = '<div style="color:var(--text-muted);font-size:var(--text-sm)">Loading results…</div>';
+    _el.evoPanelBody.innerHTML = '<div style="color:var(--text-muted);font-size:var(--text-sm)">Loading resultsÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦</div>';
 
     try {
       const data = await fetch(`/evolution/run/${_evo.loopId}`).then(r => r.json());
@@ -2043,8 +2065,8 @@ window.AIDiagPage = (() => {
       const gens = data.generations || [];
 
       const bestFitness = (session.best_fitness || 0).toFixed(1);
-      const bestVersion = session.best_version || '—';
-      const initialFitness = gens.length ? (gens[0].fitness_before || 0).toFixed(1) : '—';
+      const bestVersion = session.best_version || 'ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â';
+      const initialFitness = gens.length ? (gens[0].fitness_before || 0).toFixed(1) : 'ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â';
       const totalDelta = gens.length ? ((session.best_fitness || 0) - (gens[0].fitness_before || 0)).toFixed(1) : '0';
       const totalDeltaNum = parseFloat(totalDelta);
       const deltaClass = totalDeltaNum > 0 ? 'pos' : totalDeltaNum < 0 ? 'neg' : 'zero';
@@ -2063,7 +2085,7 @@ window.AIDiagPage = (() => {
         return `
           <tr>
             <td>${g.generation}</td>
-            <td style="font-family:var(--font-mono);font-size:10px">${_escHtml(g.version_name || '—')}</td>
+            <td style="font-family:var(--font-mono);font-size:10px">${_escHtml(g.version_name || 'ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â')}</td>
             <td>${(g.fitness_after || 0).toFixed(1)}</td>
             <td class="evo-fitness-delta evo-fitness-delta--${dc}">${dNum > 0 ? '+' : ''}${d}</td>
             <td><span class="evo-badge evo-badge--${badge}">${label}</span></td>
@@ -2079,7 +2101,7 @@ window.AIDiagPage = (() => {
           </div>
           <div class="evo-summary-card">
             <div class="evo-summary-card__title">Fitness</div>
-            <div class="evo-summary-card__value">${initialFitness} → ${bestFitness}</div>
+            <div class="evo-summary-card__value">${initialFitness} ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ ${bestFitness}</div>
             <div class="evo-summary-card__sub evo-fitness-delta evo-fitness-delta--${deltaClass}">${totalDeltaNum >= 0 ? '+' : ''}${totalDelta}</div>
           </div>
         </div>
@@ -2087,7 +2109,7 @@ window.AIDiagPage = (() => {
         <table class="evo-results-table">
           <thead>
             <tr>
-              <th>Gen</th><th>Version</th><th>Fitness</th><th>Δ</th><th>Status</th>
+              <th>Gen</th><th>Version</th><th>Fitness</th><th>ÃƒÅ½Ã¢â‚¬Â</th><th>Status</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
@@ -2111,12 +2133,12 @@ window.AIDiagPage = (() => {
   async function _acceptBestVersion(generation, versionName) {
     if (!_evo.loopId) return;
     const btn = document.getElementById('evo-accept-best-btn');
-    if (btn) { btn.disabled = true; btn.textContent = 'Applying…'; }
+    if (btn) { btn.disabled = true; btn.textContent = 'ApplyingÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦'; }
     try {
       const resp = await fetch(`/evolution/accept/${_evo.loopId}/${generation}`, { method: 'POST' });
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data = await resp.json();
-      _showEvoToast(`✓ ${data.accepted} has been applied as ${data.applied_to}`);
+      _showEvoToast(`ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“ ${data.accepted} has been applied as ${data.applied_to}`);
       _el.evoPanel.classList.remove('open');
     } catch (e) {
       if (btn) { btn.disabled = false; btn.textContent = `Accept Best Version (${versionName})`; }
@@ -2127,9 +2149,9 @@ window.AIDiagPage = (() => {
   /* ---- Code diff modal ------------------------------------ */
 
   async function _openDiff(versionName) {
-    _el.evoDiffTitle.textContent = `Code Diff — ${versionName}`;
-    _el.evoDiffOriginal.textContent = 'Loading…';
-    _el.evoDiffMutated.textContent  = 'Loading…';
+    _el.evoDiffTitle.textContent = `Code Diff ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â ${versionName}`;
+    _el.evoDiffOriginal.textContent = 'LoadingÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦';
+    _el.evoDiffMutated.textContent  = 'LoadingÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦';
     _el.evoDiffOverlay.classList.add('open');
 
     try {
@@ -2249,6 +2271,7 @@ window.AIDiagPage = (() => {
 
     DOM.setHTML(host, _buildLayout());
     _cacheRefs();
+    _setConversationListOpen(false);
     _updateLoopButton();
     _bindEvents();
     _loadProviders();
@@ -2317,13 +2340,15 @@ window.AIDiagPage = (() => {
         _resizeTextarea();
         _checkSendReady();
       }
-    });
-
-    // Send button
+    });    // Send button
     _el.sendBtn.addEventListener('click', () => _sendMessage());
 
     // New chat
     _el.newChat.addEventListener('click', _newChat);
+
+    if (_el.convToggle) {
+      _el.convToggle.addEventListener('click', _toggleConversationList);
+    }
 
     // Conversation list (delegated)
     _el.convList.addEventListener('click', e => {
@@ -2331,7 +2356,7 @@ window.AIDiagPage = (() => {
       if (deleteBtn) {
         e.stopPropagation();
         const id = deleteBtn.dataset.convId;
-        fetch(`/ai/threads/${id}`, { method: 'DELETE' }).then(() => {
+        fetch(/ai/threads/, { method: 'DELETE' }).then(() => {
           if (_state.conversationId === id) _newChat();
           _loadConversations();
         });
@@ -2340,6 +2365,7 @@ window.AIDiagPage = (() => {
       const item = e.target.closest('.ai-conv-item');
       if (item) {
         _switchConversation(item.dataset.convId);
+        _setConversationListOpen(false);
         // close mobile sidebar
         _el.sidebar.classList.remove('mobile-open');
         _el.sidebarOverlay.classList.remove('active');
