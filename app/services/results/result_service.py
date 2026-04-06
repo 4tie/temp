@@ -197,6 +197,7 @@ def normalize_backtest_result(result: dict[str, Any] | None) -> dict[str, Any]:
     summary["sharpe_ratio"] = sharpe
     summary["sharpeRatio"] = sharpe
     overview["sharpe_ratio"] = sharpe
+    overview["trades_per_day"] = to_float(summary.get("tradesPerDay"))
 
     starting_balance = to_float(summary.get("startingBalance"))
     normalized_per_pair = [
@@ -215,6 +216,7 @@ def normalize_backtest_result(result: dict[str, Any] | None) -> dict[str, Any]:
         run_metadata=run_metadata,
     )
     overview = build_overview(summary)
+    overview["trades_per_day"] = to_float(summary.get("tradesPerDay"))
     config_snapshot = normalize_config_snapshot(result)
     diagnostics = normalize_diagnostics(result)
     diagnostics["warnings"] = merge_unique_warnings(diagnostics.get("warnings") or [], integrity_warnings)

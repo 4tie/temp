@@ -18,6 +18,7 @@ class ResultsCanonicalizationTest(unittest.TestCase):
                 "totalProfit": 100,
                 "totalProfitPct": 10,
                 "totalTrades": 20,
+                "tradesPerDay": 1.25,
                 "winRate": 55,
                 "profitFactor": 1.4,
                 "maxDrawdown": 8,
@@ -31,6 +32,7 @@ class ResultsCanonicalizationTest(unittest.TestCase):
                 "totalProfit": 200,
                 "totalProfitPct": 20,
                 "totalTrades": 24,
+                "tradesPerDay": 1.5,
                 "winRate": 60,
                 "profitFactor": 1.8,
                 "maxDrawdown": 6,
@@ -43,6 +45,8 @@ class ResultsCanonicalizationTest(unittest.TestCase):
 
         self.assertEqual(tuple(snapshot.keys()), CORE_RESULT_METRICS)
         self.assertEqual(tuple(diff.keys()), CORE_RESULT_METRICS)
+        extended_snapshot = build_metric_snapshot(result_a, ("trades_per_day",))
+        self.assertEqual(extended_snapshot["trades_per_day"], 1.25)
 
     def test_canonical_paths_are_consumed_by_runtime_modules(self) -> None:
         self.assertEqual(loop_service.AI_LOOP_STATE_DIR, config.AI_LOOP_STATE_DIR)

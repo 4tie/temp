@@ -81,6 +81,15 @@ RESULT_METRICS: tuple[MetricDef, ...] = (
         decimals=0,
     ),
     MetricDef(
+        key="trades_per_day",
+        label="Trades / Day",
+        category="activity",
+        format="number",
+        higher_is_better=None,
+        sources=(("summary", "tradesPerDay"), ("summary", "trades_per_day"), ("overview", "trades_per_day"), ("run_metadata", "trades_per_day")),
+        decimals=2,
+    ),
+    MetricDef(
         key="win_rate",
         label="Win Rate",
         category="performance",
