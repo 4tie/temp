@@ -1,0 +1,29 @@
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.dashboard-panel {
+  min-height: 320px;
+}
+
+.dashboard-panel .data-table th,
+.dashboard-panel .data-table td {
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+
+.dashboard-panel .empty-state {
+  min-height: 220px;
+}
+
+@media (max-width: 960px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-panel {
+    min-height: 260px;
+  }
+}

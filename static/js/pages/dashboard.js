@@ -25,10 +25,20 @@ window.DashboardPage = (() => {
         ${_statCard('Hyperopt Runs',   '—', 'violet', 'dash-total-ho')}
         ${_statCard('Strategies',      '—', 'muted',  'dash-strategies')}
       </div>
-      <div class="section-heading">Recent Backtest Runs</div>
-      <div id="dash-recent-runs"><div class="empty-state">Loading…</div></div>
-      <div class="section-heading" style="margin-top:var(--space-6)">Recent Hyperopt Runs</div>
-      <div id="dash-recent-hyperopt"><div class="empty-state">Loading…</div></div>
+      <div class="dashboard-grid">
+        <section class="card card--fill dashboard-panel">
+          <div class="card__header">
+            <span class="card__title">Recent Backtest Runs</span>
+          </div>
+          <div class="card__body card__body--flush" id="dash-recent-runs"><div class="empty-state">Loading…</div></div>
+        </section>
+        <section class="card card--fill dashboard-panel">
+          <div class="card__header">
+            <span class="card__title">Recent Hyperopt Runs</span>
+          </div>
+          <div class="card__body card__body--flush" id="dash-recent-hyperopt"><div class="empty-state">Loading…</div></div>
+        </section>
+      </div>
     `);
   }
 

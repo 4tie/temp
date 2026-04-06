@@ -13,7 +13,14 @@ from app.services.results.metric_registry import (
     metric_registry_payload,
 )
 from app.services.results.raw_loader import find_run_local_result_artifact, load_backtest_result_payload
-from app.services.results.result_service import normalize_backtest_result, parse_backtest_results
+from app.services.results.result_service import (
+    build_compact_backtest_result,
+    load_saved_backtest_result,
+    load_stored_backtest_results,
+    normalize_backtest_result,
+    parse_backtest_results,
+    should_rehydrate_backtest_result,
+)
 
 __all__ = [
     "AI_CONTEXT_METRICS",
@@ -30,8 +37,12 @@ __all__ = [
     "find_run_local_result_artifact",
     "get_metric_def",
     "iter_metric_defs",
+    "build_compact_backtest_result",
+    "load_saved_backtest_result",
+    "load_stored_backtest_results",
     "load_backtest_result_payload",
     "metric_registry_payload",
     "normalize_backtest_result",
     "parse_backtest_results",
+    "should_rehydrate_backtest_result",
 ]

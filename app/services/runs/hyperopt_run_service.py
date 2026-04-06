@@ -73,3 +73,15 @@ def copy_hyperopt_results(run_dir: Path, strategy: str) -> None:
         if fthypt_files:
             latest = sorted(fthypt_files, key=lambda x: x.stat().st_mtime, reverse=True)[0]
             shutil.copy2(latest, run_dir / latest.name)
+
+
+def load_hyperopt_run_results(run_dir: Path, strategy: str) -> dict[str, Any]:
+    copy_hyperopt_results(run_dir, strategy)
+
+    from app.services.hyperopt_parser import load_params_file, parse_hyperopt_results
+
+    results = parse_hyperopt_results(run_dir, strategy)
+    exported_params = load_params_file(strategy)
+    if exported_params:
+        results["exported_params"] = exported_params
+    return results

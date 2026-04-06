@@ -101,15 +101,21 @@ async def run_backtest(req: BacktestRequest):
         timerange=req.timerange,
     )
     if missing_pairs:
+        # Auto-download missing data
+        download_job_id = start_download(
+            pairs=missing_pairs,
+            timeframe=req.timeframe,
+            timerange=req.timerange,
+            command_override=None,
+        )
         detail_suffix = " | ".join(issue_details[:5])
         raise HTTPException(
-            status_code=400,
+            status_code=202,
             detail=(
-                "Missing local market data for selected pairs: "
-                f"{', '.join(missing_pairs)}. "
-                "Download data for those pairs before backtesting. "
+                f"Downloading missing data for pairs: {', '.join(missing_pairs)}. "
+                f"Download job ID: {download_job_id}. "
                 f"Details: {detail_suffix}. "
-                f"Timerange context: {timerange_context}"
+                "Please wait for download to complete and retry the backtest."
             ),
         )
 

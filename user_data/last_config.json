@@ -1,32 +1,10 @@
 {
-  "strategy": "MultiMa",
-  "pairs": [
-    "ETH/USDT"
-  ],
-  "timeframe": "5m",
-  "timerange": "20251101-20260405",
-  "exchange": "binance",
-  "strategy_path": null,
-  "strategy_label": null,
-  "strategy_params": {},
-  "command_override": [
-    "python",
-    "-m",
-    "freqtrade",
-    "backtesting",
-    "-c",
-    "user_data/config.json",
-    "--strategy",
-    "MultiMa",
-    "--timeframe",
-    "5m",
-    "--export",
-    "trades",
-    "--backtest-directory",
-    "user_data/backtest_results/MultiMa",
-    "--timerange",
-    "20251101-20260405",
-    "--pairs",
-    "ETH/USDT"
-  ]
+  "download": {
+    "pairs": [
+      "ETH/USDT"
+    ],
+    "timeframe": "5m",
+    "timerange": "20241230-20260405",
+    "command_override": null
+  }
 }

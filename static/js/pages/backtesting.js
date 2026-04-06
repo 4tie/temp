@@ -94,7 +94,7 @@ window.BacktestPage = (() => {
 
   function _renderGroup(label, pairs, localSet, configSet, favs, checked = new Set()) {
     if (!pairs.length) return '';
-    const dot = localSet.has(pairs[0]) ? '<span style="color:var(--color-green)">⬤</span>' : configSet.has(pairs[0]) ? '<span style="color:var(--violet)">⬤</span>' : '';
+    const dot = localSet.has(pairs[0]) ? '<span style="color:var(--green)">⬤</span>' : configSet.has(pairs[0]) ? '<span style="color:var(--accent)">⬤</span>' : '';
     return `<div class="pairs-picker__group-label">${dot} ${_esc(label)}</div>` +
       pairs.map(p => {
         const isFav  = favs.has(p);
@@ -335,7 +335,7 @@ window.BacktestPage = (() => {
             <div class="card__body">
               <form id="bt-form" class="form">
                 <div class="form-group">
-                  <label class="form-label" for="bt-strategy">Strategy <span id="bt-strategy-saved" style="font-size:var(--text-xs);color:var(--color-green);opacity:0;transition:opacity 0.5s;margin-left:6px"></span></label>
+                  <label class="form-label" for="bt-strategy">Strategy <span id="bt-strategy-saved" style="font-size:var(--text-xs);color:var(--green);opacity:0;transition:opacity 0.5s;margin-left:6px"></span></label>
                   <select class="form-select" id="bt-strategy" name="strategy" required>
                     <option value="">Loading strategies…</option>
                   </select>
@@ -387,16 +387,16 @@ window.BacktestPage = (() => {
                 </div>
                 <div class="form-row">
                   <div class="form-group">
-                    <label class="form-label" for="bt-wallet">Starting Wallet <span id="bt-wallet-saved" style="font-size:var(--text-xs);color:var(--color-green);opacity:0;transition:opacity 0.5s;margin-left:6px"></span></label>
+                    <label class="form-label" for="bt-wallet">Starting Wallet <span id="bt-wallet-saved" style="font-size:var(--text-xs);color:var(--green);opacity:0;transition:opacity 0.5s;margin-left:6px"></span></label>
                     <input class="form-input" id="bt-wallet" name="dry_run_wallet" type="number" value="1000" min="1">
                   </div>
                   <div class="form-group">
-                    <label class="form-label" for="bt-max-trades">Max Open Trades <span id="bt-max-trades-saved" style="font-size:var(--text-xs);color:var(--color-green);opacity:0;transition:opacity 0.5s;margin-left:6px"></span></label>
+                    <label class="form-label" for="bt-max-trades">Max Open Trades <span id="bt-max-trades-saved" style="font-size:var(--text-xs);color:var(--green);opacity:0;transition:opacity 0.5s;margin-left:6px"></span></label>
                     <input class="form-input" id="bt-max-trades" name="max_open_trades" type="number" value="3" min="1">
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="form-label" for="bt-stake">Stake Amount <span id="bt-stake-saved" style="font-size:var(--text-xs);color:var(--color-green);opacity:0;transition:opacity 0.5s;margin-left:6px"></span></label>
+                  <label class="form-label" for="bt-stake">Stake Amount <span id="bt-stake-saved" style="font-size:var(--text-xs);color:var(--green);opacity:0;transition:opacity 0.5s;margin-left:6px"></span></label>
                   <input class="form-input" id="bt-stake" name="stake_amount" type="text" value="unlimited">
                 </div>
                 <div id="bt-cmd-preview"></div>
@@ -613,10 +613,10 @@ window.BacktestPage = (() => {
       if (hint) {
         if (local.length) {
           hint.textContent = `${local.length} pair(s) with downloaded data`;
-          hint.style.color = 'var(--color-green)';
+          hint.style.color = 'var(--green)';
         } else {
           hint.textContent = 'No local data — select pairs then use Download Data';
-          hint.style.color = 'var(--color-amber)';
+          hint.style.color = 'var(--amber)';
         }
       }
 

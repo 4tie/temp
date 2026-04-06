@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import json
+from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
 
+from app.core.config import PARSED_RESULTS_FILENAME
 from app.services.results.empty_result_factory import empty_backtest_result, empty_normalized_result
 from app.services.results.metric_registry import build_metric_snapshot
 from app.services.results.overview_builder import build_overview, extract_overview
@@ -15,7 +18,7 @@ from app.services.results.raw_extractors import (
     extract_section,
     extract_trades,
 )
-from app.services.results.raw_loader import load_backtest_result_payload
+from app.services.results.raw_loader import find_run_local_result_artifact, load_backtest_result_payload
 from app.services.results.risk_normalizer import compute_advanced_metrics, normalize_risk_metrics
 from app.services.results.schema_keys import (
     BALANCE_METRIC_KEYS,
@@ -46,6 +49,77 @@ from app.services.results.trade_normalizer import (
     normalize_stat_rows,
     normalize_trade,
 )
+
+
+def load_saved_backtest_result(results_file: Path) -> dict[str, Any] | None:
+    if not results_file.exists():
+        return None
+    try:
+        raw = json.loads(results_file.read_text())
+    except (json.JSONDecodeError, OSError):
+        return None
+    return normalize_backtest_result(raw)
+
+
+def should_rehydrate_backtest_result(results: Mapping[str, Any] | None) -> bool:
+    if not isinstance(results, Mapping):
+        return True
+
+    summary_metrics = results.get("summary_metrics")
+    risk_metrics = results.get("risk_metrics")
+    periodic_breakdown = results.get("periodic_breakdown")
+    raw_artifact = results.get("raw_artifact")
+    diagnostics = results.get("diagnostics")
+
+    if not isinstance(summary_metrics, Mapping) or not isinstance(risk_metrics, Mapping):
+        return True
+    if not isinstance(periodic_breakdown, Mapping):
+        return True
+    if not isinstance(raw_artifact, Mapping):
+        return True
+    if not isinstance(diagnostics, Mapping):
+        return True
+    if not summary_metrics:
+        return True
+    if not periodic_breakdown:
+        return True
+    if not raw_artifact.get("available"):
+        return True
+    return False
+
+
+def load_stored_backtest_results(
+    run_dir: Path,
+    *,
+    persist_normalized: Callable[[dict[str, Any]], None] | None = None,
+) -> dict[str, Any] | None:
+    results_file = run_dir / PARSED_RESULTS_FILENAME
+    normalized = load_saved_backtest_result(results_file)
+    has_local_artifact = bool(find_run_local_result_artifact(run_dir).get("available"))
+
+    if normalized and (not has_local_artifact or not should_rehydrate_backtest_result(normalized)):
+        return normalized
+
+    if has_local_artifact:
+        reparsed = parse_backtest_results(run_dir)
+        if not reparsed.get("error"):
+            normalized = normalize_backtest_result(reparsed)
+            if persist_normalized is not None:
+                persist_normalized(normalized)
+            return normalized
+
+    return normalized
+
+
+def build_compact_backtest_result(result: Mapping[str, Any] | None) -> dict[str, Any] | None:
+    if not isinstance(result, Mapping):
+        return None
+    return {
+        "overview": dict(result.get("overview") or {}),
+        "summary": dict(result.get("summary") or {}),
+        "result_metrics": dict(result.get("result_metrics") or build_metric_snapshot(result)),
+        "warnings": list(result.get("warnings") or []),
+    }
 
 
 def parse_backtest_results(result_dir: Path) -> dict[str, Any]:
@@ -180,4 +254,11 @@ def normalize_backtest_result(result: dict[str, Any] | None) -> dict[str, Any]:
     return normalized
 
 
-__all__ = ["normalize_backtest_result", "parse_backtest_results"]
+__all__ = [
+    "build_compact_backtest_result",
+    "load_saved_backtest_result",
+    "load_stored_backtest_results",
+    "normalize_backtest_result",
+    "parse_backtest_results",
+    "should_rehydrate_backtest_result",
+]

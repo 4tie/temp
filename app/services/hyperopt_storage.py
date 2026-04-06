@@ -4,7 +4,8 @@ import shutil
 from pathlib import Path
 from typing import Any, Optional
 
-from app.core.config import HYPEROPT_RUNS_DIR, PARSED_RESULTS_FILENAME, RUN_LOGS_FILENAME, RUN_META_FILENAME
+from app.core.config import HYPEROPT_RUNS_DIR
+from app.services.runs.base_run_service import run_logs_path, run_meta_path, run_results_path
 
 _SAFE_ID_RE = re.compile(r"^[A-Za-z0-9_\-]+$")
 _HYPEROPT_RUNS_DIR = HYPEROPT_RUNS_DIR
@@ -19,54 +20,51 @@ def _validate_id(value: str) -> str:
     return value
 
 
-def get_hyperopt_run_dir(run_id: str) -> Path:
+def _run_dir(run_id: str, *, create: bool = False) -> Path:
     _validate_id(run_id)
-    d = _HYPEROPT_RUNS_DIR / run_id
-    d.mkdir(parents=True, exist_ok=True)
-    return d
+    run_dir = _HYPEROPT_RUNS_DIR / run_id
+    if create:
+        run_dir.mkdir(parents=True, exist_ok=True)
+    return run_dir
+
+
+def _read_json_file(path: Path) -> Optional[dict[str, Any]]:
+    if not path.exists():
+        return None
+    try:
+        payload = json.loads(path.read_text())
+    except (json.JSONDecodeError, OSError):
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def _write_json_file(path: Path, payload: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2, default=str))
+
+
+def get_hyperopt_run_dir(run_id: str) -> Path:
+    return _run_dir(run_id, create=True)
 
 
 def save_hyperopt_meta(run_id: str, meta: dict[str, Any]):
-    _validate_id(run_id)
-    run_dir = _HYPEROPT_RUNS_DIR / run_id
-    run_dir.mkdir(parents=True, exist_ok=True)
-    (run_dir / RUN_META_FILENAME).write_text(json.dumps(meta, indent=2, default=str))
+    _write_json_file(run_meta_path(_run_dir(run_id, create=True)), meta)
 
 
 def load_hyperopt_meta(run_id: str) -> Optional[dict[str, Any]]:
-    _validate_id(run_id)
-    meta_file = _HYPEROPT_RUNS_DIR / run_id / RUN_META_FILENAME
-    if not meta_file.exists():
-        return None
-    try:
-        return json.loads(meta_file.read_text())
-    except (json.JSONDecodeError, OSError):
-        return None
+    return _read_json_file(run_meta_path(_run_dir(run_id)))
 
 
 def save_hyperopt_results(run_id: str, results: dict[str, Any]):
-    _validate_id(run_id)
-    run_dir = _HYPEROPT_RUNS_DIR / run_id
-    run_dir.mkdir(parents=True, exist_ok=True)
-    (run_dir / PARSED_RESULTS_FILENAME).write_text(json.dumps(results, indent=2, default=str))
+    _write_json_file(run_results_path(_run_dir(run_id, create=True)), results)
 
 
 def load_hyperopt_results(run_id: str) -> Optional[dict[str, Any]]:
-    _validate_id(run_id)
-    results_file = _HYPEROPT_RUNS_DIR / run_id / PARSED_RESULTS_FILENAME
-    if not results_file.exists():
-        return None
-    try:
-        return json.loads(results_file.read_text())
-    except (json.JSONDecodeError, OSError):
-        return None
+    return _read_json_file(run_results_path(_run_dir(run_id)))
 
 
 def save_hyperopt_logs(run_id: str, logs: list[str]):
-    _validate_id(run_id)
-    run_dir = _HYPEROPT_RUNS_DIR / run_id
-    run_dir.mkdir(parents=True, exist_ok=True)
-    (run_dir / RUN_LOGS_FILENAME).write_text("\n".join(logs))
+    run_logs_path(_run_dir(run_id, create=True)).write_text("\n".join(logs))
 
 
 def list_hyperopt_runs() -> list[dict[str, Any]]:
@@ -80,20 +78,19 @@ def list_hyperopt_runs() -> list[dict[str, Any]]:
         meta = load_hyperopt_meta(d.name)
         if meta:
             meta["run_id"] = d.name
-            meta["has_results"] = (d / PARSED_RESULTS_FILENAME).exists()
+            meta["has_results"] = run_results_path(d).exists()
             runs.append(meta)
         else:
             runs.append({
                 "run_id": d.name,
                 "status": "unknown",
-                "has_results": (d / PARSED_RESULTS_FILENAME).exists(),
+                "has_results": run_results_path(d).exists(),
             })
     return runs
 
 
 def delete_hyperopt_run(run_id: str) -> bool:
-    _validate_id(run_id)
-    run_dir = _HYPEROPT_RUNS_DIR / run_id
+    run_dir = _run_dir(run_id)
     if run_dir.exists():
         shutil.rmtree(run_dir)
         return True

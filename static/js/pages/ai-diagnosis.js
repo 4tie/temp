@@ -210,7 +210,7 @@ window.AIDiagPage = (() => {
 
     <!-- Context bar -->
     <div class="ai-context-bar hidden" id="ai-context-bar">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--violet);flex-shrink:0">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--accent);flex-shrink:0">
         <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
       </svg>
       <span style="color:var(--text-muted)">Context:</span>
@@ -301,7 +301,7 @@ window.AIDiagPage = (() => {
 <div class="evo-panel" id="evo-panel">
   <div class="evo-panel__header">
     <span class="evo-panel__title">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
         <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
         <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
       </svg>
@@ -1111,7 +1111,7 @@ window.AIDiagPage = (() => {
       ${params.length ? `
       <div class="ai-analysis-section">
         <div class="ai-analysis-section__head">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
             <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
           </svg>
           Parameter Recommendations
@@ -1741,7 +1741,7 @@ window.AIDiagPage = (() => {
       card.innerHTML = `
         <div class="evo-gen-card__head">
           <span>Generation ${gen} of ${_evo.maxGenerations}</span>
-          <span style="color:#8b5cf6;font-size:10px">🔄 Live</span>
+          <span style="color:var(--accent);font-size:10px">🔄 Live</span>
         </div>
         <div class="evo-gen-card__body" id="evo-card-body-${gen}">
           <div class="evo-step evo-step--pending" id="evo-step-analyzing-${gen}">

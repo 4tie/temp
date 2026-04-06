@@ -83,21 +83,21 @@ def persist_loop_state_locked() -> None:
         "idempotency": LOOP_IDEMPOTENCY,
         "updated_at": utc_now(),
     }
-    fd, tmp_path = tempfile.mkstemp(prefix="loop_state.", suffix=".tmp", dir=str(LOOP_STATE_DIR))
+    fd, tmp_path = tempfile.mkstemp(prefix="loop_state.", suffix=".tmp", dir=str(AI_LOOP_STATE_DIR))
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as handle:
             json.dump(payload, handle, ensure_ascii=False, indent=2)
-        os.replace(tmp_path, LOOP_STATE_FILE)
+        os.replace(tmp_path, AI_LOOP_STATE_FILE)
     finally:
         if os.path.exists(tmp_path):
             os.unlink(tmp_path)
 
 
 def load_loop_state() -> None:
-    if not LOOP_STATE_FILE.exists():
+    if not AI_LOOP_STATE_FILE.exists():
         return
     try:
-        data = json.loads(LOOP_STATE_FILE.read_text(encoding="utf-8"))
+        data = json.loads(AI_LOOP_STATE_FILE.read_text(encoding="utf-8"))
     except Exception as exc:
         logger.warning("Failed to read loop state file: %s", exc)
         return

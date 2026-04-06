@@ -31,13 +31,15 @@ window.StrategyLabPage = (() => {
 
   function _render() {
     DOM.setHTML(_el, `
+      <div class="strategy-lab-page" id="strategy-lab-page">
       <div class="page-header">
         <h1 class="page-header__title">Strategy Lab</h1>
         <p class="page-header__subtitle">Browse, inspect, and analyze your FreqTrade strategy files.</p>
+        <div class="page-header__meta" id="sl-meta">Source .py, runtime sidecar values, and extracted parameter metadata stay aligned in one editor flow.</div>
       </div>
-      <div class="split-layout split-layout--lab">
+      <div class="split-layout split-layout--lab sl-layout">
         <div class="split-layout__sidebar">
-          <div class="card card--fill">
+          <div class="card card--fill sl-sidebar-card">
             <div class="card__header">
               <span class="card__title">Strategies</span>
               <span class="badge badge--muted" id="sl-count">0</span>
@@ -65,6 +67,7 @@ window.StrategyLabPage = (() => {
           </div>
         </div>
       </div>
+      </div>
     `);
 
     DOM.on(DOM.$('#sl-search', _el), 'input', e => _filterList(e.target.value));
@@ -75,6 +78,7 @@ window.StrategyLabPage = (() => {
       const data = await API.getStrategies();
       _strategies = data.strategies || [];
       DOM.setText(DOM.$('#sl-count', _el), String(_strategies.length));
+      DOM.setText(DOM.$('#sl-meta', _el), `${_strategies.length} ${_strategies.length === 1 ? 'strategy' : 'strategies'} available for inspection and source edits.`);
       _renderList(_strategies);
     } catch (err) {
       Toast.error('Failed to load strategies: ' + err.message);
@@ -139,24 +143,26 @@ window.StrategyLabPage = (() => {
       <div class="card__header">
         <span class="card__title">${_esc(name)}</span>
         <div class="sl-header-badges">
-          <span class="badge badge--violet">${params.length} parameters</span>
+          <span class="badge sl-count-badge">${params.length} parameters</span>
           <span class="badge badge--${_dirty ? 'amber' : 'green'}" id="sl-dirty-badge">${_dirty ? 'Unsaved' : 'Saved'}</span>
         </div>
       </div>
-      <div class="card__body">
+      <div class="card__body sl-detail-body">
         ${params.length ? `
-          <table class="data-table">
-            <thead><tr><th>Parameter</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
-            <tbody>
-              ${params.map(p => `
-                <tr>
-                  <td class="font-mono text-sm">${_esc(p.name || '—')}</td>
-                  <td><span class="badge badge--muted">${_esc(p.type || '—')}</span></td>
-                  <td class="font-mono text-sm text-amber">${_esc(String(p.default ?? '—'))}</td>
-                  <td class="text-secondary text-sm">${_esc(p.description || '—')}</td>
-                </tr>`).join('')}
-            </tbody>
-          </table>` : '<div class="empty-state">No configurable parameters found.</div>'}
+          <div class="sl-params-table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Parameter</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+              <tbody>
+                ${params.map(p => `
+                  <tr>
+                    <td class="font-mono text-sm">${_esc(p.name || '—')}</td>
+                    <td><span class="badge badge--muted">${_esc(p.type || '—')}</span></td>
+                    <td class="font-mono text-sm text-amber">${_esc(String(p.default ?? '—'))}</td>
+                    <td class="text-secondary text-sm">${_esc(p.description || '—')}</td>
+                  </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>` : '<div class="empty-state">No configurable parameters found.</div>'}
 
         <section class="sl-source-card">
           <div class="sl-source-toolbar">

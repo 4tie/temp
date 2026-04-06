@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import Any, Optional
 
 from app.core.config import BACKTEST_RESULTS_DIR, RAW_ARTIFACT_META_SUFFIX
+from app.services.results.raw_loader import find_run_local_result_artifact
+from app.services.results.result_service import parse_backtest_results
 from app.services.runs.run_metadata_service import exchange_name_from_config, read_runtime_config, utcnow_iso
 
 
@@ -108,3 +110,40 @@ def try_import_fresh_global_result(run_dir: Path, meta: dict[str, Any]) -> bool:
 
     shutil.copy2(source_artifact, run_dir / source_artifact.name)
     return True
+
+
+def collect_backtest_run_results(run_dir: Path, meta: dict[str, Any]) -> dict[str, Any]:
+    artifact = find_run_local_result_artifact(run_dir)
+    if not artifact.get("available") and try_import_fresh_global_result(run_dir, meta):
+        artifact = find_run_local_result_artifact(run_dir)
+
+    if not artifact.get("available"):
+        return {
+            "status": "failed",
+            "results": None,
+            "error": "missing run-local result artifact",
+            "log_message": "ERROR: Backtest completed but no attributable result artifact was found for this run.",
+            "raw_artifact": {"available": False, "run_local": False},
+        }
+
+    results = parse_backtest_results(run_dir)
+    results["display_strategy"] = meta.get("display_strategy") or meta.get("strategy")
+    raw_artifact = results.get("raw_artifact", {"available": False})
+
+    if results.get("error"):
+        error = f"result parse error: {results.get('error')}"
+        return {
+            "status": "failed",
+            "results": results,
+            "error": error,
+            "log_message": f"ERROR: Failed to parse run-local result artifact: {results.get('error')}",
+            "raw_artifact": raw_artifact,
+        }
+
+    return {
+        "status": "completed",
+        "results": results,
+        "error": None,
+        "log_message": None,
+        "raw_artifact": raw_artifact,
+    }

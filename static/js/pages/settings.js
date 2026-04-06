@@ -6,6 +6,7 @@
 window.SettingsPage = (() => {
   let _el = null;
   let _presets = [];
+  let _selectedThemePreset = 'ocean';
 
   /* ── Helpers ─────────────────────────────────────────────── */
   function _esc(str) {
@@ -21,6 +22,10 @@ window.SettingsPage = (() => {
   function _set(id, v) {
     const el = DOM.$(`#${id}`, _el);
     if (el && v != null) el.value = v;
+  }
+
+  function _getThemePresets() {
+    return window.ThemeManager?.getPresets?.() || [];
   }
 
   function _splitApiKeys(raw) {
@@ -291,6 +296,25 @@ window.SettingsPage = (() => {
           </div>
         </div>
 
+        <div class="card" style="margin-top:var(--space-4)">
+          <div class="card__header">
+            <span class="card__title">Appearance</span>
+            <span class="settings-hint">Saved to browser storage</span>
+          </div>
+          <div class="card__body">
+            <div class="settings-section-label">Theme Presets</div>
+            <div class="settings-input-panel">
+              <div class="settings-input-panel__toolbar">
+                <span class="settings-api-count">Accent &amp; Surface Colors</span>
+              </div>
+              <div class="settings-input-panel__body">
+                <div id="theme-preset-grid" class="theme-preset-grid"></div>
+                <span class="form-hint">Pick a preset to update the full app theme immediately.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- ── Presets ── -->
         <div class="card" style="margin-top:var(--space-4)">
           <div class="card__header">
@@ -341,6 +365,8 @@ window.SettingsPage = (() => {
       _set('s-wallet',     cfg.dry_run_wallet  || 1000);
       _set('s-max-trades', cfg.max_open_trades || 3);
       _set('s-stake',      cfg.stake_amount    || 'unlimited');
+      _selectedThemePreset = cfg.theme_preset || window.ThemeManager?.getStoredPreset?.() || 'ocean';
+      _renderThemePresets();
 
       _presets = presetsData.presets || {};
       _renderPresets();
@@ -389,8 +415,10 @@ window.SettingsPage = (() => {
       dry_run_wallet:  parseFloat(_val('s-wallet'))     || 1000,
       max_open_trades: parseInt(_val('s-max-trades'))   || 3,
       stake_amount:    _val('s-stake')      || 'unlimited',
+      theme_preset:    _selectedThemePreset || 'ocean',
     };
     localStorage.setItem('4tie_settings', JSON.stringify(vals));
+    window.ThemeManager?.applyPreset?.(_selectedThemePreset || 'ocean');
     Toast.success('Trade defaults saved.');
   }
 
@@ -400,7 +428,10 @@ window.SettingsPage = (() => {
     _set('s-wallet',     1000);
     _set('s-max-trades', 3);
     _set('s-stake',      'unlimited');
-    Toast.info('Reset to defaults (not saved).');
+    _selectedThemePreset = window.ThemeManager?.DEFAULT_PRESET || 'ocean';
+    window.ThemeManager?.applyPreset?.(_selectedThemePreset);
+    _renderThemePresets();
+    Toast.info('Reset defaults applied.');
   }
 
   function _loadLocalSettings() {
@@ -447,6 +478,39 @@ window.SettingsPage = (() => {
     );
   }
 
+  function _renderThemePresets() {
+    const el = DOM.$('#theme-preset-grid', _el);
+    if (!el) return;
+    const presets = _getThemePresets();
+    el.innerHTML = presets.map(preset => `
+      <button
+        type="button"
+        class="theme-preset-card ${preset.id === _selectedThemePreset ? 'is-active' : ''}"
+        data-theme-preset="${_esc(preset.id)}"
+        aria-pressed="${preset.id === _selectedThemePreset ? 'true' : 'false'}"
+      >
+        <div class="theme-preset-card__swatches">
+          ${preset.swatches.map(color => `<span class="theme-preset-card__swatch" style="background:${_esc(color)}"></span>`).join('')}
+        </div>
+        <div class="theme-preset-card__meta">
+          <div>
+            <div class="theme-preset-card__title">${_esc(preset.name)}</div>
+            <div class="theme-preset-card__desc">${_esc(preset.description)}</div>
+          </div>
+          ${preset.id === _selectedThemePreset ? '<span class="theme-preset-card__badge">Active</span>' : ''}
+        </div>
+      </button>
+    `).join('');
+
+    el.querySelectorAll('[data-theme-preset]').forEach(btn => {
+      DOM.on(btn, 'click', () => {
+        _selectedThemePreset = btn.dataset.themePreset || 'ocean';
+        window.ThemeManager?.applyPreset?.(_selectedThemePreset);
+        _renderThemePresets();
+      });
+    });
+  }
+
   async function _onSavePreset() {
     const rawName = await Modal.prompt({
       title: 'Save Preset',
@@ -464,6 +528,7 @@ window.SettingsPage = (() => {
       dry_run_wallet:  parseFloat(_val('s-wallet'))   || 1000,
       max_open_trades: parseInt(_val('s-max-trades')) || 3,
       stake_amount:    _val('s-stake'),
+      theme_preset:    _selectedThemePreset || 'ocean',
     };
     try {
       await API.savePreset({ name, config });
@@ -484,6 +549,9 @@ window.SettingsPage = (() => {
     _set('s-wallet',     cfg.dry_run_wallet);
     _set('s-max-trades', cfg.max_open_trades);
     _set('s-stake',      cfg.stake_amount);
+    _selectedThemePreset = cfg.theme_preset || window.ThemeManager?.getStoredPreset?.() || 'ocean';
+    window.ThemeManager?.applyPreset?.(_selectedThemePreset);
+    _renderThemePresets();
     Toast.info(`Loaded preset "${name}".`);
   }
 

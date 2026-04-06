@@ -83,7 +83,7 @@ window.HyperoptPage = (() => {
 
   function _renderGroup(label, pairs, localSet, configSet, favs, checked = new Set()) {
     if (!pairs.length) return '';
-    const dot = localSet.has(pairs[0]) ? '<span style="color:var(--color-green)">⬤</span>' : configSet.has(pairs[0]) ? '<span style="color:var(--violet)">⬤</span>' : '';
+    const dot = localSet.has(pairs[0]) ? '<span style="color:var(--green)">⬤</span>' : configSet.has(pairs[0]) ? '<span style="color:var(--accent)">⬤</span>' : '';
     return `<div class="pairs-picker__group-label">${dot} ${_esc(label)}</div>` +
       pairs.map(p => {
         const isFav = favs.has(p);
@@ -247,13 +247,15 @@ window.HyperoptPage = (() => {
 
   function _render() {
     DOM.setHTML(_el, `
+      <div class="hyperopt-page" id="hyperopt-page">
       <div class="page-header">
         <h1 class="page-header__title">Hyperopt</h1>
         <p class="page-header__subtitle">Optimize strategy parameters using hyperparameter search.</p>
+        <div class="page-header__meta">Search, validate market coverage, and apply the best parameter set without leaving the run view.</div>
       </div>
-      <div class="split-layout">
+      <div class="split-layout hyperopt-layout">
         <div class="split-layout__form">
-          <div class="card">
+          <div class="card hyperopt-card hyperopt-card--form">
             <div class="card__header"><span class="card__title">Configuration</span></div>
             <div class="card__body">
               <form id="ho-form" class="form">
@@ -287,7 +289,7 @@ window.HyperoptPage = (() => {
                       <div class="pairs-picker__empty">Loading…</div>
                     </div>
                   </div>
-                  <div id="ho-pairs-hint" class="form-hint" style="margin-top:4px"></div>
+                  <div id="ho-pairs-hint" class="form-hint hyperopt-pairs-hint"></div>
                 </div>
                 <div class="form-group">
                   <label class="form-label" for="ho-loss">Loss Function</label>
@@ -344,11 +346,11 @@ window.HyperoptPage = (() => {
                     <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor"><path d="M8 12l-5-5 1.4-1.4L7 9.2V2h2v7.2l2.6-3.6L13 7l-5 5zM2 14h12v-2H2v2z"/></svg>
                     Download Data
                   </button>
-                  <button type="button" class="btn btn--danger" id="ho-stop-btn" style="display:none">Stop</button>
+                  <button type="button" class="btn btn--danger hyperopt-stop-btn" id="ho-stop-btn" style="display:none">Stop</button>
                 </div>
-                <div class="form form--compact" style="margin-top:var(--space-3)">
-                  <div id="ho-dl-log-wrap" style="display:none;margin-top:var(--space-3)">
-                    <div class="log-panel" id="ho-dl-logs" style="max-height:160px"></div>
+                <div class="form form--compact hyperopt-download-panel">
+                  <div id="ho-dl-log-wrap" class="hyperopt-download-log-wrap" style="display:none">
+                    <div class="log-panel hyperopt-download-logs" id="ho-dl-logs"></div>
                   </div>
                 </div>
               </form>
@@ -356,29 +358,30 @@ window.HyperoptPage = (() => {
           </div>
         </div>
         <div class="split-layout__output">
-          <div class="card" id="ho-status-card" style="display:none">
+          <div class="card hyperopt-card hyperopt-card--status" id="ho-status-card" style="display:none">
             <div class="card__header">
               <span class="card__title">Progress</span>
               <span class="badge" id="ho-status-badge">—</span>
             </div>
             <div class="card__body">
               <div id="ho-cmd"></div>
-              <div class="progress-panel" id="ho-progress"></div>
-              <div class="log-panel" id="ho-logs"></div>
+              <div class="progress-panel hyperopt-progress" id="ho-progress"></div>
+              <div class="log-panel hyperopt-logs" id="ho-logs"></div>
             </div>
           </div>
-          <div class="card" id="ho-results-card" style="display:none">
+          <div class="card hyperopt-card hyperopt-card--results" id="ho-results-card" style="display:none">
             <div class="card__header">
               <span class="card__title">Best Results</span>
               <button class="btn btn--secondary btn--sm" id="ho-apply-btn" style="display:none">Apply Params</button>
             </div>
             <div class="card__body" id="ho-results-body"></div>
           </div>
-          <div class="card">
+          <div class="card hyperopt-card hyperopt-card--history">
             <div class="card__header"><span class="card__title">Previous Runs</span></div>
             <div class="card__body" id="ho-history"></div>
           </div>
         </div>
+      </div>
       </div>
     `);
 
@@ -463,8 +466,8 @@ window.HyperoptPage = (() => {
 
       const hint = DOM.$('#ho-pairs-hint', _el);
       if (hint) {
-        if (local.length) { hint.textContent = `${local.length} pair(s) with downloaded data`; hint.style.color = 'var(--color-green)'; }
-        else              { hint.textContent = 'No local data — select pairs then use Download Data'; hint.style.color = 'var(--color-amber)'; }
+        if (local.length) { hint.textContent = `${local.length} pair(s) with downloaded data`; hint.style.color = 'var(--green)'; }
+        else              { hint.textContent = 'No local data — select pairs then use Download Data'; hint.style.color = 'var(--amber)'; }
       }
     } catch {
       listEl.innerHTML = '<div class="pairs-picker__empty">Failed to load pairs</div>';
@@ -752,7 +755,7 @@ window.HyperoptPage = (() => {
     const winRate = FMT.resultWinRate(best.win_rate);
     const drawdownPct = FMT.resultDrawdownPercent(best.drawdown_pct);
     el.innerHTML = `
-      <div class="results-overview" style="margin-bottom:var(--space-4)">
+      <div class="results-overview hyperopt-results-overview">
         ${_metric('Profit %',   profitPct != null ? FMT.pct(profitPct) : '—', (profitPct||0)>0?'green':'red')}
         ${_metric('Trades',     best.trades ?? best.trade_count ?? best.total_trades ?? '—')}
         ${_metric('Win Rate',   winRate != null ? FMT.pct(winRate,1,false) : '—')}

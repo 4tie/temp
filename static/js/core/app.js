@@ -92,6 +92,7 @@ window.App = (() => {
   }
 
   function init() {
+    ThemeManager?.init?.();
     Sidebar.init();
     Tabs.initAll();
     Auth.startPolling();
