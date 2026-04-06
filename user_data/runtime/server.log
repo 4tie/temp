@@ -4193,3 +4193,8 @@ INFO:     127.0.0.1:61405 - "GET /ai/threads HTTP/1.1" 200 OK
 [32mINFO[0m:     127.0.0.1:49620 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
 [32mINFO[0m:     127.0.0.1:49620 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
 [32mINFO[0m:     127.0.0.1:49620 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:49620 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:49620 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:49620 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:49620 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:55288 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
