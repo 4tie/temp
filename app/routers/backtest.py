@@ -25,6 +25,7 @@ from app.services.results.strategy_intelligence_service import (
 from app.services.storage import (
     load_run_meta, load_run_results, list_runs, delete_run,
     save_last_config, load_last_config, save_run_logs, load_run_raw_payload, get_run_dir, save_run_results,
+    load_app_events, append_app_event,
 )
 from app.services.strategies import save_strategy_current_values
 from app.services.runs.base_run_service import run_logs_path
@@ -85,6 +86,14 @@ async def patch_config(req: ConfigPatchRequest):
     for field, value in updates.items():
         cfg[field] = value
     _write_config_json(cfg)
+    append_app_event(
+        category="event",
+        source="config",
+        action="updated",
+        status="ok",
+        message="Backtest config updated.",
+        fields=sorted(updates.keys()),
+    )
     return {
         "strategy": cfg.get("strategy"),
         "max_open_trades": cfg.get("max_open_trades"),
@@ -112,6 +121,17 @@ async def run_backtest(req: BacktestRequest):
             timeframe=req.timeframe,
             timerange=req.timerange,
             command_override=None,
+        )
+        append_app_event(
+            category="event",
+            source="backtest",
+            action="missing_data",
+            status="warning",
+            message=f"Backtest blocked by missing data. Auto-started download job {download_job_id}.",
+            job_id=download_job_id,
+            strategy=req.strategy,
+            timeframe=req.timeframe,
+            missing_pairs=missing_pairs,
         )
         detail_suffix = " | ".join(issue_details[:5])
         raise HTTPException(
@@ -149,6 +169,11 @@ async def run_backtest(req: BacktestRequest):
 async def get_runs():
     runs = list_runs()
     return {"runs": runs}
+
+
+@router.get("/activity")
+async def get_activity(limit: int = Query(100, ge=1, le=500)):
+    return {"events": load_app_events(limit=limit)}
 
 
 @router.get("/result-metrics")
@@ -289,6 +314,18 @@ async def apply_run_config(run_id: str):
             warnings.append("Skipped strategy params write because strategy class is missing.")
     else:
         skipped.append("strategy_params")
+
+    append_app_event(
+        category="event",
+        source="backtest",
+        action="apply_config",
+        status="ok",
+        message=f"Applied run config from {run_id}.",
+        run_id=run_id,
+        applied=sorted(set(applied)),
+        skipped=sorted(set(skipped)),
+        warnings=warnings,
+    )
 
     return {
         "run_id": run_id,

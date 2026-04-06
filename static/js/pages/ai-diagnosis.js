@@ -119,7 +119,8 @@ window.AIDiagPage = (() => {
   }
 
   function _escHtml(s) {
-    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const value = String(s ?? '');
+    return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
   /* ---- Evolution state ------------------------------------ */
@@ -135,6 +136,15 @@ window.AIDiagPage = (() => {
   let _shellMounted = false;
   let _pageMounted = false;
   let _pageUnsubscribe = null;
+  let _activePageUnsubscribe = null;
+
+  const _SHELL_ROOT_IDS = [
+    'ai-layout',
+    'ai-deep-panel',
+    'evo-panel',
+    'evo-diff-overlay',
+    'evo-toast',
+  ];
 
   /* ---- Build layout HTML ----------------------------------- */
   function _buildLayout() {
@@ -398,65 +408,93 @@ window.AIDiagPage = (() => {
     return `
       <div class="page-header">
         <h1 class="page-header__title">AI Diagnosis</h1>
-        <p class="page-header__subtitle">The AI assistant now lives in the shell. Use this workspace for context management, deep analysis, and evolution while the same live chat stays mounted on the right.</p>
+        <p class="page-header__subtitle">AI Diagnosis is the main workspace for strategy chat, code proposals, deep analysis, and evolve strategy workflows.</p>
       </div>
 
-      <div class="ai-diagnosis-grid">
-        <section class="ai-diagnosis-card ai-diagnosis-card--hero">
-          <div class="ai-diagnosis-card__eyebrow">Persistent Dock</div>
-          <h2 class="ai-diagnosis-card__title">One live assistant across the entire app</h2>
-          <p class="ai-diagnosis-card__body">Navigation no longer resets the conversation. Drafts, streams, context, and loop activity remain active in the dock while you move between pages.</p>
-          <div class="ai-diagnosis-actions">
-            <button class="btn btn--primary" type="button" data-ai-workspace-action="focus">Focus Composer</button>
-            <button class="btn" type="button" data-ai-workspace-action="new">New Conversation</button>
-            <button class="btn" type="button" data-ai-workspace-action="inject">Inject Latest Backtest</button>
-          </div>
-        </section>
-
-        <section class="ai-diagnosis-card">
-          <div class="ai-diagnosis-card__eyebrow">Session</div>
-          <div class="ai-diagnosis-metrics">
-            <div class="ai-diagnosis-metric">
-              <span class="ai-diagnosis-metric__label">Provider</span>
-              <span class="ai-diagnosis-metric__value">${_escHtml(snapshot.provider || '—')}</span>
+      <div class="ai-diagnosis-workbench">
+        <section class="ai-diagnosis-stage">
+          <div class="ai-diagnosis-stage__header">
+            <div>
+              <div class="ai-diagnosis-card__eyebrow">Strategy Chat Workspace</div>
+              <h2 class="ai-diagnosis-stage__title">Chat, code blocks, and evolve strategy in one surface</h2>
+              <p class="ai-diagnosis-stage__body">Use this page as the primary AI surface. The same live conversation is preserved, but here it expands into a full workspace instead of staying constrained to the dock.</p>
             </div>
-            <div class="ai-diagnosis-metric">
-              <span class="ai-diagnosis-metric__label">Model</span>
-              <span class="ai-diagnosis-metric__value">${_escHtml(snapshot.model || '—')}</span>
-            </div>
-            <div class="ai-diagnosis-metric">
-              <span class="ai-diagnosis-metric__label">Threads</span>
-              <span class="ai-diagnosis-metric__value">${snapshot.conversationCount}</span>
+            <div class="ai-diagnosis-actions ai-diagnosis-actions--compact">
+              <button class="btn btn--primary" type="button" data-ai-workspace-action="focus">Focus Composer</button>
+              <button class="btn" type="button" data-ai-workspace-action="new">New Conversation</button>
+              <button class="btn" type="button" data-ai-workspace-action="inject">Inject Latest Backtest</button>
             </div>
           </div>
-          <div class="ai-diagnosis-state-list">
-            <div class="ai-diagnosis-state-row"><span>Selected Thread</span><strong>${_escHtml(threadLabel)}</strong></div>
-            <div class="ai-diagnosis-state-row"><span>Draft</span><strong>${snapshot.draftLength ? `${snapshot.draftLength} characters waiting` : 'Empty'}</strong></div>
-            <div class="ai-diagnosis-state-row"><span>Streaming</span><strong>${_escHtml(streamLabel)}</strong></div>
-            <div class="ai-diagnosis-state-row"><span>Loop</span><strong>${_escHtml(loopLabel)}</strong></div>
-          </div>
+          <div class="ai-diagnosis-stage__mount" data-ai-workspace-stage></div>
         </section>
 
-        <section class="ai-diagnosis-card">
-          <div class="ai-diagnosis-card__eyebrow">Backtest Context</div>
-          <p class="ai-diagnosis-card__body">${_escHtml(contextLabel)}</p>
-          <div class="ai-diagnosis-actions">
-            <button class="btn" type="button" data-ai-workspace-action="analyse" ${snapshot.contextRunId ? '' : 'disabled'}>Open Deep Analysis</button>
-            <button class="btn" type="button" data-ai-workspace-action="evolve" ${snapshot.contextRunId ? '' : 'disabled'}>Open Evolution</button>
-            <button class="btn" type="button" data-ai-workspace-action="clear" ${snapshot.contextRunId ? '' : 'disabled'}>Clear Context</button>
-          </div>
-        </section>
+        <aside class="ai-diagnosis-rail">
+          <section class="ai-diagnosis-card ai-diagnosis-card--context">
+            <div class="ai-diagnosis-card__eyebrow">Backtest Context</div>
+            <p class="ai-diagnosis-card__body">${_escHtml(contextLabel)}</p>
+            <div class="ai-diagnosis-actions">
+              <button class="btn" type="button" data-ai-workspace-action="analyse" ${snapshot.contextRunId ? '' : 'disabled'}>Open Deep Analysis</button>
+              <button class="btn" type="button" data-ai-workspace-action="evolve" ${snapshot.contextRunId ? '' : 'disabled'}>Open Evolution</button>
+              <button class="btn" type="button" data-ai-workspace-action="clear" ${snapshot.contextRunId ? '' : 'disabled'}>Clear Context</button>
+            </div>
+          </section>
 
-        <section class="ai-diagnosis-card ai-diagnosis-card--notes">
-          <div class="ai-diagnosis-card__eyebrow">Workflow</div>
-          <ul class="ai-diagnosis-notes">
-            <li>The dock on the right is the canonical chat surface everywhere in the app.</li>
-            <li>Streams and loop status continue while you move to dashboard, backtesting, hyperopt, or results.</li>
-            <li>Use this page for AI-heavy tooling, while the live conversation remains visible and synchronized in the shell.</li>
-          </ul>
-        </section>
+          <section class="ai-diagnosis-card">
+            <div class="ai-diagnosis-card__eyebrow">Session</div>
+            <div class="ai-diagnosis-metrics">
+              <div class="ai-diagnosis-metric">
+                <span class="ai-diagnosis-metric__label">Provider</span>
+                <span class="ai-diagnosis-metric__value">${_escHtml(snapshot.provider || '—')}</span>
+              </div>
+              <div class="ai-diagnosis-metric">
+                <span class="ai-diagnosis-metric__label">Model</span>
+                <span class="ai-diagnosis-metric__value">${_escHtml(snapshot.model || '—')}</span>
+              </div>
+              <div class="ai-diagnosis-metric">
+                <span class="ai-diagnosis-metric__label">Threads</span>
+                <span class="ai-diagnosis-metric__value">${snapshot.conversationCount}</span>
+              </div>
+            </div>
+            <div class="ai-diagnosis-state-list">
+              <div class="ai-diagnosis-state-row"><span>Selected Thread</span><strong>${_escHtml(threadLabel)}</strong></div>
+              <div class="ai-diagnosis-state-row"><span>Draft</span><strong>${snapshot.draftLength ? `${snapshot.draftLength} characters waiting` : 'Empty'}</strong></div>
+              <div class="ai-diagnosis-state-row"><span>Streaming</span><strong>${_escHtml(streamLabel)}</strong></div>
+              <div class="ai-diagnosis-state-row"><span>Loop</span><strong>${_escHtml(loopLabel)}</strong></div>
+            </div>
+          </section>
+
+          <section class="ai-diagnosis-card ai-diagnosis-card--notes">
+            <div class="ai-diagnosis-card__eyebrow">Workflow</div>
+            <ul class="ai-diagnosis-notes">
+              <li>Use the main chat area for strategy discussion, code blocks, and applyable changes.</li>
+              <li>Use Deep Analysis for deterministic diagnostics tied to run metrics.</li>
+              <li>Use Evolve Strategy from the same workspace after injecting a backtest context.</li>
+            </ul>
+          </section>
+        </aside>
       </div>
     `;
+  }
+
+  function _getShellRootNodes() {
+    return _SHELL_ROOT_IDS
+      .map(id => document.getElementById(id))
+      .filter(Boolean);
+  }
+
+  function _setDiagnosisFocusMode(enabled) {
+    const shell = DOM.$('[data-app-shell]');
+    shell?.classList.toggle('app-shell--ai-diagnosis-focus', !!enabled);
+  }
+
+  function _syncShellMount(activePage = AppState.get('activePage')) {
+    if (!_shellMounted) return;
+    const pageHost = DOM.$('[data-ai-workspace-stage]');
+    const dockHost = DOM.$('[data-ai-dock-mount]');
+    const target = activePage === 'ai-diagnosis' && pageHost ? pageHost : dockHost;
+    if (!target) return;
+    _getShellRootNodes().forEach((node) => target.appendChild(node));
+    _setDiagnosisFocusMode(activePage === 'ai-diagnosis' && !!pageHost);
   }
 
   /* ---- Populate DOM refs ----------------------------------- */
@@ -2164,37 +2202,44 @@ window.AIDiagPage = (() => {
     if (!_pageMounted) return;
     const page = DOM.$('[data-view="ai-diagnosis"]');
     if (!page) return;
-    DOM.setHTML(page, _buildWorkspace(snapshot));
-    page.querySelectorAll('[data-ai-workspace-action]').forEach((btn) => {
-      btn.addEventListener('click', async () => {
-        const action = btn.dataset.aiWorkspaceAction;
-        if (action === 'focus') {
-          _focusComposer();
-          return;
-        }
-        if (action === 'new') {
-          _newChat();
-          _focusComposer();
-          return;
-        }
-        if (action === 'inject') {
-          await _injectLatestBacktest();
-          _focusComposer();
-          return;
-        }
-        if (action === 'analyse') {
-          _openDeepPanel();
-          return;
-        }
-        if (action === 'evolve') {
-          _openEvolutionPanel();
-          return;
-        }
-        if (action === 'clear') {
-          _clearContext();
-        }
+
+    const needsInitialRender = !page.querySelector('[data-ai-workspace-stage]');
+    if (needsInitialRender) {
+      DOM.setHTML(page, _buildWorkspace(snapshot));
+      page.querySelectorAll('[data-ai-workspace-action]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const action = btn.dataset.aiWorkspaceAction;
+          if (action === 'focus') {
+            _focusComposer();
+            return;
+          }
+          if (action === 'new') {
+            _newChat();
+            _focusComposer();
+            return;
+          }
+          if (action === 'inject') {
+            await _injectLatestBacktest();
+            _focusComposer();
+            return;
+          }
+          if (action === 'analyse') {
+            _openDeepPanel();
+            return;
+          }
+          if (action === 'evolve') {
+            _openEvolutionPanel();
+            return;
+          }
+          if (action === 'clear') {
+            _clearContext();
+          }
+        });
       });
-    });
+    }
+
+    _syncShellMount('ai-diagnosis');
+    requestAnimationFrame(() => _syncShellMount('ai-diagnosis'));
   }
 
   function initShell() {
@@ -2210,6 +2255,10 @@ window.AIDiagPage = (() => {
     _loadConversations();
     _publishState();
     _shellMounted = true;
+    if (!_activePageUnsubscribe) {
+      _activePageUnsubscribe = AppState.subscribe('activePage', (page) => _syncShellMount(page));
+    }
+    _syncShellMount();
   }
 
   /* ---- Bind events ----------------------------------------- */
@@ -2414,6 +2463,7 @@ window.AIDiagPage = (() => {
   function refresh() {
     _loadConversations();
     _renderWorkspaceView(_snapshot());
+    _syncShellMount(AppState.get('activePage'));
   }
 
   return {
@@ -2429,3 +2479,6 @@ window.AIDiagPage = (() => {
     _openDiff,
   };
 })();
+
+
+

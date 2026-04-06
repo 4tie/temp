@@ -4,6 +4,7 @@
    ================================================================= */
 
 window.ResultExplorer = (() => {
+  const _PENDING_STRATEGY_RERUN_KEY = '4tie_pending_strategy_intelligence_rerun';
   const PAGE_SIZE = 25;
   const DEFAULT_SORTS = {
     trades: { key: 'closeTimestamp', dir: -1, filter: '', page: 1 },
@@ -247,13 +248,17 @@ window.ResultExplorer = (() => {
     if (improveRerun) {
       DOM.on(improveRerun, 'click', () => {
         if (!_state.runId) return;
-        window.App?.navigate?.('backtesting');
-        window.dispatchEvent(new CustomEvent('strategy-intelligence:rerun', {
-          detail: {
+        try {
+          sessionStorage.setItem(_PENDING_STRATEGY_RERUN_KEY, JSON.stringify({
             runId: _state.runId,
             intelligence: _state.detail?.results?.strategy_intelligence || null,
-          },
-        }));
+          }));
+        } catch {}
+        if (AppState.get('activePage') === 'backtesting') {
+          window.BacktestPage?.refresh?.();
+        } else {
+          window.App?.navigate?.('backtesting');
+        }
       });
     }
   }

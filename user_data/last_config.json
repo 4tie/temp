@@ -8,19 +8,28 @@
   "exchange": "binance",
   "strategy_path": null,
   "strategy_label": null,
-  "strategy_params": {
-    "buy_ma_count": 4,
-    "buy_ma_gap": 8,
-    "sell_ma_count": 12,
-    "sell_ma_gap": 68
-  },
-  "command_override": null,
-  "parent_run_id": "20260406_084223_f5b7abdb",
-  "improvement_source": "strategy_intelligence",
-  "improvement_items": [
-    "stoploss",
-    "Log raw indicator values to understand alignment frequency",
-    "Relax the most restrictive entry condition and re-test",
-    "Consider a longer backtest period to gather more trades"
-  ]
+  "strategy_params": {},
+  "command_override": [
+    "python",
+    "-m",
+    "freqtrade",
+    "backtesting",
+    "-c",
+    "user_data/config.json",
+    "--strategy",
+    "MultiMa",
+    "--timeframe",
+    "5m",
+    "--export",
+    "trades",
+    "--backtest-directory",
+    "user_data/backtest_results/MultiMa",
+    "--timerange",
+    "20250101-20260321",
+    "--pairs",
+    "ETH/USDT"
+  ],
+  "parent_run_id": null,
+  "improvement_source": null,
+  "improvement_items": []
 }

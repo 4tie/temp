@@ -6,6 +6,10 @@
 window.API = (() => {
   const BASE = window.location.origin;
 
+  const logApiError = (method, path, detail) => {
+    window.UILog?.error?.('API request failed', { method, path, detail });
+  };
+
   async function request(method, path, body = undefined) {
     const opts = {
       method,
@@ -19,6 +23,7 @@ window.API = (() => {
         const j = await res.json();
         detail = j.detail || JSON.stringify(j);
       } catch {}
+      logApiError(method, path, detail);
       throw new Error(detail);
     }
     return res.json();
@@ -33,6 +38,7 @@ window.API = (() => {
         const j = await res.json();
         detail = j.detail || JSON.stringify(j);
       } catch {}
+      logApiError('GET', path, detail);
       throw new Error(detail);
     }
     return res.text();
@@ -66,6 +72,7 @@ window.API = (() => {
 
   /* ---- Backtest runs ---------------------------------------- */
   const getRuns         = ()        => get('/runs');
+  const getActivity     = (limit = 100) => get(`/activity?limit=${encodeURIComponent(limit)}`);
   const getRun          = (id)      => get(`/runs/${id}`);
   const getRunRaw       = (id)      => get(`/runs/${id}/raw`);
   const getResultMetrics = ()       => get('/result-metrics');
@@ -107,7 +114,7 @@ window.API = (() => {
     getStrategies, getStrategyParams, getStrategySource, saveStrategyParams, saveStrategySource,
     getPairs,
     getConfig, patchConfig,
-    getRuns, getRun, getRunRaw, getResultMetrics, applyRunConfig, startBacktest, deleteRun, getLastConfig,
+    getRuns, getActivity, getRun, getRunRaw, getResultMetrics, applyRunConfig, startBacktest, deleteRun, getLastConfig,
     downloadData, getDownload, dataCoverage,
     getHyperoptRuns, getHyperoptRun, startHyperopt, deleteHyperoptRun,
     getLossFunctions, getHyperoptSpaces, applyHyperoptParams,
@@ -116,3 +123,5 @@ window.API = (() => {
     getSettings, saveSettings, testOpenRouterKey,
   };
 })();
+
+

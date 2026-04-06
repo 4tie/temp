@@ -294,3 +294,23 @@
     height: min(50vh, 420px);
   }
 }
+/* Strategy Lab overflow-safe overrides */
+.sl-layout {
+  grid-template-columns: 220px minmax(0, 1fr);
+}
+
+.sl-sidebar-card,
+#sl-detail,
+.strategy-list,
+.sl-source-toolbar__left,
+.sl-source-toolbar__actions {
+  min-width: 0;
+}
+
+@media (max-width: 980px) {
+  .sl-layout {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+}
+

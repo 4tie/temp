@@ -5,7 +5,7 @@
     <!-- Connection indicator -->
     <div class="statusbar__conn" id="statusbar-conn" data-statusbar-conn>
       <span class="statusbar__conn-dot statusbar__conn-dot--offline" id="statusbar-conn-dot" data-conn-dot></span>
-      <span id="statusbar-conn-label" data-conn-label>Connecting…</span>
+      <span id="statusbar-conn-label" data-conn-label>Connecting...</span>
     </div>
 
     <div class="statusbar__sep"></div>
@@ -21,6 +21,10 @@
   </div>
 
   <div class="statusbar__right">
+    <button class="statusbar__log-btn" id="statusbar-log-btn" data-ui-log-open type="button" title="Open app logs" aria-label="Open app logs">
+      Logs
+      <span class="statusbar__log-count" data-ui-log-count style="display:none">0</span>
+    </button>
     <span class="statusbar__meta" id="statusbar-time" data-clock></span>
   </div>
 

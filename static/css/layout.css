@@ -15,16 +15,21 @@
   height: 100dvh;
   max-height: 100dvh;
   overflow: hidden;
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--text-primary) 1.5%, transparent), transparent 20%),
-    linear-gradient(135deg, color-mix(in srgb, var(--accent) 12%, transparent), transparent 28%),
-    var(--bg-base);
+  background: var(--bg-base);
   transition: grid-template-columns var(--ease-slow);
 }
 
 .app-shell.sidebar-collapsed {
   grid-template-columns: var(--sidebar-collapsed-width) minmax(0, 1fr) var(--ai-dock-width);
   --sidebar-width: var(--sidebar-collapsed-width);
+}
+
+.app-shell.app-shell--ai-diagnosis-focus {
+  --ai-dock-width: 0px;
+}
+
+.app-shell.app-shell--ai-diagnosis-focus .page-content {
+  border-right: 0;
 }
 
 /* ============================================================
@@ -35,9 +40,7 @@
   grid-area: sidebar;
   display: flex;
   flex-direction: column;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 24%),
-    var(--surface-1);
+  background: var(--bg-base);
   border-right: 1px solid var(--border-subtle);
   overflow: hidden;
   z-index: var(--z-sidebar);
@@ -48,7 +51,7 @@
   border: 0;
   padding: 0;
   margin: 0;
-  background: rgba(6, 10, 14, 0.58);
+  background: rgba(0, 0, 0, 0.8);
   opacity: 0;
   pointer-events: none;
   transition: opacity var(--ease-slow);
@@ -439,15 +442,12 @@
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
   scrollbar-gutter: stable;
-  background:
-    radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 10%, transparent), transparent 24%),
-    linear-gradient(180deg, color-mix(in srgb, var(--text-primary) 1.5%, transparent), transparent 18%),
-    var(--bg-primary);
+  background: var(--bg-base);
   position: relative;
   min-height: 0;
   max-height: 100%;
   min-width: 0;
-  border-right: 1px solid rgba(255, 255, 255, 0.035);
+  border-right: 1px solid var(--border-subtle);
 }
 
 .page-view {
@@ -483,9 +483,7 @@
   padding: var(--space-4) var(--space-5);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--text-primary) 2%, transparent), transparent 70%),
-    var(--surface-panel);
+  background: var(--surface-1);
   box-shadow: var(--shadow-xs);
 }
 
@@ -516,11 +514,13 @@
   position: relative;
   min-width: 0;
   min-height: 0;
-  background:
-    radial-gradient(circle at top left, color-mix(in srgb, var(--accent) 14%, transparent), transparent 28%),
-    linear-gradient(180deg, color-mix(in srgb, var(--text-primary) 2%, transparent), transparent 18%),
-    var(--surface-1);
+  background: var(--bg-base);
   overflow: hidden;
+}
+
+.app-shell.app-shell--ai-diagnosis-focus .app-ai-dock {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .app-ai-dock::before {
@@ -664,7 +664,7 @@
 
 @media (max-width: 768px) {
   .app-shell {
-    grid-template-columns: 0 1fr;
+    grid-template-columns: 1fr;
     grid-template-areas:
       "topbar"
       "content"
@@ -773,7 +773,7 @@
     border: 0;
     padding: 0;
     margin: 0;
-    background: rgba(6, 10, 14, 0.58);
+    background: rgba(0, 0, 0, 0.8);
     opacity: 0;
     pointer-events: none;
     transition: opacity var(--ease-slow);
@@ -800,4 +800,40 @@
   .statusbar__stream {
     display: none;
   }
+}
+/* Layout hardening overrides */
+.page-view {
+  overflow-x: clip;
+}
+
+.page-view > * {
+  min-width: 0;
+}
+
+/* App shell scrolling polish */
+.page-content {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.page-content::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.page-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.page-content::-webkit-scrollbar-thumb {
+  background: rgba(78, 103, 116, 0.72);
+  border-radius: var(--radius-full);
+}
+
+.page-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(103, 131, 146, 0.92);
+}
+
+.page-view.active {
+  min-height: 0;
 }

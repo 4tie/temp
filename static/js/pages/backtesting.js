@@ -4,13 +4,16 @@
    ================================================================= */
 
 window.BacktestPage = (() => {
+  const _PENDING_STRATEGY_RERUN_KEY = '4tie_pending_strategy_intelligence_rerun';
   let _el = null;
   let _pollTimer = null;
   let _activeRunId = null;
   let _resultRunId = null;
   let _loadedResult = null;
+  let _strategyRerunStarting = false;
   let _quickParamsState = _createQuickParamsState();
   let _intelligenceEventBound = false;
+  let _pendingStrategyRerunConsuming = false;
 
   /* ── Favourites ── */
   const _FAV_KEY  = '4tie_fav_pairs';
@@ -320,6 +323,44 @@ window.BacktestPage = (() => {
     if (!_el) return;
     _render();
     _loadFormData();
+    void _consumePendingStrategyIntelligenceRerun();
+  }
+
+  function _readPendingStrategyIntelligenceRerun() {
+    try {
+      const raw = sessionStorage.getItem(_PENDING_STRATEGY_RERUN_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object') {
+        _clearPendingStrategyIntelligenceRerun();
+        return null;
+      }
+      return parsed;
+    } catch {
+      _clearPendingStrategyIntelligenceRerun();
+      return null;
+    }
+  }
+
+  function _clearPendingStrategyIntelligenceRerun() {
+    try {
+      sessionStorage.removeItem(_PENDING_STRATEGY_RERUN_KEY);
+    } catch {}
+  }
+
+  async function _consumePendingStrategyIntelligenceRerun() {
+    if (_pendingStrategyRerunConsuming) return;
+    const pending = _readPendingStrategyIntelligenceRerun();
+    if (!pending) return;
+    _pendingStrategyRerunConsuming = true;
+    try {
+      await _onStrategyIntelligenceEvent({ detail: pending });
+      _clearPendingStrategyIntelligenceRerun();
+    } catch (err) {
+      Toast.error('Failed to start rerun: ' + (err?.message || err));
+    } finally {
+      _pendingStrategyRerunConsuming = false;
+    }
   }
 
   function _render() {
@@ -644,6 +685,7 @@ window.BacktestPage = (() => {
     _loadedResult = null;
     DOM.hide(DOM.$('#bt-results-card', _el));
     _resetQuickParamsState();
+    _syncIntelligenceRerunUiState();
   }
 
   function _resetQuickParamsState() {
@@ -1345,55 +1387,75 @@ window.BacktestPage = (() => {
       Toast.warning('No completed run is loaded.');
       return;
     }
-    if (_activeRunId) return;
-
-    _normalizeAllQuickParamControls();
-
-    const meta = _loadedResult.meta;
-    const strategyName = _quickParamsState.strategyName || _resolveRunStrategyName(meta);
-    if (!strategyName) {
-      Toast.error('Cannot rerun this result because the strategy class is unavailable.');
+    const fromIntelligence = options.improvementSource === 'strategy_intelligence';
+    if (_activeRunId) {
+      if (fromIntelligence) {
+        Toast.warning('A backtest is already running. Wait for it to finish before using Improve & Run.');
+      }
       return;
     }
-
-    await _syncFormToRunContext(meta, strategyName, _quickParamsState.strategyLabel);
-
-    const body = {
-      strategy: strategyName,
-      strategy_label: meta.strategy && meta.strategy !== strategyName ? meta.strategy : null,
-      strategy_path: meta.strategy_path || null,
-      pairs: Array.isArray(meta.pairs) ? [...meta.pairs] : [],
-      timeframe: meta.timeframe || '5m',
-      timerange: meta.timerange || null,
-      exchange: meta.exchange || 'binance',
-      parent_run_id: _resultRunId || null,
-      improvement_source: options.improvementSource || null,
-      improvement_items: Array.isArray(options.improvementItems) ? options.improvementItems : [],
-      strategy_params: _quickHasParams()
-        ? { ..._quickParamsState.currentValues }
-        : { ...(meta.strategy_params || {}) },
-    };
-
-    try {
-      const hasCoverage = await _ensureCoverageWithAutoDownload(body);
-      if (!hasCoverage) return;
-    } catch (err) {
-      Toast.error('Failed to validate/download pair data: ' + err.message);
+    if (fromIntelligence && _strategyRerunStarting) {
       return;
     }
+    if (fromIntelligence) {
+      _strategyRerunStarting = true;
+      _syncIntelligenceRerunUiState();
+    }
 
-    _clearLoadedResult();
-    _setRunning(true);
     try {
-      const res = await API.startBacktest(body);
-      _activeRunId = res.run_id;
-      AppState.set('stream', `Backtest started: ${_activeRunId}`);
-      Auth.setRunning(true);
-      _startPoll(_activeRunId);
-      Toast.success(options.toastMessage || 'Backtest started from the loaded result context.');
-    } catch (err) {
-      _setRunning(false);
-      Toast.error('Failed to start backtest: ' + err.message);
+      _normalizeAllQuickParamControls();
+
+      const meta = _loadedResult.meta;
+      const strategyName = _quickParamsState.strategyName || _resolveRunStrategyName(meta);
+      if (!strategyName) {
+        Toast.error('Cannot rerun this result because the strategy class is unavailable.');
+        return;
+      }
+
+      await _syncFormToRunContext(meta, strategyName, _quickParamsState.strategyLabel);
+
+      const body = {
+        strategy: strategyName,
+        strategy_label: meta.strategy && meta.strategy !== strategyName ? meta.strategy : null,
+        strategy_path: meta.strategy_path || null,
+        pairs: Array.isArray(meta.pairs) ? [...meta.pairs] : [],
+        timeframe: meta.timeframe || '5m',
+        timerange: meta.timerange || null,
+        exchange: meta.exchange || 'binance',
+        parent_run_id: _resultRunId || null,
+        improvement_source: options.improvementSource || null,
+        improvement_items: Array.isArray(options.improvementItems) ? options.improvementItems : [],
+        strategy_params: _quickHasParams()
+          ? { ..._quickParamsState.currentValues }
+          : { ...(meta.strategy_params || {}) },
+      };
+
+      try {
+        const hasCoverage = await _ensureCoverageWithAutoDownload(body);
+        if (!hasCoverage) return;
+      } catch (err) {
+        Toast.error('Failed to validate/download pair data: ' + err.message);
+        return;
+      }
+
+      _clearLoadedResult();
+      _setRunning(true);
+      try {
+        const res = await API.startBacktest(body);
+        _activeRunId = res.run_id;
+        AppState.set('stream', `Backtest started: ${_activeRunId}`);
+        Auth.setRunning(true);
+        _startPoll(_activeRunId);
+        Toast.success(options.toastMessage || 'Backtest started from the loaded result context.');
+      } catch (err) {
+        _setRunning(false);
+        Toast.error('Failed to start backtest: ' + err.message);
+      }
+    } finally {
+      if (fromIntelligence) {
+        _strategyRerunStarting = false;
+        _syncIntelligenceRerunUiState();
+      }
     }
   }
 
@@ -2002,12 +2064,27 @@ window.BacktestPage = (() => {
     }
   }
 
+  async function _waitForQuickParamsReady(runId, timeoutMs = 6000) {
+    const started = Date.now();
+    while (
+      _quickParamsState.runId === runId &&
+      _quickParamsState.loading &&
+      (Date.now() - started) < timeoutMs
+    ) {
+      await _sleep(50);
+    }
+  }
+
   async function _runStrategyIntelligenceRerun(intelligence) {
     if (!_loadedResult?.meta || !intelligence) {
       Toast.warning('No strategy intelligence is available for this run yet.');
       return;
     }
+    const runId = _loadedResult.run_id || _resultRunId || null;
     await _ensureQuickParamsForRun(_loadedResult);
+    if (runId && _quickParamsState.runId === runId && _quickParamsState.loading) {
+      await _waitForQuickParamsReady(runId);
+    }
 
     const rerunPlan = intelligence.rerun_plan || {};
     const autoChanges = Array.isArray(rerunPlan.auto_param_changes) ? rerunPlan.auto_param_changes : [];
@@ -2133,6 +2210,16 @@ window.BacktestPage = (() => {
     if (runBtn)  runBtn.disabled = running;
     if (running) DOM.show(stopBtn); else DOM.hide(stopBtn);
     _syncQuickParamsUiState();
+    _syncIntelligenceRerunUiState();
+  }
+
+  function _syncIntelligenceRerunUiState() {
+    if (!_el) return;
+    const resultCard = DOM.$('#bt-results-card', _el);
+    if (!resultCard) return;
+    const rerunBtn = resultCard.querySelector('[data-intelligence-action="rerun"]');
+    if (!rerunBtn) return;
+    rerunBtn.disabled = Boolean(_activeRunId) || Boolean(_strategyRerunStarting);
   }
 
   function _stopPoll() {
@@ -2212,7 +2299,10 @@ window.BacktestPage = (() => {
   function refresh() {
     _loadFormData();
     _syncRunState();
+    void _consumePendingStrategyIntelligenceRerun();
   }
 
   return { init, refresh };
 })();
+
+

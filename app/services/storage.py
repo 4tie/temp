@@ -8,6 +8,7 @@ Generic JSON read/write helpers live in app.core.json_io.
 from __future__ import annotations
 
 import json
+import logging
 import re
 import shutil
 import threading
@@ -15,6 +16,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 from app.core.config import (
+    APP_EVENT_LOG_FILE,
     BACKTEST_RESULTS_DIR,
     LAST_CONFIG_FILE,
     PRESETS_FILE,
@@ -34,6 +36,9 @@ _SAFE_ID_RE = re.compile(r"^[A-Za-z0-9_\-]+$")
 _SAFE_FOLDER_RE = re.compile(r"[^A-Za-z0-9_\-]+")
 _VERSION_RE = re.compile(r"^v(\d+)$")
 _VERSION_ALLOC_LOCK = threading.Lock()
+_APP_EVENT_LOG_LOCK = threading.Lock()
+
+logger = logging.getLogger(__name__)
 
 
 def _validate_id(value: str) -> str:
@@ -100,6 +105,66 @@ def load_run_results(run_id: str) -> Optional[dict[str, Any]]:
 def save_run_logs(run_id: str, logs: list[str]):
     log_path = run_logs_path(_run_dir(run_id, create=True))
     log_path.write_text("\n".join(logs))
+
+
+def append_app_event(
+    *,
+    category: str,
+    source: str,
+    action: str,
+    status: str = "info",
+    message: str | None = None,
+    timestamp: str | None = None,
+    **fields: Any,
+) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "timestamp": timestamp or utcnow_iso(),
+        "category": str(category or "event"),
+        "source": str(source or "app"),
+        "action": str(action or "unknown"),
+        "status": str(status or "info"),
+    }
+    if message:
+        payload["message"] = str(message)
+    for key, value in fields.items():
+        if value is not None:
+            payload[key] = value
+
+    APP_EVENT_LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+    line = json.dumps(payload, ensure_ascii=False, default=str)
+    try:
+        with _APP_EVENT_LOG_LOCK:
+            with APP_EVENT_LOG_FILE.open("a", encoding="utf-8") as handle:
+                handle.write(line)
+                handle.write("\n")
+    except OSError as exc:
+        logger.warning("Failed to append app event log entry: %s", exc)
+    return payload
+
+
+def load_app_events(*, limit: int = 200) -> list[dict[str, Any]]:
+    if limit <= 0 or not APP_EVENT_LOG_FILE.exists():
+        return []
+    try:
+        lines = APP_EVENT_LOG_FILE.read_text(encoding="utf-8").splitlines()
+    except OSError as exc:
+        logger.warning("Failed to read app event log: %s", exc)
+        return []
+
+    events: list[dict[str, Any]] = []
+    for line in reversed(lines):
+        if len(events) >= limit:
+            break
+        raw = (line or "").strip()
+        if not raw:
+            continue
+        try:
+            item = json.loads(raw)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(item, dict):
+            events.append(item)
+    return events
 
 
 def _load_compact_results(run_id: str) -> Optional[dict[str, Any]]:

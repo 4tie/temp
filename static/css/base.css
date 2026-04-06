@@ -4,20 +4,20 @@
 
 :root {
   /* --- Backgrounds --- */
-  --bg-base: #0a0e12;
-  --bg-primary: #0f1419;
-  --surface-1: #13181d;
-  --surface-2: #181d23;
-  --surface-3: #1d2329;
-  --surface-4: #242a31;
-  --surface-overlay: rgba(10, 14, 18, 0.92);
-  --surface-panel: color-mix(in srgb, var(--surface-1) 88%, transparent);
-  --surface-panel-strong: color-mix(in srgb, var(--surface-2) 92%, transparent);
-  --surface-panel-soft: color-mix(in srgb, var(--surface-2) 76%, transparent);
+  --bg-base: #000000;
+  --bg-primary: #00000c;
+  --surface-1: #000009;
+  --surface-2: #000000;
+  --surface-3: #000000;
+  --surface-4: #000000;
+  --surface-overlay: rgba(0, 0, 0, 0.92);
+  --surface-panel: rgba(0, 0, 0, 0.88);
+  --surface-panel-strong: rgba(0, 0, 0, 0.92);
+  --surface-panel-soft: rgba(0, 0, 0, 0.76);
   --bg-glow-top: rgba(42, 183, 199, 0.06);
   --bg-glow-bottom: rgba(34, 197, 94, 0.03);
-  --bg-gradient-start: #0a0e12;
-  --bg-gradient-end: #0f1419;
+  --bg-gradient-start: #000000;
+  --bg-gradient-end: #00000c;
 
   /* --- Borders --- */
   --border-subtle: #1a1e23;
@@ -148,10 +148,10 @@ html[data-theme-preset="ocean"] {
   --accent-dim: #1e97a5;
   --accent-bg: rgba(42, 183, 199, 0.12);
   --accent-ring: rgba(42, 183, 199, 0.32);
-  --bg-glow-top: rgba(42, 183, 199, 0.06);
-  --bg-glow-bottom: rgba(34, 197, 94, 0.03);
-  --bg-gradient-start: #0a0e12;
-  --bg-gradient-end: #0f1419;
+  --bg-glow-top: rgba(42, 183, 199, 0.08);
+  --bg-glow-bottom: rgba(34, 197, 94, 0.04);
+  --bg-gradient-start: #08131d;
+  --bg-gradient-end: #102c3a;
 }
 
 html[data-theme-preset="ember"] {
@@ -160,10 +160,10 @@ html[data-theme-preset="ember"] {
   --accent-dim: #ea580c;
   --accent-bg: rgba(249, 115, 22, 0.14);
   --accent-ring: rgba(251, 146, 60, 0.34);
-  --bg-glow-top: rgba(249, 115, 22, 0.08);
-  --bg-glow-bottom: rgba(250, 204, 21, 0.04);
-  --bg-gradient-start: #0a0e12;
-  --bg-gradient-end: #0f1419;
+  --bg-glow-top: rgba(249, 115, 22, 0.1);
+  --bg-glow-bottom: rgba(250, 204, 21, 0.05);
+  --bg-gradient-start: #190d07;
+  --bg-gradient-end: #311a0f;
 }
 
 html[data-theme-preset="aurora"] {
@@ -172,10 +172,10 @@ html[data-theme-preset="aurora"] {
   --accent-dim: #16a34a;
   --accent-bg: rgba(34, 197, 94, 0.14);
   --accent-ring: rgba(74, 222, 128, 0.34);
-  --bg-glow-top: rgba(20, 184, 166, 0.07);
-  --bg-glow-bottom: rgba(34, 197, 94, 0.04);
-  --bg-gradient-start: #0a0e12;
-  --bg-gradient-end: #0f1419;
+  --bg-glow-top: rgba(20, 184, 166, 0.08);
+  --bg-glow-bottom: rgba(34, 197, 94, 0.05);
+  --bg-gradient-start: #08140d;
+  --bg-gradient-end: #142f1c;
 }
 
 html[data-theme-preset="cobalt"] {
@@ -184,10 +184,10 @@ html[data-theme-preset="cobalt"] {
   --accent-dim: #2563eb;
   --accent-bg: rgba(59, 130, 246, 0.14);
   --accent-ring: rgba(96, 165, 250, 0.34);
-  --bg-glow-top: rgba(59, 130, 246, 0.08);
-  --bg-glow-bottom: rgba(34, 211, 238, 0.04);
-  --bg-gradient-start: #0a0e12;
-  --bg-gradient-end: #0f1419;
+  --bg-glow-top: rgba(59, 130, 246, 0.1);
+  --bg-glow-bottom: rgba(34, 211, 238, 0.05);
+  --bg-gradient-start: #071224;
+  --bg-gradient-end: #123852;
 }
 
 html[data-theme-preset="ruby"] {
@@ -196,10 +196,10 @@ html[data-theme-preset="ruby"] {
   --accent-dim: #be123c;
   --accent-bg: rgba(225, 29, 72, 0.14);
   --accent-ring: rgba(244, 114, 182, 0.32);
-  --bg-glow-top: rgba(225, 29, 72, 0.07);
-  --bg-glow-bottom: rgba(244, 114, 182, 0.04);
-  --bg-gradient-start: #0a0e12;
-  --bg-gradient-end: #0f1419;
+  --bg-glow-top: rgba(225, 29, 72, 0.1);
+  --bg-glow-bottom: rgba(244, 114, 182, 0.05);
+  --bg-gradient-start: #21070f;
+  --bg-gradient-end: #3b1421;
 }
 
 html[data-theme-preset="amethyst"] {
@@ -208,10 +208,10 @@ html[data-theme-preset="amethyst"] {
   --accent-dim: #7c3aed;
   --accent-bg: rgba(139, 92, 246, 0.14);
   --accent-ring: rgba(167, 139, 250, 0.34);
-  --bg-glow-top: rgba(139, 92, 246, 0.08);
-  --bg-glow-bottom: rgba(192, 132, 252, 0.04);
-  --bg-gradient-start: #0a0e12;
-  --bg-gradient-end: #0f1419;
+  --bg-glow-top: rgba(139, 92, 246, 0.1);
+  --bg-glow-bottom: rgba(192, 132, 252, 0.05);
+  --bg-gradient-start: #120c20;
+  --bg-gradient-end: #2d1e43;
 }
 
 html[data-theme-preset="sunset"] {
@@ -220,10 +220,10 @@ html[data-theme-preset="sunset"] {
   --accent-dim: #c2410c;
   --accent-bg: rgba(234, 88, 12, 0.14);
   --accent-ring: rgba(251, 146, 60, 0.34);
-  --bg-glow-top: rgba(234, 88, 12, 0.08);
-  --bg-glow-bottom: rgba(253, 186, 116, 0.04);
-  --bg-gradient-start: #0a0e12;
-  --bg-gradient-end: #0f1419;
+  --bg-glow-top: rgba(234, 88, 12, 0.1);
+  --bg-glow-bottom: rgba(253, 186, 116, 0.05);
+  --bg-gradient-start: #24110b;
+  --bg-gradient-end: #44271a;
 }
 
 html[data-theme-preset="forest"] {
@@ -232,10 +232,10 @@ html[data-theme-preset="forest"] {
   --accent-dim: #14532d;
   --accent-bg: rgba(22, 101, 52, 0.14);
   --accent-ring: rgba(132, 204, 22, 0.32);
-  --bg-glow-top: rgba(22, 101, 52, 0.07);
-  --bg-glow-bottom: rgba(132, 204, 22, 0.04);
-  --bg-gradient-start: #0a0e12;
-  --bg-gradient-end: #0f1419;
+  --bg-glow-top: rgba(22, 101, 52, 0.08);
+  --bg-glow-bottom: rgba(132, 204, 22, 0.05);
+  --bg-gradient-start: #08180d;
+  --bg-gradient-end: #163822;
 }
 
 html[data-theme-preset="sakura"] {
@@ -244,10 +244,10 @@ html[data-theme-preset="sakura"] {
   --accent-dim: #be185d;
   --accent-bg: rgba(219, 39, 119, 0.14);
   --accent-ring: rgba(244, 114, 182, 0.34);
-  --bg-glow-top: rgba(219, 39, 119, 0.08);
-  --bg-glow-bottom: rgba(251, 113, 133, 0.04);
-  --bg-gradient-start: #0a0e12;
-  --bg-gradient-end: #0f1419;
+  --bg-glow-top: rgba(219, 39, 119, 0.1);
+  --bg-glow-bottom: rgba(251, 113, 133, 0.05);
+  --bg-gradient-start: #241023;
+  --bg-gradient-end: #3c1f3a;
 }
 
 html[data-theme-preset="midnight"] {
@@ -256,10 +256,10 @@ html[data-theme-preset="midnight"] {
   --accent-dim: #334155;
   --accent-bg: rgba(71, 85, 105, 0.14);
   --accent-ring: rgba(100, 116, 139, 0.32);
-  --bg-glow-top: rgba(30, 41, 59, 0.07);
-  --bg-glow-bottom: rgba(71, 85, 105, 0.04);
-  --bg-gradient-start: #0a0e12;
-  --bg-gradient-end: #0f1419;
+  --bg-glow-top: rgba(30, 41, 59, 0.1);
+  --bg-glow-bottom: rgba(71, 85, 105, 0.05);
+  --bg-gradient-start: #04111f;
+  --bg-gradient-end: #132d4f;
 }
 
 /* ============================================================

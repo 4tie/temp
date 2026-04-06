@@ -21,7 +21,7 @@ from app.core.config import AI_EVOLUTION_DIR, STRATEGIES_DIR
 from app.core.json_io import read_json, write_json
 from app.services.results.result_service import normalize_backtest_result
 from app.services.runner import start_backtest, wait_for_run
-from app.services.storage import load_run_meta, load_run_results
+from app.services.storage import append_app_event, load_run_meta, load_run_results
 
 logger = logging.getLogger(__name__)
 
@@ -147,6 +147,18 @@ def _emit(loop_id: str, event: dict[str, Any] | LoopEventType | str, **kwargs: A
         )
     with _state_lock:
         _evolution_events.setdefault(loop_id, []).append(serialized)
+    append_app_event(
+        category="event",
+        source="evolution",
+        action=str(serialized.get("event_type") or serialized.get("step") or "event"),
+        status=str(serialized.get("status") or "info"),
+        message=str(serialized.get("message") or serialized.get("event_type") or "Evolution event"),
+        timestamp=str(serialized.get("timestamp") or datetime.now(timezone.utc).isoformat()),
+        loop_id=loop_id,
+        stream=serialized.get("stream"),
+        cycle_index=serialized.get("cycle_index"),
+        payload=serialized.get("payload"),
+    )
 
 
 def _update_session(loop_id: str, **kwargs: Any) -> None:

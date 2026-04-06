@@ -31,16 +31,19 @@
   min-height: 86px;
 }
 
+.jobs-activity-card,
 .jobs-table-card {
   border: 1px solid var(--border-subtle);
   box-shadow: var(--shadow-xs);
 }
 
+.jobs-activity-card .card__header,
 .jobs-table-card .card__header {
   min-height: 46px;
   border-bottom: 1px solid var(--border-subtle);
 }
 
+.jobs-activity-card .card__body,
 .jobs-table-card .card__body {
   padding: 0;
   overflow: auto;
@@ -48,6 +51,49 @@
 
 #jobs-table-wrap .data-table {
   min-width: 720px;
+}
+
+#jobs-activity-wrap {
+  max-height: 34rem;
+}
+
+.jobs-activity-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.jobs-activity-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.jobs-activity-item:last-child {
+  border-bottom: none;
+}
+
+.jobs-activity-item__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.jobs-activity-item__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.jobs-activity-item__message {
+  color: var(--text);
+  line-height: 1.45;
+}
+
+.jobs-activity-item__detail {
+  word-break: break-word;
 }
 
 .jobs-type-pill {
@@ -68,6 +114,11 @@
   .jobs-summary {
     width: 100%;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .jobs-activity-item__head {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 

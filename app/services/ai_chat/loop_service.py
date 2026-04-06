@@ -28,7 +28,7 @@ from app.services.ai_chat.loop_report_service import (
 )
 from app.services.ai_chat.thread_service import role_overrides, validate_thread_id_http
 from app.services.runner import start_backtest, wait_for_run
-from app.services.storage import load_run_meta, load_run_results
+from app.services.storage import append_app_event, load_run_meta, load_run_results
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +47,18 @@ def loop_emit(loop_id: str, event: dict[str, Any]) -> None:
         if loop_id not in LOOP_EVENTS:
             LOOP_EVENTS[loop_id] = []
         LOOP_EVENTS[loop_id].append(event)
+    append_app_event(
+        category="event",
+        source="ai_loop",
+        action=str(event.get("event_type") or event.get("step") or "event"),
+        status=str(event.get("status") or "info"),
+        message=str(event.get("message") or event.get("event_type") or event.get("step") or "AI loop event"),
+        timestamp=str(event.get("timestamp") or utc_now()),
+        loop_id=loop_id,
+        stream=event.get("stream"),
+        cycle_index=event.get("cycle_index"),
+        payload=event.get("payload"),
+    )
 
 
 def loop_drain(loop_id: str) -> list[dict[str, Any]]:

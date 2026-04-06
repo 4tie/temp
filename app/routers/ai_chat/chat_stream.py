@@ -19,7 +19,7 @@ from app.services.ai_chat.thread_service import (
     resolve_thread_id,
     role_overrides,
 )
-from app.services.storage import load_run_meta, load_run_results
+from app.services.storage import append_app_event, load_run_meta, load_run_results
 
 logger = logging.getLogger(__name__)
 
@@ -141,10 +141,38 @@ async def analyze_run(run_id: str):
     run_data = {**results, "strategy": meta.get("strategy", "")}
 
     try:
+        append_app_event(
+            category="event",
+            source="ai_diagnosis",
+            action="analyze_started",
+            status="running",
+            message=f"AI diagnosis started for run {run_id}.",
+            run_id=run_id,
+            strategy=meta.get("strategy"),
+        )
         analysis = analyze(run_data, run_id=run_id, include_ai_narrative=False)
+        append_app_event(
+            category="event",
+            source="ai_diagnosis",
+            action="analyze_completed",
+            status="completed",
+            message=f"AI diagnosis completed for run {run_id}.",
+            run_id=run_id,
+            strategy=meta.get("strategy"),
+        )
         return analysis
     except Exception as exc:
         logger.error("Deep analysis failed for run %s: %s", run_id, exc)
+        append_app_event(
+            category="event",
+            source="ai_diagnosis",
+            action="analyze_failed",
+            status="failed",
+            message=f"AI diagnosis failed for run {run_id}: {exc}",
+            run_id=run_id,
+            strategy=meta.get("strategy"),
+            error=str(exc),
+        )
         raise HTTPException(status_code=500, detail=f"Analysis failed: {exc}")
 
 

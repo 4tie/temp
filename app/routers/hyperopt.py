@@ -15,6 +15,7 @@ from app.services.hyperopt_storage import (
 from app.services.runs.base_run_service import run_logs_path
 from app.services.hyperopt_parser import save_params_file
 from app.core.processes import get_status, get_logs
+from app.services.storage import append_app_event
 
 router = APIRouter(prefix="/hyperopt", tags=["hyperopt"])
 
@@ -212,4 +213,14 @@ async def apply_params(req: ApplyParamsRequest):
         raise HTTPException(status_code=400, detail=str(e))
     except OSError as e:
         raise HTTPException(status_code=500, detail=f"Failed to write params file: {e}")
+    append_app_event(
+        category="event",
+        source="hyperopt",
+        action="apply_params",
+        status="ok",
+        message=f"Applied hyperopt params for {req.strategy}.",
+        strategy=req.strategy,
+        spaces=req.spaces,
+        param_count=len(req.params or {}),
+    )
     return {"applied": True, "strategy": req.strategy, "spaces": req.spaces}

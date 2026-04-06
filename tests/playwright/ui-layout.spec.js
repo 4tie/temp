@@ -153,6 +153,39 @@ test.describe('Layout and shell integrity', () => {
     expect(metrics.headerScrollWidth, 'AI header should not overflow horizontally').toBeLessThanOrEqual(metrics.headerClientWidth + 2);
     expect(metrics.threadScrollWidth, 'AI thread should fit horizontally').toBeLessThanOrEqual(metrics.threadClientWidth + 2);
   });
+  test('AI Diagnosis right rail stacks below the main stage at medium desktop widths', async ({ page }) => {
+    await page.setViewportSize({ width: 1366, height: 860 });
+    await gotoPage(page, 'ai-diagnosis', '#ai-layout');
+
+    const layout = await page.evaluate(() => {
+      const workbench = document.querySelector('.ai-diagnosis-workbench');
+      const stage = document.querySelector('.ai-diagnosis-stage');
+      const rail = document.querySelector('.ai-diagnosis-rail');
+      const stageRect = stage ? stage.getBoundingClientRect() : null;
+      const railRect = rail ? rail.getBoundingClientRect() : null;
+      return {
+        hasNodes: Boolean(workbench && stage && rail),
+        inFlowOrder: Boolean(stage && rail && stage.nextElementSibling === rail),
+        stageBottom: stageRect ? stageRect.bottom : 0,
+        stageLeft: stageRect ? stageRect.left : 0,
+        stageWidth: stageRect ? stageRect.width : 0,
+        railTop: railRect ? railRect.top : 0,
+        railLeft: railRect ? railRect.left : 0,
+        railWidth: railRect ? railRect.width : 0,
+      };
+    });
+
+    expect(layout.hasNodes, 'AI diagnosis stage and rail must exist').toBeTruthy();
+    expect(layout.inFlowOrder, 'AI diagnosis rail should follow stage in flow').toBeTruthy();
+    expect(layout.railTop, 'AI diagnosis rail should stack below stage at 1366px').toBeGreaterThanOrEqual(layout.stageBottom - 1);
+    expect(Math.abs(layout.railLeft - layout.stageLeft), 'Stacked rail should align with stage left edge').toBeLessThanOrEqual(2);
+    expect(Math.abs(layout.railWidth - layout.stageWidth), 'Stacked rail should use full stage width').toBeLessThanOrEqual(2);
+
+    const overflow = await readOverflowMetrics(page);
+    expect(overflow.docScrollWidth, 'ai-diagnosis: stacked layout should not overflow document').toBeLessThanOrEqual(overflow.viewportWidth + 2);
+    expect(overflow.contentScrollWidth, 'ai-diagnosis: stacked layout should fit page content width').toBeLessThanOrEqual(overflow.contentClientWidth + 2);
+  });
+
 
   test('Strategy Lab stays usable at compact desktop widths', async ({ page }) => {
     await page.setViewportSize({ width: 1100, height: 860 });
@@ -212,3 +245,4 @@ test.describe('Layout and shell integrity', () => {
     expect(jobsMetrics.docScrollWidth, 'jobs: document should fit mobile viewport').toBeLessThanOrEqual(jobsMetrics.viewportWidth + 2);
   });
 });
+

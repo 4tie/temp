@@ -20,7 +20,31 @@ from app.services.runs.hyperopt_run_service import build_hyperopt_meta, load_hyp
 from app.services.runs.run_log_service import log_command_start, log_process_exit, persist_logs
 from app.services.runs.run_metadata_service import ensure_valid_strategy_json, finalize_meta
 from app.services.runs.run_process_service import mark_running, spawn_and_stream, start_daemon
-from app.services.storage import get_run_dir, load_run_meta, save_run_logs, save_run_meta, save_run_results
+from app.services.storage import append_app_event, get_run_dir, load_run_meta, save_run_logs, save_run_meta, save_run_results
+
+
+def _log_job_event(
+    *,
+    source: str,
+    action: str,
+    status: str,
+    message: str,
+    run_id: str | None = None,
+    job_id: str | None = None,
+    strategy: str | None = None,
+    **extra: Any,
+) -> None:
+    append_app_event(
+        category="job",
+        source=source,
+        action=action,
+        status=status,
+        message=message,
+        run_id=run_id,
+        job_id=job_id,
+        strategy=strategy,
+        **extra,
+    )
 
 
 def wait_for_run(run_id: str, timeout_s: int = 600) -> dict:
@@ -73,6 +97,16 @@ def start_backtest(
 
     save_run_meta(run_id, meta)
     mark_running(run_id)
+    _log_job_event(
+        source="backtest",
+        action="queued",
+        status="running",
+        message=f"Backtest queued for {display_strategy}.",
+        run_id=run_id,
+        strategy=display_strategy,
+        timeframe=timeframe,
+        exchange=exchange,
+    )
     start_daemon(_backtest_worker, run_id, cmd, run_dir, meta)
     return run_id
 
@@ -93,6 +127,16 @@ def start_download(
     cmd = normalize_command(default_cmd, command_override)
 
     mark_running(job_id)
+    _log_job_event(
+        source="download",
+        action="queued",
+        status="running",
+        message=f"Data download queued for {len(pairs)} pair(s) on {timeframe}.",
+        job_id=job_id,
+        timeframe=timeframe,
+        pair_count=len(pairs),
+        timerange=timerange,
+    )
     start_daemon(_download_worker, job_id, cmd)
     return job_id
 
@@ -100,25 +144,71 @@ def start_download(
 def _download_worker(job_id: str, cmd: list[str]) -> None:
     try:
         log_command_start(job_id, cmd)
+        _log_job_event(
+            source="download",
+            action="started",
+            status="running",
+            message="Data download started.",
+            job_id=job_id,
+        )
         code = spawn_and_stream(job_id, cmd)
         if code == 0:
             set_status(job_id, "completed")
+            _log_job_event(
+                source="download",
+                action="completed",
+                status="completed",
+                message="Data download completed.",
+                job_id=job_id,
+            )
         else:
             set_status(job_id, "failed")
             log_process_exit(job_id, code)
+            _log_job_event(
+                source="download",
+                action="failed",
+                status="failed",
+                message=f"Data download failed with exit code {code}.",
+                job_id=job_id,
+                exit_code=code,
+            )
     except FileNotFoundError:
         set_status(job_id, "failed")
         append_log(job_id, "ERROR: freqtrade command not found. Please install FreqTrade.")
+        _log_job_event(
+            source="download",
+            action="failed",
+            status="failed",
+            message="Data download failed because freqtrade was not found.",
+            job_id=job_id,
+        )
     except Exception as exc:
         set_status(job_id, "failed")
         append_log(job_id, f"ERROR: {str(exc)}")
+        _log_job_event(
+            source="download",
+            action="failed",
+            status="failed",
+            message=f"Data download failed: {exc}",
+            job_id=job_id,
+            error=str(exc),
+        )
     finally:
         remove_process(job_id)
 
 
 def _backtest_worker(run_id: str, cmd: list[str], run_dir: Path, meta: dict[str, Any]) -> None:
+    display_strategy = meta.get("display_strategy") or meta.get("strategy")
     try:
         log_command_start(run_id, cmd)
+        _log_job_event(
+            source="backtest",
+            action="started",
+            status="running",
+            message=f"Backtest started for {display_strategy or 'strategy'}.",
+            run_id=run_id,
+            strategy=display_strategy,
+        )
         code = spawn_and_stream(run_id, cmd)
         if code == 0:
             outcome = collect_backtest_run_results(run_dir, meta)
@@ -130,9 +220,32 @@ def _backtest_worker(run_id: str, cmd: list[str], run_dir: Path, meta: dict[str,
             meta["raw_artifact"] = outcome.get("raw_artifact", {"available": False})
             if outcome.get("results") is not None:
                 save_run_results(run_id, outcome["results"])
+            _log_job_event(
+                source="backtest",
+                action=outcome["status"],
+                status=outcome["status"],
+                message=(
+                    f"Backtest {outcome['status']} for {display_strategy or 'strategy'}."
+                    if outcome["status"] != "failed"
+                    else f"Backtest failed for {display_strategy or 'strategy'}."
+                ),
+                run_id=run_id,
+                strategy=display_strategy,
+                has_results=outcome.get("results") is not None,
+                error=outcome.get("error"),
+            )
         else:
             set_status(run_id, "failed")
             log_process_exit(run_id, code)
+            _log_job_event(
+                source="backtest",
+                action="failed",
+                status="failed",
+                message=f"Backtest failed for {display_strategy or 'strategy'} with exit code {code}.",
+                run_id=run_id,
+                strategy=display_strategy,
+                exit_code=code,
+            )
 
         save_run_meta(run_id, finalize_meta(meta, get_status(run_id)))
         persist_logs(run_id, save_run_logs)
@@ -141,11 +254,28 @@ def _backtest_worker(run_id: str, cmd: list[str], run_dir: Path, meta: dict[str,
         append_log(run_id, "ERROR: freqtrade command not found. Please install FreqTrade.")
         save_run_meta(run_id, finalize_meta(meta, "failed", "freqtrade not found"))
         persist_logs(run_id, save_run_logs)
+        _log_job_event(
+            source="backtest",
+            action="failed",
+            status="failed",
+            message=f"Backtest failed for {display_strategy or 'strategy'} because freqtrade was not found.",
+            run_id=run_id,
+            strategy=display_strategy,
+        )
     except Exception as exc:
         set_status(run_id, "failed")
         append_log(run_id, f"ERROR: {str(exc)}")
         save_run_meta(run_id, finalize_meta(meta, "failed", str(exc)))
         persist_logs(run_id, save_run_logs)
+        _log_job_event(
+            source="backtest",
+            action="failed",
+            status="failed",
+            message=f"Backtest failed for {display_strategy or 'strategy'}: {exc}",
+            run_id=run_id,
+            strategy=display_strategy,
+            error=str(exc),
+        )
     finally:
         remove_process(run_id)
 
@@ -212,6 +342,16 @@ def start_hyperopt(
 
     ensure_valid_strategy_json(strategy, run_id)
     mark_running(run_id)
+    _log_job_event(
+        source="hyperopt",
+        action="queued",
+        status="running",
+        message=f"Hyperopt queued for {strategy}.",
+        run_id=run_id,
+        strategy=strategy,
+        timeframe=timeframe,
+        epochs=epochs,
+    )
     start_daemon(_hyperopt_worker, run_id, cmd, run_dir, meta, strategy)
     return run_id
 
@@ -219,14 +359,39 @@ def start_hyperopt(
 def _hyperopt_worker(run_id: str, cmd: list[str], run_dir: Path, meta: dict[str, Any], strategy: str) -> None:
     try:
         log_command_start(run_id, cmd)
+        _log_job_event(
+            source="hyperopt",
+            action="started",
+            status="running",
+            message=f"Hyperopt started for {strategy}.",
+            run_id=run_id,
+            strategy=strategy,
+        )
         code = spawn_and_stream(run_id, cmd)
         if code == 0:
             set_status(run_id, "completed")
             results = load_hyperopt_run_results(run_dir, strategy)
             save_hyperopt_results(run_id, results)
+            _log_job_event(
+                source="hyperopt",
+                action="completed",
+                status="completed",
+                message=f"Hyperopt completed for {strategy}.",
+                run_id=run_id,
+                strategy=strategy,
+            )
         else:
             set_status(run_id, "failed")
             log_process_exit(run_id, code)
+            _log_job_event(
+                source="hyperopt",
+                action="failed",
+                status="failed",
+                message=f"Hyperopt failed for {strategy} with exit code {code}.",
+                run_id=run_id,
+                strategy=strategy,
+                exit_code=code,
+            )
 
         save_hyperopt_meta(run_id, finalize_meta(meta, get_status(run_id)))
         persist_logs(run_id, save_hyperopt_logs)
@@ -235,10 +400,27 @@ def _hyperopt_worker(run_id: str, cmd: list[str], run_dir: Path, meta: dict[str,
         append_log(run_id, "ERROR: freqtrade command not found.")
         save_hyperopt_meta(run_id, finalize_meta(meta, "failed", "freqtrade not found"))
         persist_logs(run_id, save_hyperopt_logs)
+        _log_job_event(
+            source="hyperopt",
+            action="failed",
+            status="failed",
+            message=f"Hyperopt failed for {strategy} because freqtrade was not found.",
+            run_id=run_id,
+            strategy=strategy,
+        )
     except Exception as exc:
         set_status(run_id, "failed")
         append_log(run_id, f"ERROR: {str(exc)}")
         save_hyperopt_meta(run_id, finalize_meta(meta, "failed", str(exc)))
         persist_logs(run_id, save_hyperopt_logs)
+        _log_job_event(
+            source="hyperopt",
+            action="failed",
+            status="failed",
+            message=f"Hyperopt failed for {strategy}: {exc}",
+            run_id=run_id,
+            strategy=strategy,
+            error=str(exc),
+        )
     finally:
         remove_process(run_id)

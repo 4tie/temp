@@ -189,6 +189,10 @@
   min-width: 0;
 }
 
+.ai-header > * {
+  min-width: 0;
+}
+
 .ai-hamburger {
   display: none;
   background: none;
@@ -879,7 +883,7 @@
 .ai-deep-panel {
   position: fixed;
   top: var(--topbar-height);
-  right: calc(var(--ai-dock-width, 430px) - 480px);
+  right: var(--ai-dock-width, 430px);
   width: 480px;
   height: calc(100vh - var(--topbar-height) - var(--statusbar-height));
   background: var(--bg-primary);
@@ -887,13 +891,18 @@
   z-index: 150;
   display: flex;
   flex-direction: column;
-  transition: right 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
   box-shadow: -4px 0 24px rgba(0,0,0,0.5);
   overflow: hidden;
+  transform: translateX(100%);
+  opacity: 0;
+  pointer-events: none;
 }
 
 .ai-deep-panel.open {
-  right: var(--ai-dock-width, 430px);
+  transform: translateX(0);
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .ai-deep-panel__header {
@@ -1169,11 +1178,11 @@
     width: 100vw;
     top: var(--topbar-height);
     height: calc(100vh - var(--topbar-height) - var(--statusbar-height));
-    right: -100vw;
+    right: 0;
   }
 
   .ai-deep-panel.open {
-    right: 0;
+    transform: translateX(0);
   }
 }
 
@@ -1215,7 +1224,7 @@
 .evo-panel {
   position: fixed;
   top: var(--topbar-height);
-  right: calc(var(--ai-dock-width, 430px) - 440px);
+  right: var(--ai-dock-width, 430px);
   width: 440px;
   height: calc(100vh - var(--topbar-height) - var(--statusbar-height));
   background: var(--bg-primary);
@@ -1223,19 +1232,24 @@
   z-index: 160;
   display: flex;
   flex-direction: column;
-  transition: right 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
   box-shadow: -4px 0 24px rgba(0,0,0,0.5);
   overflow: hidden;
+  transform: translateX(100%);
+  opacity: 0;
+  pointer-events: none;
 }
 
 .evo-panel.open {
-  right: var(--ai-dock-width, 430px);
+  transform: translateX(0);
+  opacity: 1;
+  pointer-events: auto;
 }
 
 /* When deep analysis panel is also open, evo panel sits to its left */
 .ai-deep-panel.open ~ .evo-panel.open,
 .evo-panel.open.evo-panel--offset {
-  right: calc(var(--ai-dock-width, 430px) + 480px);
+  transform: translateX(calc(-100% - 480px));
 }
 
 .evo-panel__header {
@@ -1859,11 +1873,11 @@
 @media (max-width: 640px) {
   .evo-panel {
     width: 100vw;
-    right: -100vw;
+    right: 0;
   }
   .ai-deep-panel.open ~ .evo-panel.open,
-  .evo-panel.open.evo-panel--offset {
-    right: 0;
+   .evo-panel.open.evo-panel--offset {
+    transform: translateX(0);
     top: calc(var(--topbar-height) + 48px); /* stack below deep panel header */
     height: calc(100vh - var(--topbar-height) - var(--statusbar-height) - 48px);
   }
@@ -1886,3 +1900,5 @@
     display: none; /* hide on very small screens — accessible via settings */
   }
 }
+
+

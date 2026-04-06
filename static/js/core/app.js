@@ -38,6 +38,7 @@ window.App = (() => {
   function navigate(page) {
     if (!PAGE_TITLES[page]) page = 'dashboard';
     if (page === _current) return;
+    window.UILog?.debug?.('Navigate', { page });
     _current = page;
 
     DOM.$$('.page-view').forEach(v => v.classList.remove('active'));
@@ -96,6 +97,7 @@ window.App = (() => {
     Sidebar.init();
     Tabs.initAll();
     Auth.startPolling();
+    window.UILog?.init?.();
     window.AIDiagPage?.initShell?.();
 
     _bindNavLinks();
@@ -110,3 +112,4 @@ window.App = (() => {
 
   return { navigate, refresh: () => navigate(_current) };
 })();
+
