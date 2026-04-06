@@ -1,4 +1,4 @@
-// @ts-check
+﻿// @ts-check
 import { defineConfig, devices } from '@playwright/test';
 
 /**
@@ -72,10 +72,13 @@ export default defineConfig({
   ],
 
   /* Run your local dev server before starting the tests */
-  // webServer: {
-  //   command: 'npm run start',
-  //   url: 'http://localhost:3000',
-  //   reuseExistingServer: !process.env.CI,
-  // },
+  webServer: {
+    command: '.\\4t\\Scripts\\python.exe run.py start --no-reload --host 127.0.0.1 --port 5000',
+    url: 'http://127.0.0.1:5000/healthz',
+    reuseExistingServer: !process.env.CI,
+    timeout: 120000,
+  },
 });
+
+
 

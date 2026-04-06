@@ -10,5 +10,27 @@
   "devDependencies": {
     "@playwright/test": "^1.59.1",
     "@types/node": "^25.5.2"
-  }
+  },
+  "main": "playwright.config.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "dependencies": {
+    "playwright": "^1.59.1",
+    "playwright-core": "^1.59.1",
+    "undici-types": "^7.18.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/4tie/temp.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/4tie/temp/issues"
+  },
+  "homepage": "https://github.com/4tie/temp#readme"
 }
