@@ -27,15 +27,12 @@ SameGrossNetframework/
 │   │   │   └── deep_analysis.py # Deep backtest analysis with health scoring
 │   │   ├── evolution/          # Autonomous strategy evolution loop
 │   │   ├── market/             # Market regime detection helpers
-│   │   ├── conversation_store.py  # Legacy conversation file I/O
-│   │   └── orchestrator.py     # Legacy re-export shim
+│   │   └── model_metrics_store.py # Persistent model-router metrics
 │   ├── core/                   # Shared infrastructure
 │   │   ├── config.py           # Source of truth: env vars, dirs, run/report filenames
 │   │   ├── json_io.py          # Shared JSON read/write helpers
-│   │   ├── json_store.py       # Legacy compatibility re-export for JSON helpers
 │   │   └── processes.py        # Process lifecycle: start, status, logs (in-memory)
 │   ├── routers/                # FastAPI route handlers
-│   │   ├── ai.py               # Legacy flat AI router (not mounted by app/main.py)
 │   │   ├── ai_chat/            # Mounted /ai router package
 │   │   │   ├── __init__.py
 │   │   │   ├── chat_stream.py  # /ai/chat, /ai/analyze/{run_id}, /ai/pipeline-logs
@@ -72,11 +69,13 @@ SameGrossNetframework/
 │       ├── results/            # Canonical backtest result parsing/normalization
 │       │   ├── result_service.py
 │       │   ├── raw_loader.py
+│       │   ├── raw_extractors.py
 │       │   ├── payload_detector.py
 │       │   ├── overview_builder.py
 │       │   ├── trade_normalizer.py
 │       │   ├── risk_normalizer.py
 │       │   ├── summary_normalizer.py
+│       │   ├── schema_keys.py
 │       │   ├── empty_result_factory.py
 │       │   ├── comparison_metrics.py
 │       │   └── metric_registry.py
@@ -94,10 +93,7 @@ SameGrossNetframework/
 │       ├── hyperopt_parser.py  # Parses .fthypt hyperopt result files
 │       ├── hyperopt_storage.py # Hyperopt result persistence
 │       ├── indicator_calculator.py  # Calculates technical indicators on OHLCV data
-│       ├── ohlcv_loader.py     # Loads OHLCV data from local JSON/feather files
-│       ├── result_parser.py    # Compatibility re-export shim into services/results
-│       ├── result_normalizer.py # Compatibility re-export shim into services/results
-│       └── strategy_scanner.py # Compatibility wrapper around strategy metadata services
+│       └── ohlcv_loader.py     # Loads OHLCV data from local JSON/feather files
 ├── static/                     # Frontend static assets
 │   ├── css/
 │   │   ├── base.css            # CSS reset and root variables

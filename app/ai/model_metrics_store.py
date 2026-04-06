@@ -6,13 +6,12 @@ from __future__ import annotations
 import json
 import threading
 import time
-from pathlib import Path
 from typing import Any
 
-from app.core.config import BASE_DIR
+from app.core.config import AI_MODEL_METRICS_FILE
 
 _LOCK = threading.Lock()
-_METRICS_FILE = Path(BASE_DIR) / "ai_model_metrics.json"
+_METRICS_FILE = AI_MODEL_METRICS_FILE
 _CACHE: dict[str, Any] | None = None
 
 

@@ -32,8 +32,7 @@ Routing and model selection:
 - `model_router.py`: deterministic role-based model selection
 - `model_metrics_store.py`: persistent model performance observations
 
-Compatibility:
+Notes:
 
-- `orchestrator.py` is a thin shim that re-exports `pipelines.orchestrator` for legacy imports.
-- `conversation_store.py` is legacy conversation I/O. New work should prefer `app.ai.memory`.
-- `app/routers/ai.py` is an older flat AI router and is not the mounted AI API in `app/main.py`.
+- Mounted AI API lives in `app/routers/ai_chat/` and is registered by `app/main.py`.
+- Conversation migration support remains in `app.ai.memory.threads`, which can import old JSON records from `user_data/ai_conversations/`.

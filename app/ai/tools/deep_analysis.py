@@ -15,7 +15,7 @@ from math import sqrt
 from typing import Any
 
 from app.core.config import BACKTEST_RESULTS_DIR, STRATEGIES_DIR
-from app.services.result_normalizer import normalize_backtest_result
+from app.services.results.result_service import normalize_backtest_result
 
 logger = logging.getLogger(__name__)
 

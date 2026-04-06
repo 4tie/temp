@@ -82,7 +82,7 @@ python run.py
 
 ## File I/O Conventions
 - Low-level JSON reads/writes live in `app/core/json_io.py`
-- `app/core/json_store.py` is a compatibility shim for legacy imports; new code should import `read_json()` / `write_json()` / `ensure_dir()` from `app.core.json_io`
+- Low-level JSON helpers live in `app.core.json_io` via `read_json()` / `write_json()` / `ensure_dir()`
 - Config writes use atomic pattern: `tempfile.mkstemp` → write → `os.replace`
 - Directory creation: `path.mkdir(parents=True, exist_ok=True)` at startup in `config.py`
 - Run/report filenames (`meta.json`, `parsed_results.json`, `logs.txt`) are defined centrally in `app/core/config.py`

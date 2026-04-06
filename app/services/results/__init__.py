@@ -1,4 +1,4 @@
-from app.services.results.comparison_metrics import CORE_COMPARISON_KEYS, compare_overviews, compare_results
+from app.services.results.comparison_metrics import compare_overviews, compare_results
 from app.services.results.empty_result_factory import empty_backtest_result, empty_normalized_result
 from app.services.results.metric_registry import (
     AI_CONTEXT_METRICS,
@@ -18,7 +18,6 @@ from app.services.results.result_service import normalize_backtest_result, parse
 __all__ = [
     "AI_CONTEXT_METRICS",
     "AI_LOOP_REPORT_METRICS",
-    "CORE_COMPARISON_KEYS",
     "CORE_RESULT_METRICS",
     "RESULTS_TABLE_METRICS",
     "build_metric_delta_rows",

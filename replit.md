@@ -9,7 +9,6 @@ Web-based management interface for the FreqTrade algorithmic trading framework. 
 - `app/main.py` — Entry point, mounts static files, includes mounted routers
 - `app/core/config.py` — Source of truth for host, port, `user_data` root, run/report dirs, and canonical filenames
 - `app/core/json_io.py` — Low-level JSON read/write helpers
-- `app/core/json_store.py` — Compatibility re-export for legacy JSON helper imports
 - `app/core/processes.py` — In-memory active-process registry
 - `app/routers/` — API endpoint modules/packages:
   - `backtest.py` — Backtest runs, data download, config, metrics registry endpoint
@@ -32,7 +31,7 @@ Web-based management interface for the FreqTrade algorithmic trading framework. 
   - `memory/` — Thread and conversation persistence
   - `evolution/` and `market/` — Evolution loop and market-regime helpers
   - `context_builder.py` — Builds run/strategy context bundles for AI flows
-  - `orchestrator.py` and `conversation_store.py` — Legacy compatibility shims
+  - `model_metrics_store.py` — Persistent model-routing metrics
 
 ### Frontend (Vanilla JS SPA)
 - `templates/layouts/base.html` — Single HTML shell, all pages included

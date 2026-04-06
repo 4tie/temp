@@ -15,7 +15,8 @@ from app.core.processes import (
     set_process, get_logs, remove_process
 )
 from app.services.command_builder import build_backtest_command, build_download_data_command, build_hyperopt_command
-from app.services.result_parser import parse_backtest_results, find_run_local_result_artifact
+from app.services.results.raw_loader import find_run_local_result_artifact
+from app.services.results.result_service import parse_backtest_results
 from app.services.storage import (
     save_run_meta,
     save_run_results,

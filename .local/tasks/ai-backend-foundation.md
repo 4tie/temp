@@ -10,7 +10,6 @@ Completed. This document now tracks the canonical structure after the follow-up 
 
 ### Core JSON I/O
 - `app/core/json_io.py` — low-level JSON helpers (`read_json`, `write_json`, `ensure_dir`)
-- `app/core/json_store.py` — compatibility re-export for legacy imports
 
 ### AI runtime
 - `app/ai/models/openrouter_client.py` — OpenRouter client

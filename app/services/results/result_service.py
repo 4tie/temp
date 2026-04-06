@@ -3,7 +3,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from app.services.result_extractors import (
+from app.services.results.empty_result_factory import empty_backtest_result, empty_normalized_result
+from app.services.results.metric_registry import build_metric_snapshot
+from app.services.results.overview_builder import build_overview, extract_overview
+from app.services.results.raw_extractors import (
     extract_daily_profit,
     extract_equity_curve,
     extract_grouped_rows,
@@ -12,7 +15,9 @@ from app.services.result_extractors import (
     extract_section,
     extract_trades,
 )
-from app.services.result_parser_schema import (
+from app.services.results.raw_loader import load_backtest_result_payload
+from app.services.results.risk_normalizer import compute_advanced_metrics, normalize_risk_metrics
+from app.services.results.schema_keys import (
     BALANCE_METRIC_KEYS,
     CONFIG_SNAPSHOT_KEYS,
     DIAGNOSTIC_KEYS,
@@ -20,11 +25,6 @@ from app.services.result_parser_schema import (
     RUN_METADATA_KEYS,
     SUMMARY_METRIC_KEYS,
 )
-from app.services.results.empty_result_factory import empty_backtest_result, empty_normalized_result
-from app.services.results.metric_registry import build_metric_snapshot
-from app.services.results.overview_builder import build_overview, extract_overview
-from app.services.results.raw_loader import load_backtest_result_payload
-from app.services.results.risk_normalizer import compute_advanced_metrics, normalize_risk_metrics
 from app.services.results.summary_normalizer import (
     build_summary,
     coalesce,

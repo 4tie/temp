@@ -23,8 +23,8 @@ from app.core.config import (
     RUN_LOGS_FILENAME,
     RUN_META_FILENAME,
 )
-from app.services.result_normalizer import normalize_backtest_result
-from app.services.result_parser import parse_backtest_results, load_backtest_result_payload
+from app.services.results.raw_loader import load_backtest_result_payload
+from app.services.results.result_service import normalize_backtest_result, parse_backtest_results
 from app.services.results.metric_registry import build_metric_snapshot
 
 _SAFE_ID_RE = re.compile(r"^[A-Za-z0-9_\-]+$")

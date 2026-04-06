@@ -1,5 +1,5 @@
 """
-Fitness scoring — converts a parsed backtest result into a single 0-100 scalar.
+Fitness scoring — converts a normalized backtest result into a single 0-100 scalar.
 
 Weights
 -------
@@ -15,73 +15,9 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
+from typing import Any
 
-
-@dataclass
-class FitnessScore:
-    value: float                  # 0–100
-    breakdown: dict[str, float]   # component scores
-
-
-def compute_fitness(backtest_result: dict) -> FitnessScore:
-    """
-    Compute fitness from a parsed backtest result dict.
-
-    Expects the same structure produced by result_parser / services/storage:
-      backtest_result["summary"]          → summary metrics
-      backtest_result["advanced_metrics"] → sharpe_ratio etc.
-      backtest_result["trades"]           → list of trade dicts
-    """
-    summary: dict = backtest_result.get("summary") or {}
-    advanced: dict = backtest_result.get("advanced_metrics") or {}
-    trades: list = backtest_result.get("trades") or []
-
-    n_trades = len(trades)
-    if n_trades < 20:
-        return FitnessScore(value=0.0, breakdown={"reason": "insufficient_trades", "n_trades": n_trades})
-
-    # ── Profit factor (0–20) ──────────────────────────────────────────────────
-    pf = float(summary.get("profitFactor") or 0.0)
-    pf_score = min(pf / 2.0, 1.0) * 20.0
-
-    # ── Sharpe ratio (0–15) ───────────────────────────────────────────────────
-    sharpe = advanced.get("sharpe_ratio")
-    if sharpe is None:
-        sharpe = float(summary.get("sharpeRatio") or 0.0)
-    sharpe = float(sharpe)
-    sharpe_score = min(max(sharpe, 0.0) / 2.0, 1.0) * 15.0
-
-    # ── Drawdown (0–25) ───────────────────────────────────────────────────────
-    dd = float(summary.get("maxDrawdown") or 0.0)          # already a percentage
-    dd_score = max(0.0, 1.0 - dd / 50.0) * 25.0
-
-    # ── Win rate (0–20) ───────────────────────────────────────────────────────
-    wr = float(summary.get("winRate") or 0.0)              # already a percentage
-    wr_score = min(wr * 0.2, 20.0)
-
-    # ── Trade count bonus (0–20) ──────────────────────────────────────────────
-    trade_score = min(math.log10(max(n_trades, 1)) * 5.0, 20.0)
-
-    total = pf_score + sharpe_score + dd_score + wr_score + trade_score
-
-    return FitnessScore(
-        value=round(total, 2),
-        breakdown={
-            "profit_factor_score": round(pf_score, 2),
-            "sharpe_score": round(sharpe_score, 2),
-            "drawdown_score": round(dd_score, 2),
-            "win_rate_score": round(wr_score, 2),
-            "trade_bonus_score": round(trade_score, 2),
-            "profit_factor": round(pf, 4),
-            "sharpe_ratio": round(sharpe, 4),
-            "max_drawdown_pct": round(dd, 2),
-            "win_rate_pct": round(wr, 2),
-            "n_trades": n_trades,
-        },
-    )
-
-
-from app.services.result_normalizer import normalize_backtest_result as _normalize_backtest_result
+from app.services.results.result_service import normalize_backtest_result
 
 
 @dataclass
@@ -90,11 +26,11 @@ class FitnessScore:
     breakdown: dict[str, float | int | str]
 
 
-def compute_fitness(backtest_result: dict) -> FitnessScore:
-    normalized = _normalize_backtest_result(backtest_result)
-    summary: dict = normalized.get("summary") or {}
-    advanced: dict = normalized.get("advanced_metrics") or {}
-    trades: list = normalized.get("trades") or []
+def compute_fitness(backtest_result: dict[str, Any]) -> FitnessScore:
+    normalized = normalize_backtest_result(backtest_result)
+    summary: dict[str, Any] = normalized.get("summary") or {}
+    advanced: dict[str, Any] = normalized.get("advanced_metrics") or {}
+    trades: list[dict[str, Any]] = normalized.get("trades") or []
 
     n_trades = len(trades)
     if n_trades < 20:

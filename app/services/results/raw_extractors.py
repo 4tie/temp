@@ -2,54 +2,11 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.services.results.summary_normalizer import stringify_key
+
 
 def extract_section(data: dict[str, Any], keys: list[str]) -> dict[str, Any]:
     return {key: data.get(key) for key in keys if key in data}
-
-
-def extract_overview(data: dict[str, Any]) -> dict[str, Any]:
-    return {
-        "total_trades": data.get("total_trades", 0),
-        "profit_total": data.get("profit_total", 0),
-        "profit_total_abs": data.get("profit_total_abs", 0),
-        "profit_percent": round(data.get("profit_total", 0) * 100, 4),
-        "profit_factor": data.get("profit_factor", 0),
-        "win_rate": calc_win_rate(data),
-        "max_drawdown": data.get("max_drawdown", 0) or data.get("max_drawdown_account", 0) or 0,
-        "max_drawdown_abs": data.get("max_drawdown_abs", 0) or 0,
-        "max_drawdown_account": data.get("max_drawdown_account", 0) or 0,
-        "avg_profit_pct": data.get("avg_profit_pct", data.get("profit_mean_pct")),
-        "avg_duration": data.get("avg_duration", ""),
-        "best_pair": row_key_to_string(data.get("best_pair", {}).get("key", data.get("best_pair", ""))),
-        "worst_pair": row_key_to_string(data.get("worst_pair", {}).get("key", data.get("worst_pair", ""))),
-        "trading_volume": data.get("trading_volume", data.get("total_volume", 0)),
-        "trade_count_long": data.get("trade_count_long", 0),
-        "trade_count_short": data.get("trade_count_short", 0),
-        "starting_balance": data.get("starting_balance", 0),
-        "final_balance": data.get("final_balance", 0),
-        "backtest_start": data.get("backtest_start", ""),
-        "backtest_end": data.get("backtest_end", ""),
-        "timeframe": data.get("timeframe", ""),
-        "stake_currency": data.get("stake_currency", ""),
-        "stake_amount": data.get("stake_amount", ""),
-        "max_open_trades": data.get("max_open_trades", 0),
-    }
-
-
-def calc_win_rate(data: dict[str, Any]) -> float:
-    total = data.get("total_trades", 0)
-    if total == 0:
-        return 0.0
-
-    if data.get("winrate") is not None:
-        try:
-            winrate = float(data["winrate"])
-            return round(winrate * 100 if abs(winrate) <= 1 else winrate, 2)
-        except (TypeError, ValueError):
-            pass
-
-    wins = data.get("wins", 0)
-    return round((wins / total) * 100, 2)
 
 
 def extract_trades(data: dict[str, Any]) -> list[dict[str, Any]]:
@@ -122,7 +79,7 @@ def extract_per_pair(data: dict[str, Any]) -> list[dict[str, Any]]:
 
         pairs.append(
             {
-                "pair": row_key_to_string(row.get("key", row.get("pair", ""))),
+                "pair": stringify_key(row.get("key", row.get("pair", ""))),
                 "key": row.get("key", row.get("pair", "")),
                 "trades": row.get("trades", 0),
                 "profit_mean": row.get("profit_mean"),
@@ -183,7 +140,7 @@ def extract_grouped_rows(rows: Any) -> list[dict[str, Any]]:
         if not isinstance(row, dict):
             continue
         normalized = dict(row)
-        normalized["label"] = row_key_to_string(row.get("key"))
+        normalized["label"] = stringify_key(row.get("key"))
         normalized_rows.append(normalized)
     return normalized_rows
 
@@ -206,9 +163,12 @@ def extract_periodic_breakdown(data: dict[str, Any]) -> dict[str, list[dict[str,
     return extracted
 
 
-def row_key_to_string(value: Any) -> str:
-    if value is None:
-        return ""
-    if isinstance(value, (list, tuple)):
-        return " -> ".join(str(item) for item in value if item not in (None, ""))
-    return str(value)
+__all__ = [
+    "extract_daily_profit",
+    "extract_equity_curve",
+    "extract_grouped_rows",
+    "extract_per_pair",
+    "extract_periodic_breakdown",
+    "extract_section",
+    "extract_trades",
+]

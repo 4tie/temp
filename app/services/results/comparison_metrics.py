@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Mapping
+from typing import Any, Iterable, Mapping
 
 from app.services.results.metric_registry import (
     CORE_RESULT_METRICS,
@@ -8,7 +8,9 @@ from app.services.results.metric_registry import (
     compare_metric_snapshots,
 )
 
-CORE_COMPARISON_KEYS = list(CORE_RESULT_METRICS)
+
+def _selected_keys(keys: Iterable[str] | None) -> tuple[str, ...]:
+    return tuple(keys or CORE_RESULT_METRICS)
 
 
 def compare_overviews(
@@ -24,9 +26,10 @@ def compare_results(
     result_b: Mapping[str, Any] | None,
     keys: list[str] | None = None,
 ) -> dict[str, dict[str, Any]]:
-    snapshot_a = build_metric_snapshot(result_a, keys or CORE_COMPARISON_KEYS)
-    snapshot_b = build_metric_snapshot(result_b, keys or CORE_COMPARISON_KEYS)
-    return compare_metric_snapshots(snapshot_a, snapshot_b, keys or CORE_COMPARISON_KEYS)
+    metric_keys = _selected_keys(keys)
+    snapshot_a = build_metric_snapshot(result_a, metric_keys)
+    snapshot_b = build_metric_snapshot(result_b, metric_keys)
+    return compare_metric_snapshots(snapshot_a, snapshot_b, metric_keys)
 
 
-__all__ = ["CORE_COMPARISON_KEYS", "compare_overviews", "compare_results"]
+__all__ = ["compare_overviews", "compare_results"]

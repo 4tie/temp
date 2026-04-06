@@ -151,7 +151,7 @@ async def start_evolution(
 
 Loop:
 ```
-1. Load backtest result from run_id (result_parser.parse_backtest_results)
+1. Load backtest result from run_id (`app.services.results.result_service.parse_backtest_results`)
 2. Run deep_analysis.analyze() → get analysis + fitness
 3. Detect market regime for the strategy's pairs/timeframe
 4. Read strategy source from user_data/strategies/{strategy}.py

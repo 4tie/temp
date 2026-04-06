@@ -8,7 +8,6 @@ import tempfile
 import threading
 import time
 import uuid
-from pathlib import Path
 from typing import Any
 
 from fastapi import HTTPException
@@ -18,7 +17,7 @@ from app.ai.context_builder import build_context_bundle
 from app.ai.goals import normalize_goal_id
 from app.ai.memory.threads import append_message
 from app.ai.pipelines.orchestrator import stream_run
-from app.core.config import AI_LOOP_REPORTS_DIR, BASE_DIR
+from app.core.config import AI_LOOP_REPORTS_DIR, AI_LOOP_STATE_DIR, AI_LOOP_STATE_FILE
 from app.services.ai_chat.apply_code_service import apply_code_impl, atomic_write_text
 from app.services.ai_chat.loop_report_service import (
     result_delta_rows,
@@ -39,9 +38,6 @@ LOOP_IDEMPOTENCY: dict[str, dict[str, Any]] = {}
 # Recovery/import paths can emit events while already holding the loop lock.
 # Use an RLock so startup restoration does not deadlock on nested acquisition.
 LOOP_LOCK = threading.RLock()
-LOOP_STATE_DIR = BASE_DIR / "ai_loop_state"
-LOOP_STATE_FILE = LOOP_STATE_DIR / "sessions.json"
-LOOP_STATE_DIR.mkdir(parents=True, exist_ok=True)
 IDEMPOTENCY_TTL_S = 6 * 3600
 MAX_IDEMPOTENCY_RECORDS = 2000
 

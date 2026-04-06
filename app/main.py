@@ -1,15 +1,26 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse, Response
 
-from app.routers import backtest, strategies, presets, compare, hyperopt, ai_chat, evolution, settings
+from app.routers import backtest, compare, evolution, hyperopt, presets, settings, strategies, ai_chat
+from app.services.ai_chat.loop_service import load_loop_state
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    load_loop_state()
+    yield
+
 
 app = FastAPI(
     title="4tie",
     version="1.0.0",
     root_path="",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -46,10 +57,9 @@ async def serve_index(request: Request):
 
 @app.get("/sw.js")
 async def service_worker() -> Response:
-    # No-op service worker to satisfy browsers that still request /sw.js.
     return Response(
         content="self.addEventListener('install', () => self.skipWaiting());\n"
-                "self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()));\n",
+        "self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()));\n",
         media_type="application/javascript",
         headers={"Cache-Control": "no-store"},
     )

@@ -496,7 +496,7 @@ window.AIDiagPage = (() => {
       return;
     }
     _el.convList.innerHTML = convs.map(c => {
-      const cid = c.conversation_id || c.id;
+      const cid = c.conversation_id || c.thread_id;
       const title = c.title || c.strategy_name || 'Chat';
       const preview = c.preview || '';
       return `
@@ -1285,7 +1285,7 @@ window.AIDiagPage = (() => {
       _appendMessage('assistant', `Applied update to **${applyResult.strategy || evt.strategy || 'strategy'}**${_durationSuffix(evt)}.\n\n${_renderLoopFileChanges(evt.file_changes || applyResult.file_changes || {})}`, { auto_loop: true });
       return;
     }
-    if (step === 'validate_done' || step === 'ai_validate_done') {
+    if (step === 'validate_done') {
       _appendMessage('assistant', `Validation complete${_durationSuffix(evt)}:\n\n${evt.validation_text || '_No validation text._'}`, { auto_loop: true });
       if (_state.loopEnabled && _state.loopId === evt.loop_id) {
         _state.pendingRerunPrompt = true;
@@ -1688,7 +1688,7 @@ window.AIDiagPage = (() => {
   function _handleEvoEvent(evt, maxGen) {
     const step = String(evt.event_type || evt.step || '');
 
-    if (step === 'comparison_done' || step === 'comparing') {
+    if (step === 'comparison_done') {
       _evo.generations.push(evt);
       const gen = evt.generation || _evo.generations.length;
       _updateEvoProgress(gen, maxGen);
@@ -1696,20 +1696,20 @@ window.AIDiagPage = (() => {
     }
 
     if (
-      step === 'analysis_started' || step === 'analyzing' ||
-      step === 'mutation_started' || step === 'mutating' ||
-      step === 'backtest_started' || step === 'backtesting'
+      step === 'analysis_started' ||
+      step === 'mutation_started' ||
+      step === 'backtest_started'
     ) {
       _updateActiveGenStep(evt);
     }
 
-    if (step === 'loop_completed' || step === 'done' || evt.done) {
+    if (step === 'loop_completed' || evt.done) {
       if (_evo.activeTab === 'running') {
         setTimeout(() => _evoSwitchTab('results'), 1200);
       }
     }
 
-    if (step === 'loop_failed' || step === 'error' || step === 'mutation_failed' || step === 'backtest_failed') {
+    if (step === 'loop_failed' || step === 'mutation_failed' || step === 'backtest_failed') {
       _showEvoToast(`Evolution error: ${evt.message}`, true);
     }
   }
@@ -1762,12 +1762,10 @@ window.AIDiagPage = (() => {
     }
 
     const stepMap = {
-      analyzing: 'analyzing',
       analysis_started: 'analyzing',
-      mutating: 'mutating',
       mutation_started: 'mutating',
-      backtesting: 'backtesting',
       backtest_started: 'backtesting',
+      comparison_done: 'comparing',
     };
     const stepKey = stepMap[evt.event_type || evt.step];
     if (stepKey) {
