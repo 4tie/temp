@@ -2936,3 +2936,55 @@ INFO:     127.0.0.1:54286 - "GET /activity?limit=120 HTTP/1.1" 200 OK
 [32mINFO[0m:     127.0.0.1:55363 - "[1mGET /runs HTTP/1.1[0m" [32m200 OK[0m
 [32mINFO[0m:     127.0.0.1:64098 - "[1mGET /hyperopt/runs HTTP/1.1[0m" [32m200 OK[0m
 [32mINFO[0m:     127.0.0.1:64312 - "[1mGET /activity?limit=120 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:54229 - "[1mGET /hyperopt/runs HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:54932 - "[1mGET /runs HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:61983 - "[1mGET /activity?limit=120 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:65486 - "[1mGET /runs HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:55901 - "[1mGET /hyperopt/runs HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:57219 - "[1mGET /activity?limit=120 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:55737 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:55737 - "[1mGET / HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:55737 - "[1mGET /static/css/base.css HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:58429 - "[1mGET /static/css/layout.css HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:51128 - "[1mGET /static/css/utilities.css HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:64532 - "[1mGET /static/css/components.css HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:58848 - "[1mGET /static/css/pages/dashboard.css HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:61599 - "[1mGET /static/css/pages/backtesting.css HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:55737 - "[1mGET /static/css/pages/hyperopt.css HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:58429 - "[1mGET /static/css/pages/strategy-lab.css HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:51128 - "[1mGET /static/css/pages/ai-chat.css HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:64532 - "[1mGET /static/css/pages/ai-diagnosis.css HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:61599 - "[1mGET /static/css/pages/jobs.css HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:58848 - "[1mGET /static/css/pages/results.css?v=20260406 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:55737 - "[1mGET /static/css/pages/settings.css HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:58848 - "[1mGET /static/js/core/api-client.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:61599 - "[1mGET /static/js/core/theme.js HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:64532 - "[1mGET /static/js/components/result-explorer.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:58429 - "[1mGET /static/js/components/ui-log.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:51128 - "[1mGET /static/js/components/sidebar.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:58848 - "[1mGET /static/js/pages/backtesting.js HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:55737 - "[1mGET /static/js/pages/dashboard.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:58429 - "[1mGET /static/js/pages/strategy-lab.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:64532 - "[1mGET /static/js/pages/hyperopt.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:51128 - "[1mGET /static/js/pages/jobs.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:61599 - "[1mGET /static/js/pages/ai-diagnosis.js?v=20260404-2 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:55737 - "[1mGET /static/js/pages/results.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:51128 - "[1mGET /static/js/pages/settings.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:58848 - "[1mGET /static/js/core/app.js HTTP/1.1[0m" [33m304 Not Modified[0m
+[32mINFO[0m:     127.0.0.1:58848 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:61599 - "[1mGET /ai/threads HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:49926 - "[1mGET /runs HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:62792 - "[1mGET /hyperopt/runs HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:61556 - "[1mGET /activity?limit=120 HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:58848 - "[1mGET /ai/providers HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     127.0.0.1:58848 - "[1mGET /healthz HTTP/1.1[0m" [32m200 OK[0m
+[32mINFO[0m:     Shutting down
+[32mINFO[0m:     Shutting down
+[32mINFO[0m:     Waiting for application shutdown.
+[32mINFO[0m:     Waiting for application shutdown.
+[32mINFO[0m:     Application shutdown complete.
+[32mINFO[0m:     Application shutdown complete.
+[32mINFO[0m:     Finished server process [[36m31756[0m]
+[32mINFO[0m:     Finished server process [[36m31756[0m]
+[32mINFO[0m:     Stopping reloader process [[36m[1m42228[0m]
+[32mINFO[0m:     Stopping reloader process [[36m[1m42228[0m]

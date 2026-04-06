@@ -50,3 +50,9 @@ user_data/logs/
 # Keep strategy files and config template
 !user_data/strategies/
 !user_data/config.json
+
+# Playwright
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
