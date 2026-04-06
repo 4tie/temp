@@ -19,11 +19,16 @@ AI_THREADS_DIR = BASE_DIR / "ai_threads"
 AI_EVOLUTION_DIR = BASE_DIR / "ai_evolution"
 AI_LOOP_REPORTS_DIR = BASE_DIR / "ai_loop_reports"
 AI_PIPELINE_LOGS_DIR = BASE_DIR / "ai_pipeline_logs"
+APP_RUNTIME_DIR = BASE_DIR / "runtime"
 
 RUN_META_FILENAME = "meta.json"
 PARSED_RESULTS_FILENAME = "parsed_results.json"
 RAW_ARTIFACT_META_SUFFIX = ".meta.json"
 RUN_LOGS_FILENAME = "logs.txt"
+DEV_SERVER_PID_FILENAME = "dev_server.pid.json"
+DEV_SERVER_LOG_FILENAME = "dev_server.log"
+DEV_SERVER_PID_FILE = APP_RUNTIME_DIR / DEV_SERVER_PID_FILENAME
+DEV_SERVER_LOG_FILE = APP_RUNTIME_DIR / DEV_SERVER_LOG_FILENAME
 
 BACKTEST_RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 HYPEROPT_RESULTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -35,6 +40,7 @@ AI_THREADS_DIR.mkdir(parents=True, exist_ok=True)
 AI_EVOLUTION_DIR.mkdir(parents=True, exist_ok=True)
 AI_LOOP_REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 AI_PIPELINE_LOGS_DIR.mkdir(parents=True, exist_ok=True)
+APP_RUNTIME_DIR.mkdir(parents=True, exist_ok=True)
 
 HOST = os.environ.get("BACKTEST_API_HOST", "127.0.0.1")
 PORT = int(os.environ.get("BACKTEST_API_PORT", "5000"))

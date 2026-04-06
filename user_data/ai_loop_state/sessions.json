@@ -3,13 +3,20 @@
     "67991c11-9258-4469-9b28-eef28a300d38": {
       "loop_id": "67991c11-9258-4469-9b28-eef28a300d38",
       "thread_id": "thread-loop",
-      "status": "running",
+      "status": "interrupted",
       "started_at": "2026-04-05T23:48:41.281159+00:00",
-      "updated_at": "2026-04-05T23:48:41.281159+00:00",
+      "updated_at": "2026-04-06T01:36:10.579532+00:00",
       "strategy": null,
       "baseline_run_id": "run-ctx",
       "new_run_id": null,
-      "steps": [],
+      "steps": [
+        {
+          "ts": "2026-04-06T01:36:10.579532+00:00",
+          "step": "loop_recovered",
+          "status": "warning",
+          "message": "Server restarted while loop was running. Session recovered from disk."
+        }
+      ],
       "table_rows": [],
       "test_results": [],
       "file_changes": {},
@@ -33,5 +40,5 @@
     }
   },
   "idempotency": {},
-  "updated_at": "2026-04-05T23:48:41.281308+00:00"
+  "updated_at": "2026-04-06T01:43:34.667505+00:00"
 }

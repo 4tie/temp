@@ -1,0 +1,86 @@
+INFO:     Will watch for changes in these directories: ['T:\\SameGrossNetframework\\SameGrossNetframework\\app', 'T:\\SameGrossNetframework\\SameGrossNetframework\\static', 'T:\\SameGrossNetframework\\SameGrossNetframework\\templates']
+INFO:     Uvicorn running on http://127.0.0.1:5000 (Press CTRL+C to quit)
+INFO:     Started reloader process [51848] using StatReload
+INFO:     Started server process [48568]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:58684 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58684 - "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56941 - "GET /static/css/pages/strategy-lab.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:58684 - "GET /static/css/components.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:64014 - "GET /static/css/pages/backtesting.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65121 - "GET /static/css/pages/ai-chat.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:56111 - "GET /static/css/pages/results.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65025 - "GET /static/css/pages/settings.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58684 - "GET /static/js/utils/format.js HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:65121 - "GET /static/js/core/api-client.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65025 - "GET /static/js/components/modal.js HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:58684 - "GET /static/js/components/result-explorer.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65025 - "GET /static/js/pages/backtesting.js HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:56111 - "GET /static/js/pages/dashboard.js HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:64014 - "GET /static/js/pages/hyperopt.js HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:56941 - "GET /static/js/pages/strategy-lab.js HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:65121 - "GET /static/js/pages/ai-diagnosis.js?v=20260404-2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58684 - "GET /static/js/pages/settings.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64014 - "GET /static/js/pages/results.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58684 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58684 - "GET /runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64014 - "GET /hyperopt/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65121 - "GET /strategies HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65121 - "GET /sw.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65121 - "GET /runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64014 - "GET /strategies HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58684 - "GET /last-config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56941 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65121 - "GET /runs/20260405_232204_17d85a85 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56941 - "GET /pairs?exchange=binance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56941 - "GET /strategies/MultiMa/params HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56941 - "GET /strategies HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58684 - "GET /hyperopt/spaces HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65121 - "GET /hyperopt/loss-functions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65121 - "GET /pairs?exchange=binance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65121 - "GET /hyperopt/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65121 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65121 - "GET /strategies HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58684 - "GET /ai/threads HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58684 - "GET /runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56941 - "GET /hyperopt/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56941 - "GET /runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58684 - "GET /result-metrics HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58684 - "GET /runs/20260405_232204_17d85a85/raw HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56941 - "GET /runs/20260405_232204_17d85a85 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65121 - "GET /ai/providers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65121 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65121 - "GET /runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65121 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65121 - "GET /settings HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60788 - "GET /presets HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51320 - "GET /last-config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51320 - "GET /runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60788 - "GET /hyperopt/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65121 - "GET /strategies HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65121 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65121 - "GET /strategies HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60788 - "GET /last-config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51320 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60692 - "GET /runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65121 - "GET /pairs?exchange=binance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65121 - "GET /runs/20260405_232204_17d85a85 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65121 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65121 - "GET /hyperopt/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65121 - "GET /runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57716 - "GET /strategies HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64038 - "GET /hyperopt/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57716 - "GET /strategies HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65121 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64038 - "GET /last-config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58654 - "GET /runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64038 - "GET /pairs?exchange=binance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64038 - "GET /runs/20260405_232204_17d85a85 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64038 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62846 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62846 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62846 - "GET /runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49566 - "GET /hyperopt/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54668 - "GET /strategies HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54668 - "GET /sw.js HTTP/1.1" 200 OK

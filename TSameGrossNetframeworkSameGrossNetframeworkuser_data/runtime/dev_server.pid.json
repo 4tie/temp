@@ -1,0 +1,15 @@
+{
+  "pid": 3,
+  "host": "127.0.0.1",
+  "port": 5000,
+  "reload": true,
+  "started_at": "2026-04-06T01:40:53.216383+00:00",
+  "python": "/mnt/t/SameGrossNetframework/SameGrossNetframework/.venv/bin/python",
+  "log_file": "T:\\SameGrossNetframework\\SameGrossNetframework\\user_data/runtime/dev_server.log",
+  "command": [
+    "/mnt/t/SameGrossNetframework/SameGrossNetframework/.venv/bin/python",
+    "/mnt/t/SameGrossNetframework/SameGrossNetframework/run.py",
+    "start",
+    "--foreground"
+  ]
+}

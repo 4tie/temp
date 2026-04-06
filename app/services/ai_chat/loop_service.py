@@ -36,7 +36,9 @@ logger = logging.getLogger(__name__)
 LOOP_SESSIONS: dict[str, dict[str, Any]] = {}
 LOOP_EVENTS: dict[str, list[dict[str, Any]]] = {}
 LOOP_IDEMPOTENCY: dict[str, dict[str, Any]] = {}
-LOOP_LOCK = threading.Lock()
+# Recovery/import paths can emit events while already holding the loop lock.
+# Use an RLock so startup restoration does not deadlock on nested acquisition.
+LOOP_LOCK = threading.RLock()
 LOOP_STATE_DIR = BASE_DIR / "ai_loop_state"
 LOOP_STATE_FILE = LOOP_STATE_DIR / "sessions.json"
 LOOP_STATE_DIR.mkdir(parents=True, exist_ok=True)
