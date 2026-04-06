@@ -44,6 +44,7 @@ def build_strategy_intelligence(
         parent_result=parent_result,
         parent_run_id=(meta or {}).get("parent_run_id") or (parent_meta or {}).get("run_id"),
     )
+    suggestion_groups = _group_suggestions(suggestions)
 
     return {
         "version": INTELLIGENCE_VERSION,
@@ -54,6 +55,8 @@ def build_strategy_intelligence(
                 "title": root.get("primary_failure_label") or "No clear primary issue detected",
                 "severity": root.get("severity") or "neutral",
                 "explanation": root.get("root_cause_conclusion") or "No root-cause conclusion available.",
+                "evidence": _primary_evidence(root),
+                "metric_snapshot": dict(root.get("metric_snapshot") or {}),
                 "confidence": root.get("confidence") or "low",
                 "confidence_note": root.get("confidence_note") or "",
             },
@@ -68,6 +71,7 @@ def build_strategy_intelligence(
             ],
         },
         "suggestions": suggestions,
+        "suggestion_groups": suggestion_groups,
         "rerun_plan": rerun_plan,
         "analysis_snapshot": {
             "health_score": analysis.get("health_score") or {},
@@ -167,7 +171,28 @@ def _build_diagnosis_items(
             }
         )
 
-    return items[:4]
+    for idx, item in enumerate(root.get("secondary_issues") or [], start=1):
+        secondary_item = _secondary_issue_item(item, idx)
+        if secondary_item:
+            items.append(secondary_item)
+
+    for idx, warning in enumerate(analysis.get("data_warnings") or [], start=1):
+        issue = warning.get("issue") if isinstance(warning, Mapping) else None
+        impact = warning.get("impact") if isinstance(warning, Mapping) else None
+        if not issue:
+            continue
+        items.append(
+            {
+                "id": f"data-warning-{idx}",
+                "title": "Data Warning",
+                "severity": "warning",
+                "explanation": str(impact or issue),
+                "evidence": str(issue),
+                "source": "data_warning",
+            }
+        )
+
+    return items[:5]
 
 
 def _build_suggestions(
@@ -241,7 +266,11 @@ def _build_suggestions(
             for suggestion in deduped
             if not suggestion.get("auto_applicable")
         ][:4],
+        "auto_action_count": len(auto_param_changes),
+        "manual_action_count": sum(1 for suggestion in deduped if not suggestion.get("auto_applicable")),
     }
+
+
 def _normalize_auto_param_change(
     parameter: str,
     suggestion_value: Any,
@@ -305,7 +334,79 @@ def _build_parent_comparison(
     return {
         "parent_run_id": parent_run_id,
         "metrics": metrics,
+        "highlights": _comparison_highlights(metrics),
     }
+
+
+def _comparison_highlights(metrics: Mapping[str, Any]) -> list[dict[str, Any]]:
+    ordered_keys = ("profit_percent", "profit_total_abs", "win_rate", "profit_factor", "max_drawdown")
+    rows: list[dict[str, Any]] = []
+    for key in ordered_keys:
+        row = metrics.get(key) if isinstance(metrics, Mapping) else None
+        if not isinstance(row, Mapping) or row.get("diff") is None:
+            continue
+        rows.append(dict(row))
+    return rows[:4]
+
+
+def _primary_evidence(root: Mapping[str, Any]) -> str:
+    findings = [
+        str(step.get("finding") or "").strip()
+        for step in (root.get("causal_chain") or [])
+        if isinstance(step, Mapping) and str(step.get("finding") or "").strip()
+    ]
+    evidence = " ".join(findings[:3]).strip()
+    if evidence:
+        return evidence
+    return _metric_snapshot_text(root.get("metric_snapshot"))
+
+
+def _group_suggestions(suggestions: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+    quick_params = [dict(item) for item in suggestions if item.get("auto_applicable")]
+    manual_guidance = [dict(item) for item in suggestions if not item.get("auto_applicable")]
+    return {
+        "quick_params": quick_params,
+        "manual_guidance": manual_guidance,
+    }
+
+
+def _secondary_issue_item(raw_value: Any, idx: int) -> dict[str, Any] | None:
+    text = str(raw_value or "").strip()
+    if not text:
+        return None
+    title, _, explanation = text.partition(":")
+    normalized_title = title.replace("_", " ").strip().title() if title else f"Secondary issue {idx}"
+    normalized_explanation = explanation.strip() or text
+    return {
+        "id": f"secondary-{idx}",
+        "title": normalized_title,
+        "severity": "warning",
+        "explanation": normalized_explanation,
+        "evidence": text,
+        "source": "secondary_issue",
+    }
+
+
+def _metric_snapshot_text(snapshot: Any) -> str:
+    if not isinstance(snapshot, Mapping):
+        return ""
+    parts: list[str] = []
+    total_trades = _number(snapshot.get("total_trades"))
+    win_rate = _number(snapshot.get("win_rate_pct"))
+    profit_factor = _number(snapshot.get("profit_factor"))
+    drawdown = _number(snapshot.get("max_drawdown_pct"))
+    total_profit = _number(snapshot.get("total_profit_pct"))
+    if total_trades is not None:
+        parts.append(f"{int(total_trades)} trades")
+    if win_rate is not None:
+        parts.append(f"{win_rate:.1f}% win rate")
+    if profit_factor is not None:
+        parts.append(f"profit factor {profit_factor:.2f}")
+    if total_profit is not None:
+        parts.append(f"{total_profit:+.2f}% return")
+    if drawdown is not None:
+        parts.append(f"{drawdown:.2f}% max drawdown")
+    return " | ".join(parts)
 
 
 def _number(value: Any) -> float | None:

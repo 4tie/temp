@@ -575,21 +575,64 @@ window.ResultExplorer = (() => {
     `;
   }
 
+  function _intelligenceComparisonRows(comparison) {
+    if (Array.isArray(comparison?.highlights) && comparison.highlights.length) {
+      return comparison.highlights;
+    }
+    if (!comparison?.metrics) return [];
+    return ['profit_percent', 'win_rate', 'profit_factor', 'max_drawdown']
+      .map((key) => comparison.metrics[key])
+      .filter(Boolean);
+  }
+
+  function _intelligenceSuggestionGroups(intelligence) {
+    const groups = intelligence?.suggestion_groups || {};
+    const suggestions = Array.isArray(intelligence?.suggestions) ? intelligence.suggestions : [];
+    const quickParams = Array.isArray(groups.quick_params)
+      ? groups.quick_params
+      : suggestions.filter((item) => item?.auto_applicable);
+    const manualGuidance = Array.isArray(groups.manual_guidance)
+      ? groups.manual_guidance
+      : suggestions.filter((item) => !item?.auto_applicable);
+    return { quickParams, manualGuidance };
+  }
+
+  function _visibleIntelligenceIssues(diagnosis) {
+    const primary = diagnosis?.primary || {};
+    const issues = Array.isArray(diagnosis?.issues) ? diagnosis.issues : [];
+    return issues.filter((issue) => {
+      if (!issue) return false;
+      const sameId = primary.id && issue.id && String(primary.id) === String(issue.id);
+      const sameTitle = primary.title && issue.title && String(primary.title) === String(issue.title);
+      return !sameId && !sameTitle;
+    });
+  }
+
+  function _metricSnapshotText(snapshot) {
+    if (!snapshot || typeof snapshot !== 'object') return '';
+    const parts = [];
+    if (FMT.toNumber(snapshot.total_trades) != null) parts.push(`${FMT.integer(snapshot.total_trades)} trades`);
+    if (FMT.toNumber(snapshot.win_rate_pct) != null) parts.push(`${_formatPct(snapshot.win_rate_pct, 1, false)} win rate`);
+    if (FMT.toNumber(snapshot.profit_factor) != null) parts.push(`Profit factor ${FMT.number(snapshot.profit_factor, 2)}`);
+    if (FMT.toNumber(snapshot.total_profit_pct) != null) parts.push(`${_formatPct(snapshot.total_profit_pct)} return`);
+    if (FMT.toNumber(snapshot.max_drawdown_pct) != null) parts.push(`${_formatPct(snapshot.max_drawdown_pct, 1, false)} max drawdown`);
+    return parts.join(' · ');
+  }
+
   function _renderIntelligenceTab(detail) {
     const results = detail.results || {};
     const intelligence = results.strategy_intelligence || {};
     const diagnosis = intelligence.diagnosis || {};
     const primary = diagnosis.primary || {};
-    const issues = Array.isArray(diagnosis.issues) ? diagnosis.issues : [];
-    const suggestions = Array.isArray(intelligence.suggestions) ? intelligence.suggestions : [];
+    const issues = _visibleIntelligenceIssues(diagnosis);
+    const { quickParams, manualGuidance } = _intelligenceSuggestionGroups(intelligence);
     const comparison = intelligence.comparison_to_parent || {};
-    const comparisonRows = comparison.metrics
-      ? ['profit_percent', 'win_rate', 'profit_factor', 'max_drawdown']
-          .map((key) => comparison.metrics[key])
-          .filter(Boolean)
-      : [];
+    const comparisonRows = _intelligenceComparisonRows(comparison);
+    const primaryEvidence = primary.evidence || 'No metric-backed evidence was captured.';
+    const primaryMetrics = _metricSnapshotText(primary.metric_snapshot);
+    const secondaryIssues = Array.isArray(diagnosis.secondary_issues) ? diagnosis.secondary_issues : [];
 
-    if (!issues.length && !suggestions.length) {
+    if (!issues.length && !quickParams.length && !manualGuidance.length && !primary.title) {
       return '<div class="empty-state">No strategy intelligence is available for this run yet.</div>';
     }
 
@@ -602,34 +645,57 @@ window.ResultExplorer = (() => {
           ${_detailItem('Confidence', _esc(primary.confidence || '—'))}
           ${_detailItem('Why It Matters', _esc(primary.explanation || '—'))}
         </div>
+        <div class="result-explorer__stack" style="margin-top:12px">
+          <article class="result-explorer__insight-card result-explorer__insight-card--${_severityTone(primary.severity)}">
+            <div class="result-explorer__insight-title">Metric Evidence</div>
+            <div class="result-explorer__insight-body">${_esc(primaryEvidence)}</div>
+            ${primaryMetrics ? `<div class="result-explorer__insight-meta">${_esc(primaryMetrics)}</div>` : ''}
+            ${primary.confidence_note ? `<div class="result-explorer__insight-meta">${_esc(primary.confidence_note)}</div>` : ''}
+          </article>
+        </div>
       </div>
       <div class="result-explorer__section">
         <div class="section-heading">Detected Issues</div>
         <div class="result-explorer__stack">
-          ${issues.map((issue) => `
+          ${issues.length ? issues.map((issue) => `
             <article class="result-explorer__insight-card result-explorer__insight-card--${_severityTone(issue.severity)}">
               <div class="result-explorer__insight-title">${_esc(issue.title || 'Issue')}</div>
               <div class="result-explorer__insight-body">${_esc(issue.explanation || issue.evidence || '')}</div>
               ${issue.evidence ? `<div class="result-explorer__insight-meta">Metric evidence: ${_esc(issue.evidence)}</div>` : ''}
             </article>
-          `).join('')}
+          `).join('') : '<div class="empty-state">No secondary issues were detected beyond the primary diagnosis.</div>'}
+          ${secondaryIssues.length ? secondaryIssues.slice(0, 3).map((item) => `
+            <article class="result-explorer__insight-card result-explorer__insight-card--amber">
+              <div class="result-explorer__insight-title">Secondary Issue</div>
+              <div class="result-explorer__insight-body">${_esc(item)}</div>
+            </article>
+          `).join('') : ''}
         </div>
       </div>
       <div class="result-explorer__section">
-        <div class="section-heading">Suggested Improvements</div>
+        <div class="section-heading">Quick Parameter Actions</div>
         <div class="result-explorer__stack">
-          ${suggestions.map((item) => `
+          ${quickParams.length ? quickParams.map((item) => `
             <article class="result-explorer__insight-card">
               <div class="result-explorer__insight-title">${_esc(item.title || 'Suggestion')}</div>
               <div class="result-explorer__insight-body">${_esc(item.description || '')}</div>
-              <div class="result-explorer__insight-meta">
-                ${item.auto_applicable
-                  ? _esc(`Quick Params can apply ${item.parameter} = ${item.suggested_value}`)
-                  : _esc('Manual guidance only. No strategy code will be changed automatically.')}
-              </div>
+              <div class="result-explorer__insight-meta">${_esc(`Quick Params can apply ${item.parameter} = ${item.suggested_value}`)}</div>
               ${item.evidence ? `<div class="result-explorer__insight-meta">Metric evidence: ${_esc(item.evidence)}</div>` : ''}
             </article>
-          `).join('')}
+          `).join('') : '<div class="empty-state">No direct quick-parameter changes were identified for this run.</div>'}
+        </div>
+      </div>
+      <div class="result-explorer__section">
+        <div class="section-heading">Manual Guidance</div>
+        <div class="result-explorer__stack">
+          ${manualGuidance.length ? manualGuidance.map((item) => `
+            <article class="result-explorer__insight-card">
+              <div class="result-explorer__insight-title">${_esc(item.title || 'Suggestion')}</div>
+              <div class="result-explorer__insight-body">${_esc(item.description || '')}</div>
+              <div class="result-explorer__insight-meta">${_esc('Manual guidance only. No strategy code will be changed automatically.')}</div>
+              ${item.evidence ? `<div class="result-explorer__insight-meta">Metric evidence: ${_esc(item.evidence)}</div>` : ''}
+            </article>
+          `).join('') : '<div class="empty-state">No manual follow-up guidance was generated for this run.</div>'}
         </div>
       </div>
       ${comparisonRows.length ? `

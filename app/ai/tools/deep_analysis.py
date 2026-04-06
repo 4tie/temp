@@ -1225,6 +1225,20 @@ def _compute_param_recommendations(
     return recs
 
 
+def _root_metric_snapshot(summary: dict, trades_with_profit: list[dict], won: list[dict], lost: list[dict]) -> dict[str, Any]:
+    avg_win_abs = statistics.mean([t["profit"] for t in won]) if won else None
+    avg_loss_abs = abs(statistics.mean([t["profit"] for t in lost])) if lost else None
+    return {
+        "total_trades": len(trades_with_profit),
+        "win_rate_pct": round((len(won) / len(trades_with_profit) * 100), 1) if trades_with_profit else None,
+        "profit_factor": round(float(summary.get("profitFactor") or 0.0), 2) if summary.get("profitFactor") is not None else None,
+        "total_profit_pct": round(float(summary.get("totalProfitPct") or 0.0), 2) if summary.get("totalProfitPct") is not None else None,
+        "max_drawdown_pct": round(float(summary.get("maxDrawdown") or 0.0), 2) if summary.get("maxDrawdown") is not None else None,
+        "avg_win_abs": round(avg_win_abs, 2) if avg_win_abs is not None else None,
+        "avg_loss_abs": round(avg_loss_abs, 2) if avg_loss_abs is not None else None,
+    }
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Analysis panels
 # ─────────────────────────────────────────────────────────────────────────────
@@ -2842,20 +2856,36 @@ def _diagnose_root_causes(
             "secondary_issues": [],
             "confidence": "low",
             "confidence_note": "No trades to analyze.",
+            "metric_snapshot": {
+                "total_trades": 0,
+                "win_rate_pct": None,
+                "profit_factor": None,
+                "total_profit_pct": float(summary.get("totalProfitPct") or 0.0) if summary.get("totalProfitPct") is not None else None,
+                "max_drawdown_pct": float(summary.get("maxDrawdown") or 0.0) if summary.get("maxDrawdown") is not None else None,
+                "avg_win_abs": None,
+                "avg_loss_abs": None,
+            },
         }
 
     won = [t for t in trades_with_profit if t["profit"] > 0]
     lost = [t for t in trades_with_profit if t["profit"] <= 0]
     avg_win_abs = statistics.mean([t["profit"] for t in won]) if won else 0.0
     avg_loss_abs = abs(statistics.mean([t["profit"] for t in lost])) if lost else 0.001
+    metric_snapshot = _root_metric_snapshot(summary=summary, trades_with_profit=trades_with_profit, won=won, lost=lost)
 
     win_rate_actual = len(won) / total_trades if total_trades > 0 else 0.0
     profit_factor = float(summary.get("profitFactor") or 0.0)
     max_drawdown_pct = float(summary.get("maxDrawdown") or 0.0)
     total_profit_pct = float(summary.get("totalProfitPct") or 0.0)
+    trade_behavior = analysis.get("trade_behavior") or {}
+    poor_exit_control = bool(trade_behavior.get("poor_exit_control"))
+    avg_duration_winners = trade_behavior.get("avg_duration_winners_min")
+    avg_duration_losers = trade_behavior.get("avg_duration_losers_min")
 
     code_audit_criticals = sum(1 for i in (code_audit or []) if i.get("severity") == "critical")
     trade_count_confidence_factor = min(1.0, total_trades / 50.0)
+    stoploss_missing = any(i.get("issue") == "Missing stoploss definition" for i in (code_audit or []))
+    stoploss_very_wide = any(i.get("issue") == "Very wide stoploss" for i in (code_audit or []))
 
     candidates: list[dict] = []
 
@@ -2875,6 +2905,11 @@ def _diagnose_root_causes(
                 "implication": "Actual win rate is below the breakeven threshold for this strategy's R:R ratio",
             }
         ]
+        causal_chain.append({
+            "step": len(causal_chain) + 1,
+            "finding": f"Profit factor is {profit_factor:.2f} with average win ${avg_win_abs:.2f} vs average loss ${avg_loss_abs:.2f}",
+            "implication": "Losses are not being offset by enough winning trades or large enough winners.",
+        })
 
         exit_reasons: dict[str, int] = defaultdict(int)
         for t in lost:
@@ -2900,6 +2935,28 @@ def _diagnose_root_causes(
                     "finding": f"Avg loss duration {avg_dur_lost/60:.1f}h vs avg win duration {avg_dur_won/60:.1f}h",
                     "implication": "Losers are held significantly longer — no early cut mechanism",
                 })
+        elif poor_exit_control and avg_duration_winners and avg_duration_losers:
+            causal_chain.append({
+                "step": len(causal_chain) + 1,
+                "finding": (
+                    f"Losing trades average {float(avg_duration_losers):.0f} min "
+                    f"vs {float(avg_duration_winners):.0f} min for winners"
+                ),
+                "implication": "Exit control is allowing losing positions to remain open longer than winning ones.",
+            })
+
+        if stoploss_missing:
+            causal_chain.append({
+                "step": len(causal_chain) + 1,
+                "finding": "Strategy source does not define a stoploss",
+                "implication": "Poorly timed entries can expand into larger losses before the exit logic reacts.",
+            })
+        elif stoploss_very_wide:
+            causal_chain.append({
+                "step": len(causal_chain) + 1,
+                "finding": "Configured stoploss is unusually wide",
+                "implication": "Reversal trades get more room to become large losers before being closed.",
+            })
 
         candidates.append({
             "primary_failure_mode": "high_loss_rate",
@@ -2915,6 +2972,7 @@ def _diagnose_root_causes(
                 "Review entry signal direction — ensure indicators confirm entry direction",
                 "Consider reducing stoploss to cut losers faster",
             ],
+            "metric_snapshot": metric_snapshot,
         })
 
     timeframe = run_config.get("timeframe") or "1h"
@@ -2964,6 +3022,7 @@ def _diagnose_root_causes(
                 "Relax the most restrictive entry condition and re-test",
                 "Consider a longer backtest period to gather more trades",
             ],
+            "metric_snapshot": metric_snapshot,
         })
 
     if avg_win_abs / max(avg_loss_abs, 0.001) < 1.0 and profit_factor < 1.1:
@@ -2984,18 +3043,33 @@ def _diagnose_root_causes(
                 "finding": f"Avg win ${avg_win_abs:.2f} vs avg loss ${avg_loss_abs:.2f} — losses are larger",
                 "implication": "Strategy requires a very high win rate to break even",
             },
+            {
+                "step": 2,
+                "finding": f"Profit factor is {profit_factor:.2f} and total return is {total_profit_pct:+.2f}%",
+                "implication": "The current payoff profile is not producing a durable edge.",
+            },
         ]
         if roi_pct > 60:
             causal_chain_rr.append({
-                "step": 2,
+                "step": len(causal_chain_rr) + 1,
                 "finding": f"{roi_pct:.0f}% of wins close at ROI target",
                 "implication": "Profit is consistently capped at the ROI limit — consider raising ROI targets",
             })
         else:
             causal_chain_rr.append({
-                "step": 2,
+                "step": len(causal_chain_rr) + 1,
                 "finding": "Win exits are variable (not dominated by ROI target)",
                 "implication": "Exit timing is inconsistent — review exit logic for profit-taking",
+            })
+
+        if poor_exit_control and avg_duration_winners and avg_duration_losers:
+            causal_chain_rr.append({
+                "step": len(causal_chain_rr) + 1,
+                "finding": (
+                    f"Losers stay open {float(avg_duration_losers):.0f} min on average "
+                    f"vs {float(avg_duration_winners):.0f} min for winners"
+                ),
+                "implication": "Losses are given more time than winners, which worsens payoff asymmetry.",
             })
 
         candidates.append({
@@ -3012,6 +3086,7 @@ def _diagnose_root_causes(
                 "Tighten the stoploss to reduce average loss size",
                 "Review exit conditions to avoid cutting winners short",
             ],
+            "metric_snapshot": metric_snapshot,
         })
 
     drawdown_multiple = max_drawdown_pct / max(total_profit_pct, 0.01)
@@ -3031,12 +3106,30 @@ def _diagnose_root_causes(
                 "finding": f"Max drawdown {max_drawdown_pct:.1f}% is {drawdown_multiple:.1f}× total profit",
                 "implication": "Risk taken is severely disproportionate to profit earned",
             },
+            {
+                "step": 2,
+                "finding": f"Profit factor is {profit_factor:.2f} while total return is {total_profit_pct:+.2f}%",
+                "implication": "The equity curve is volatile without enough payoff to justify the drawdown depth.",
+            },
         ]
         if max_loss_streak >= 4:
             causal_chain_dd.append({
-                "step": 2,
+                "step": len(causal_chain_dd) + 1,
                 "finding": f"Longest consecutive loss streak: {max_loss_streak} trades",
                 "implication": "Loss clustering amplifies drawdown — strategy may be sensitive to specific market regimes",
+            })
+
+        if stoploss_missing:
+            causal_chain_dd.append({
+                "step": len(causal_chain_dd) + 1,
+                "finding": "No stoploss is defined in strategy source",
+                "implication": "Drawdowns can deepen because losses depend entirely on later exit conditions.",
+            })
+        elif stoploss_very_wide:
+            causal_chain_dd.append({
+                "step": len(causal_chain_dd) + 1,
+                "finding": "Stoploss is configured very wide in the strategy source",
+                "implication": "Per-trade downside is large enough to compound into deeper equity drawdowns.",
             })
 
         candidates.append({
@@ -3054,6 +3147,7 @@ def _diagnose_root_causes(
                 "Reduce position size to limit per-trade dollar loss",
                 "Review stoploss width — a tighter stop may reduce drawdown depth",
             ],
+            "metric_snapshot": metric_snapshot,
         })
 
     if not candidates:
@@ -3068,7 +3162,13 @@ def _diagnose_root_causes(
             "primary_failure_mode": "none" if pf_label == "ok" else "marginal_profit_factor",
             "primary_failure_label": "No Critical Failure Mode Detected" if pf_label == "ok" else "Marginal Profit Factor",
             "severity": "ok" if pf_label == "ok" else pf_label,
-            "causal_chain": [],
+            "causal_chain": [
+                {
+                    "step": 1,
+                    "finding": f"Profit factor {profit_factor:.2f}, total return {total_profit_pct:+.2f}%, max drawdown {max_drawdown_pct:.1f}%",
+                    "implication": "No single failure mode dominates, but overall edge quality is only moderate." if pf_label != "ok" else "Core metrics do not indicate a dominant failure mode.",
+                }
+            ],
             "root_cause_conclusion": (
                 "Strategy metrics are within acceptable ranges. Focus on improving consistency and robustness."
                 if pf_label == "ok"
@@ -3078,6 +3178,7 @@ def _diagnose_root_causes(
             "secondary_issues": [],
             "confidence": confidence,
             "confidence_note": confidence_note,
+            "metric_snapshot": metric_snapshot,
         }
 
     candidates.sort(key=lambda c: c["severity_score"], reverse=True)
@@ -3113,4 +3214,5 @@ def _diagnose_root_causes(
         "secondary_issues": secondary_issues,
         "confidence": confidence,
         "confidence_note": confidence_note,
+        "metric_snapshot": primary.get("metric_snapshot") or metric_snapshot,
     }

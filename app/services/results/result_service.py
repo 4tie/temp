@@ -197,7 +197,6 @@ def normalize_backtest_result(result: dict[str, Any] | None) -> dict[str, Any]:
     summary["sharpe_ratio"] = sharpe
     summary["sharpeRatio"] = sharpe
     overview["sharpe_ratio"] = sharpe
-    overview["trades_per_day"] = to_float(summary.get("tradesPerDay"))
 
     starting_balance = to_float(summary.get("startingBalance"))
     normalized_per_pair = [
