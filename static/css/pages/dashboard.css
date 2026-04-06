@@ -18,6 +18,12 @@
   min-height: 220px;
 }
 
+@media (max-width: 1380px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 960px) {
   .dashboard-grid {
     grid-template-columns: 1fr;

@@ -9,6 +9,7 @@ from app.core.config import DATA_DIR
 
 _TIMERANGE_RE = re.compile(r"^(\d{8})-(\d{8})$")
 _INTRADAY_TIMEFRAME_RE = re.compile(r"^(\d+)(m|h)$")
+_RECENT_END_DAY_GRACE_DAYS = 1
 
 
 def _find_pair_file(pair: str, timeframe: str, exchange: str) -> tuple[Optional[Path], int]:
@@ -145,6 +146,10 @@ def _iter_days(start_day: date, end_day: date) -> list[str]:
     return days
 
 
+def _current_utc_day() -> date:
+    return datetime.now(timezone.utc).date()
+
+
 def check_data_coverage(
     pairs: list[str],
     timeframe: str,
@@ -155,11 +160,11 @@ def check_data_coverage(
     start_day, end_day = _parse_timerange(timerange)
     expected_per_day, skip_reason = _expected_candles_per_day(timeframe)
     requested_daily_validation = start_day is not None and end_day is not None
-    today_utc = datetime.now(timezone.utc).date()
+    today_utc = _current_utc_day()
     partial_current_day_allowed = bool(
         requested_daily_validation
         and expected_per_day is not None
-        and end_day == today_utc
+        and end_day >= (today_utc - timedelta(days=_RECENT_END_DAY_GRACE_DAYS))
     )
 
     for pair in pairs:
@@ -190,12 +195,12 @@ def check_data_coverage(
                             partial_current_day_allowed
                             and day == end_day.isoformat()
                         )
+                        if is_in_progress_end_day:
+                            # The trailing requested day may still be settling due to
+                            # exchange/API lag. Do not force an auto-download loop for it.
+                            continue
                         if actual == 0:
                             missing_days.append(day)
-                        elif is_in_progress_end_day:
-                            # End day may still be in progress (e.g. 226/288 on 5m).
-                            # Treat partial candle count as acceptable for "today".
-                            continue
                         elif actual != expected_per_day:
                             incomplete_days.append({
                                 "date": day,

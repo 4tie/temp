@@ -2,8 +2,8 @@
   "strategy_name": "MultiMa",
   "params": {
     "buy": {
-      "buy_ma_count": 4,
-      "buy_ma_gap": 8
+      "buy_ma_count": 2,
+      "buy_ma_gap": 10
     },
     "sell": {
       "sell_ma_count": 12,

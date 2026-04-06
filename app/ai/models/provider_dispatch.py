@@ -56,6 +56,17 @@ def _next_openrouter_key() -> tuple[str | None, int | None]:
     return keys[index], index
 
 
+def _is_retryable_provider_error(provider_name: str, error_text: str) -> bool:
+    text = str(error_text or "").lower()
+    if provider_name != "openrouter":
+        return True
+    if any(marker in text for marker in ("status=401", "status=403", "user not found", "no openrouter api keys configured")):
+        return False
+    if "malformed payload" in text or "missing choices" in text:
+        return False
+    return True
+
+
 async def _retry_call_v2(
     provider_name: str,
     requested_model: str,
@@ -96,18 +107,27 @@ async def _retry_call_v2(
                 }],
             }
         except Exception as exc:
-            logger.warning("%s attempt %d failed for %s: %s", provider_name, attempt, actual_model, exc)
+            error_text = str(exc)
+            retryable = _is_retryable_provider_error(provider_name, error_text)
             attempts.append({
                 "provider": provider_name,
                 "model": actual_model,
                 "attempt": attempt,
                 "key_slot": key_slot,
                 "status": "error",
-                "error": str(exc),
+                "error": error_text,
+                "retryable": retryable,
             })
-            if attempt < 3:
+            if retryable and attempt < 3:
+                logger.debug("%s attempt %d failed for %s: %s", provider_name, attempt, actual_model, exc)
                 await _asyncio.sleep(delay)
                 delay *= 2
+                continue
+            if retryable:
+                logger.warning("%s failed for %s after %d attempts: %s", provider_name, actual_model, attempt, exc)
+            else:
+                logger.warning("%s failed for %s without retry: %s", provider_name, actual_model, exc)
+            break
 
     raise RuntimeError(str(attempts[-1]["error"]))
 
@@ -185,22 +205,30 @@ async def _stream_with_retries_v2(
             }
             return
         except Exception as exc:
+            error_text = str(exc)
+            retryable = _is_retryable_provider_error(provider_name, error_text)
             attempts.append({
                 "provider": provider_name,
                 "model": actual_model,
                 "attempt": attempt,
                 "key_slot": key_slot,
                 "status": "error",
-                "error": str(exc),
+                "error": error_text,
+                "retryable": retryable,
             })
             if first_delta_seen:
-                yield {"error": str(exc), "done": True}
+                yield {"error": error_text, "done": True}
                 return
-            if attempt < 3:
+            if retryable and attempt < 3:
+                logger.debug("%s stream attempt %d failed for %s: %s", provider_name, attempt, actual_model, exc)
                 await _asyncio.sleep(delay)
                 delay *= 2
                 continue
-            raise RuntimeError(str(exc))
+            if retryable:
+                logger.warning("%s stream failed for %s after %d attempts: %s", provider_name, actual_model, attempt, exc)
+            else:
+                logger.warning("%s stream failed for %s without retry: %s", provider_name, actual_model, exc)
+            raise RuntimeError(error_text)
 
 
 async def _dispatch_ollama_model_v2(requested_model: str) -> str:

@@ -64,6 +64,7 @@ window.SettingsPage = (() => {
     row.innerHTML = `
       <input class="form-input settings-api-input" type="password" autocomplete="off" placeholder="sk-or-..." spellcheck="false">
       <button type="button" class="settings-api-btn" data-action="toggle" title="Show/hide key">Show</button>
+      <button type="button" class="settings-api-btn settings-api-btn--test" data-action="test" title="Test API key">Test</button>
       <button type="button" class="settings-api-btn settings-api-btn--danger" data-action="remove" title="Remove key">Remove</button>
     `;
 
@@ -75,6 +76,32 @@ window.SettingsPage = (() => {
       const hidden = input.type === 'password';
       input.type = hidden ? 'text' : 'password';
       e.currentTarget.textContent = hidden ? 'Hide' : 'Show';
+    });
+
+    DOM.on(DOM.$('[data-action="test"]', row), 'click', async (e) => {
+      const btn = e.currentTarget;
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Testing...';
+      
+      try {
+        const result = await API.testOpenRouterKey(input.value.trim());
+        if (result.valid) {
+          Toast.success('API key is valid');
+          btn.textContent = '✓ Valid';
+          setTimeout(() => { btn.textContent = originalText; }, 2000);
+        } else {
+          Toast.error(`API key test failed: ${result.error}`);
+          btn.textContent = '✗ Failed';
+          setTimeout(() => { btn.textContent = originalText; }, 3000);
+        }
+      } catch (err) {
+        Toast.error('Failed to test API key: ' + err.message);
+        btn.textContent = '✗ Error';
+        setTimeout(() => { btn.textContent = originalText; }, 3000);
+      } finally {
+        btn.disabled = false;
+      }
     });
 
     DOM.on(DOM.$('[data-action="remove"]', row), 'click', () => {
@@ -194,7 +221,7 @@ window.SettingsPage = (() => {
                   <div class="form-row">
                     <div class="form-group">
                       <label class="form-label" for="s-port">API Port</label>
-                      <input class="form-input" id="s-port" type="number" min="1024" max="65535" placeholder="5000">
+                      <input class="form-input" id="s-port" type="number" min="1024" max="65535" placeholder="8000">
                       <span class="form-hint">Requires server restart.</span>
                     </div>
                     <div class="form-group">
@@ -213,10 +240,6 @@ window.SettingsPage = (() => {
               </div>
 
               <div class="form-actions">
-                <button type="submit" class="btn btn--primary" id="env-save-btn">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                  Save to .env
-                </button>
                 <span class="settings-save-status" id="env-save-status"></span>
               </div>
 
@@ -288,10 +311,6 @@ window.SettingsPage = (() => {
                   </div>
                 </div>
               </div>
-              <div class="form-actions">
-                <button type="submit" class="btn btn--primary">Save Defaults</button>
-                <button type="button" class="btn btn--secondary" id="s-reset-btn">Reset</button>
-              </div>
             </form>
           </div>
         </div>
@@ -326,18 +345,26 @@ window.SettingsPage = (() => {
           </div>
         </div>
 
+        <!-- ── Master Save Button ── -->
+        <div class="settings-master-save" style="margin-top:var(--space-4)">
+          <button type="button" class="btn btn--primary btn--lg" id="master-save-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Save All Settings
+          </button>
+          <span class="settings-save-status" id="master-save-status"></span>
+        </div>
+
       </div>
     `);
 
-    /* ── Bind env form ── */
-    DOM.on(DOM.$('#env-form', _el), 'submit', _onSaveEnv);
+    /* ── Bind events ── */
+    DOM.on(DOM.$('#env-form', _el), 'submit', (e) => e.preventDefault()); // Prevent default form submission
+    DOM.on(DOM.$('#settings-form', _el), 'submit', (e) => e.preventDefault()); // Prevent default form submission
     DOM.on(DOM.$('#s-or-add', _el), 'click', () => _addApiKeyRow(''));
     DOM.on(DOM.$('#s-or-clear', _el), 'click', () => _setApiKeys(''));
-
-    /* ── Bind trade defaults form ── */
-    DOM.on(DOM.$('#settings-form', _el), 'submit', _onSaveDefaults);
     DOM.on(DOM.$('#s-reset-btn',   _el), 'click',  _onReset);
     DOM.on(DOM.$('#s-save-preset-btn', _el), 'click', _onSavePreset);
+    DOM.on(DOM.$('#master-save-btn', _el), 'click', _onMasterSave);
   }
 
   /* ── Load ────────────────────────────────────────────────── */
@@ -354,7 +381,7 @@ window.SettingsPage = (() => {
       _set('s-ollama-url',  envData.ollama_base_url    || '');
       _set('s-ft-path',     envData.freqtrade_path     || '');
       _set('s-user-data',   envData.user_data_dir      || '');
-      _set('s-port',        envData.backtest_api_port  || '5000');
+      _set('s-port',        envData.backtest_api_port  || '8000');
       _set('s-exchange-env', envData.freqtrade_exchange || 'binance');
 
       // Populate trade defaults (localStorage wins over last_config)
@@ -365,7 +392,7 @@ window.SettingsPage = (() => {
       _set('s-wallet',     cfg.dry_run_wallet  || 1000);
       _set('s-max-trades', cfg.max_open_trades || 3);
       _set('s-stake',      cfg.stake_amount    || 'unlimited');
-      _selectedThemePreset = cfg.theme_preset || window.ThemeManager?.getStoredPreset?.() || 'ocean';
+      _selectedThemePreset = window.ThemeManager?.getStoredPreset?.() || 'ocean';
       _renderThemePresets();
 
       _presets = presetsData.presets || {};
@@ -415,10 +442,8 @@ window.SettingsPage = (() => {
       dry_run_wallet:  parseFloat(_val('s-wallet'))     || 1000,
       max_open_trades: parseInt(_val('s-max-trades'))   || 3,
       stake_amount:    _val('s-stake')      || 'unlimited',
-      theme_preset:    _selectedThemePreset || 'ocean',
     };
     localStorage.setItem('4tie_settings', JSON.stringify(vals));
-    window.ThemeManager?.applyPreset?.(_selectedThemePreset || 'ocean');
     Toast.success('Trade defaults saved.');
   }
 
@@ -428,9 +453,6 @@ window.SettingsPage = (() => {
     _set('s-wallet',     1000);
     _set('s-max-trades', 3);
     _set('s-stake',      'unlimited');
-    _selectedThemePreset = window.ThemeManager?.DEFAULT_PRESET || 'ocean';
-    window.ThemeManager?.applyPreset?.(_selectedThemePreset);
-    _renderThemePresets();
     Toast.info('Reset defaults applied.');
   }
 
@@ -528,7 +550,6 @@ window.SettingsPage = (() => {
       dry_run_wallet:  parseFloat(_val('s-wallet'))   || 1000,
       max_open_trades: parseInt(_val('s-max-trades')) || 3,
       stake_amount:    _val('s-stake'),
-      theme_preset:    _selectedThemePreset || 'ocean',
     };
     try {
       await API.savePreset({ name, config });
@@ -549,9 +570,6 @@ window.SettingsPage = (() => {
     _set('s-wallet',     cfg.dry_run_wallet);
     _set('s-max-trades', cfg.max_open_trades);
     _set('s-stake',      cfg.stake_amount);
-    _selectedThemePreset = cfg.theme_preset || window.ThemeManager?.getStoredPreset?.() || 'ocean';
-    window.ThemeManager?.applyPreset?.(_selectedThemePreset);
-    _renderThemePresets();
     Toast.info(`Loaded preset "${name}".`);
   }
 
@@ -569,6 +587,58 @@ window.SettingsPage = (() => {
       _renderPresets();
     } catch (err) {
       Toast.error('Failed to delete: ' + err.message);
+    }
+  }
+
+  /* ── Master Save ─────────────────────────────────────────── */
+  async function _onMasterSave() {
+    const btn = DOM.$('#master-save-btn', _el);
+    const status = DOM.$('#master-save-status', _el);
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+
+    try {
+      // Save environment settings to .env
+      const envBody = {
+        openrouter_api_keys: _collectApiKeysRaw(),
+        ollama_base_url:    _val('s-ollama-url'),
+        freqtrade_path:     _val('s-ft-path'),
+        user_data_dir:      _val('s-user-data'),
+        backtest_api_port:  _val('s-port'),
+        freqtrade_exchange: _val('s-exchange-env'),
+      };
+      await API.saveSettings(envBody);
+
+      // Save trade defaults and theme to localStorage
+      const localVals = {
+        exchange:        _val('s-exchange')   || 'binance',
+        timeframe:       _val('s-timeframe')  || '5m',
+        dry_run_wallet:  parseFloat(_val('s-wallet'))     || 1000,
+        max_open_trades: parseInt(_val('s-max-trades'))   || 3,
+        stake_amount:    _val('s-stake')      || 'unlimited',
+      };
+      localStorage.setItem('4tie_settings', JSON.stringify(localVals));
+
+      // Apply current theme (already saved by ThemeManager when selected)
+      window.ThemeManager?.applyPreset?.(_selectedThemePreset || 'ocean');
+
+      if (status) {
+        status.textContent = '✓ All settings saved';
+        status.className = 'settings-save-status settings-save-status--ok';
+        setTimeout(() => { status.textContent = ''; status.className = 'settings-save-status'; }, 3000);
+      }
+      Toast.success('All settings saved successfully!');
+
+    } catch (err) {
+      Toast.error('Failed to save settings: ' + err.message);
+      if (status) {
+        status.textContent = '✗ Save failed';
+        status.className = 'settings-save-status settings-save-status--error';
+        setTimeout(() => { status.textContent = ''; status.className = 'settings-save-status'; }, 3000);
+      }
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Save All Settings';
     }
   }
 

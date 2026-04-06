@@ -8,7 +8,7 @@
    ──────────────────────────────────────────────────────────── */
 
 .page-view[data-view="backtesting"] .split-layout {
-  grid-template-columns: minmax(320px, 0.94fr) minmax(420px, 1.26fr);
+  grid-template-columns: minmax(300px, 0.96fr) minmax(360px, 1.18fr);
 }
 
 .split-layout__output {
@@ -429,12 +429,23 @@
   gap: var(--space-4);
 }
 
+@media (max-width: 1460px) {
+  .page-view[data-view="backtesting"] .split-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .split-layout__output {
+    max-height: none;
+    overflow-y: visible;
+  }
+}
+
 /* ── Responsive: stack columns on narrow screens ─────────────
    Below 900 px the two-column grid becomes a single column.
    ──────────────────────────────────────────────────────────── */
 
 @media (max-width: 900px) {
-  .split-layout {
+  .page-view[data-view="backtesting"] .split-layout {
     grid-template-columns: 1fr;
   }
 
@@ -468,6 +479,20 @@
   }
 
   .bt-results-tech {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .bt-results-primary,
+  .bt-results-grid,
+  .quick-params__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .quick-params__field-head,
+  .quick-params__group-header {
     flex-direction: column;
     align-items: flex-start;
   }

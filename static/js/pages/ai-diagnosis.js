@@ -1,5 +1,5 @@
 /* =================================================================
-   AI DIAGNOSIS PAGE — full chat UI
+   AI DIAGNOSIS — shared AI runtime + shell dock workspace
    Exposes: window.AIDiagPage
    ================================================================= */
 
@@ -10,6 +10,7 @@ window.AIDiagPage = (() => {
     model: null,
     goal: 'balanced',
     conversationId: null,
+    conversationCount: 0,
     contextRunId: null,
     contextStrategyName: null,
     contextTimeframe: null,
@@ -24,6 +25,7 @@ window.AIDiagPage = (() => {
     lastApplied: null,
     pendingRerunPrompt: false,
     loopToken: 0,
+    statusMessage: '',
   };
 
   /* ---- DOM refs (populated in init) ------------------------ */
@@ -129,6 +131,10 @@ window.AIDiagPage = (() => {
     maxGenerations: 3,
     originalSource: null,  // source code before mutation (for diff)
   };
+
+  let _shellMounted = false;
+  let _pageMounted = false;
+  let _pageUnsubscribe = null;
 
   /* ---- Build layout HTML ----------------------------------- */
   function _buildLayout() {
@@ -350,6 +356,109 @@ window.AIDiagPage = (() => {
     `;
   }
 
+  function _snapshot() {
+    const draft = _el.textarea?.value || '';
+    return {
+      provider: _state.provider,
+      model: _state.model,
+      goal: _state.goal,
+      conversationId: _state.conversationId,
+      conversationCount: _state.conversationCount || 0,
+      contextRunId: _state.contextRunId,
+      contextStrategyName: _state.contextStrategyName,
+      contextTimeframe: _state.contextTimeframe,
+      streaming: !!_state.streaming,
+      loopEnabled: !!_state.loopEnabled,
+      loopBusy: !!_state.loopBusy,
+      loopId: _state.loopId,
+      statusMessage: _state.statusMessage || '',
+      draft,
+      draftLength: draft.trim().length,
+    };
+  }
+
+  function _publishState() {
+    AppState.set('aiRuntime', _snapshot());
+  }
+
+  function _buildWorkspace(snapshot = _snapshot()) {
+    const contextLabel = snapshot.contextRunId
+      ? `${snapshot.contextStrategyName || snapshot.contextRunId}${snapshot.contextTimeframe ? ` · ${snapshot.contextTimeframe}` : ''}`
+      : 'No backtest context injected';
+    const threadLabel = snapshot.conversationId
+      ? `${snapshot.conversationId}`
+      : 'No conversation selected';
+    const streamLabel = snapshot.streaming
+      ? (snapshot.statusMessage || 'Streaming response in progress')
+      : 'Idle';
+    const loopLabel = snapshot.loopBusy
+      ? `Running${snapshot.loopId ? ` · ${snapshot.loopId}` : ''}`
+      : (snapshot.loopEnabled ? 'Armed and waiting for apply' : 'Inactive');
+
+    return `
+      <div class="page-header">
+        <h1 class="page-header__title">AI Diagnosis</h1>
+        <p class="page-header__subtitle">The AI assistant now lives in the shell. Use this workspace for context management, deep analysis, and evolution while the same live chat stays mounted on the right.</p>
+      </div>
+
+      <div class="ai-diagnosis-grid">
+        <section class="ai-diagnosis-card ai-diagnosis-card--hero">
+          <div class="ai-diagnosis-card__eyebrow">Persistent Dock</div>
+          <h2 class="ai-diagnosis-card__title">One live assistant across the entire app</h2>
+          <p class="ai-diagnosis-card__body">Navigation no longer resets the conversation. Drafts, streams, context, and loop activity remain active in the dock while you move between pages.</p>
+          <div class="ai-diagnosis-actions">
+            <button class="btn btn--primary" type="button" data-ai-workspace-action="focus">Focus Composer</button>
+            <button class="btn" type="button" data-ai-workspace-action="new">New Conversation</button>
+            <button class="btn" type="button" data-ai-workspace-action="inject">Inject Latest Backtest</button>
+          </div>
+        </section>
+
+        <section class="ai-diagnosis-card">
+          <div class="ai-diagnosis-card__eyebrow">Session</div>
+          <div class="ai-diagnosis-metrics">
+            <div class="ai-diagnosis-metric">
+              <span class="ai-diagnosis-metric__label">Provider</span>
+              <span class="ai-diagnosis-metric__value">${_escHtml(snapshot.provider || '—')}</span>
+            </div>
+            <div class="ai-diagnosis-metric">
+              <span class="ai-diagnosis-metric__label">Model</span>
+              <span class="ai-diagnosis-metric__value">${_escHtml(snapshot.model || '—')}</span>
+            </div>
+            <div class="ai-diagnosis-metric">
+              <span class="ai-diagnosis-metric__label">Threads</span>
+              <span class="ai-diagnosis-metric__value">${snapshot.conversationCount}</span>
+            </div>
+          </div>
+          <div class="ai-diagnosis-state-list">
+            <div class="ai-diagnosis-state-row"><span>Selected Thread</span><strong>${_escHtml(threadLabel)}</strong></div>
+            <div class="ai-diagnosis-state-row"><span>Draft</span><strong>${snapshot.draftLength ? `${snapshot.draftLength} characters waiting` : 'Empty'}</strong></div>
+            <div class="ai-diagnosis-state-row"><span>Streaming</span><strong>${_escHtml(streamLabel)}</strong></div>
+            <div class="ai-diagnosis-state-row"><span>Loop</span><strong>${_escHtml(loopLabel)}</strong></div>
+          </div>
+        </section>
+
+        <section class="ai-diagnosis-card">
+          <div class="ai-diagnosis-card__eyebrow">Backtest Context</div>
+          <p class="ai-diagnosis-card__body">${_escHtml(contextLabel)}</p>
+          <div class="ai-diagnosis-actions">
+            <button class="btn" type="button" data-ai-workspace-action="analyse" ${snapshot.contextRunId ? '' : 'disabled'}>Open Deep Analysis</button>
+            <button class="btn" type="button" data-ai-workspace-action="evolve" ${snapshot.contextRunId ? '' : 'disabled'}>Open Evolution</button>
+            <button class="btn" type="button" data-ai-workspace-action="clear" ${snapshot.contextRunId ? '' : 'disabled'}>Clear Context</button>
+          </div>
+        </section>
+
+        <section class="ai-diagnosis-card ai-diagnosis-card--notes">
+          <div class="ai-diagnosis-card__eyebrow">Workflow</div>
+          <ul class="ai-diagnosis-notes">
+            <li>The dock on the right is the canonical chat surface everywhere in the app.</li>
+            <li>Streams and loop status continue while you move to dashboard, backtesting, hyperopt, or results.</li>
+            <li>Use this page for AI-heavy tooling, while the live conversation remains visible and synchronized in the shell.</li>
+          </ul>
+        </section>
+      </div>
+    `;
+  }
+
   /* ---- Populate DOM refs ----------------------------------- */
   function _cacheRefs() {
     const $ = (id) => document.getElementById(id);
@@ -357,6 +466,9 @@ window.AIDiagPage = (() => {
       layout:          $('ai-layout'),
       sidebar:         $('ai-sidebar'),
       sidebarOverlay:  $('ai-sidebar-overlay'),
+      dock:            $('app-ai-dock'),
+      dockOverlay:     document.querySelector('[data-ai-dock-overlay]'),
+      dockOpenBtn:     document.querySelector('[data-ai-dock-open]'),
       hamburger:       $('ai-hamburger'),
       newChat:         $('ai-new-chat'),
       convList:        $('ai-conv-list'),
@@ -407,6 +519,7 @@ window.AIDiagPage = (() => {
       // Support {providers: {ollama,openrouter}} and {ollama,openrouter} formats
       _state.providers = data.providers || data;
       _updateProviderUI();
+      _publishState();
     } catch (e) {
       _setStatus('Could not load providers');
     }
@@ -478,6 +591,7 @@ window.AIDiagPage = (() => {
     _state.model = matched ? selectedId : models[0].id;
     _el.modelSelect.value = _state.model;
     _checkSendReady();
+    _publishState();
   }
 
   /* ---- Load conversations ---------------------------------- */
@@ -491,8 +605,10 @@ window.AIDiagPage = (() => {
   }
 
   function _renderConvList(convs) {
+    _state.conversationCount = Array.isArray(convs) ? convs.length : 0;
     if (!convs || convs.length === 0) {
       _el.convList.innerHTML = '<div class="ai-sidebar-empty">No conversations yet</div>';
+      _publishState();
       return;
     }
     _el.convList.innerHTML = convs.map(c => {
@@ -511,6 +627,7 @@ window.AIDiagPage = (() => {
       </div>
     `;
     }).join('');
+    _publishState();
   }
 
   /* ---- Switch conversation --------------------------------- */
@@ -547,6 +664,7 @@ window.AIDiagPage = (() => {
         _updateContextBar();
         _el.deepAnalyseBtn.disabled = !_state.contextRunId;
         if (_el.evolveBtn) _el.evolveBtn.disabled = !_state.contextRunId;
+        _publishState();
 
         (conv.messages || []).forEach(m => _appendMessage(m.role, m.content, m.meta, m.id));
       }
@@ -571,6 +689,7 @@ window.AIDiagPage = (() => {
     document.querySelectorAll('.ai-conv-item').forEach(el => el.classList.remove('active'));
     _updateLoopButton();
     _el.textarea.focus();
+    _publishState();
   }
 
   /* ---- Inject backtest ------------------------------------- */
@@ -595,6 +714,7 @@ window.AIDiagPage = (() => {
         const srcResp = await fetch(`/strategies/${encodeURIComponent(_state.contextStrategyName)}/source`);
         if (srcResp.ok) _evo.originalSource = await srcResp.text();
       } catch (_) {}
+      _publishState();
     } catch (e) {
       _setStatus('Could not fetch backtest runs');
     }
@@ -612,6 +732,7 @@ window.AIDiagPage = (() => {
 
     if (_el.evolveBtn) _el.evolveBtn.disabled = !active;
     _updateLoopButton();
+    _publishState();
   }
 
   function _updateLoopButton() {
@@ -625,6 +746,7 @@ window.AIDiagPage = (() => {
     }
     _el.loopToggle.textContent = _state.loopEnabled ? 'Stop Loop' : 'Start Loop';
     _el.loopToggle.classList.toggle('active', _state.loopEnabled);
+    _publishState();
   }
 
   function _closeLoopStream() {
@@ -646,6 +768,7 @@ window.AIDiagPage = (() => {
     _state.loopId = null;
     _el.deepAnalyseBtn.disabled = true;
     if (_el.evolveBtn) _el.evolveBtn.disabled = true;
+    _publishState();
   }
 
   function _formatTraceDuration(ms) {
@@ -800,6 +923,7 @@ window.AIDiagPage = (() => {
     _el.sendBtn.style.display = 'none';
     _el.stopBtn.style.display = '';
     _setStatus('');
+    _publishState();
 
     _appendMessage('user', text, opts.userMeta || {});
     _scrollThread();
@@ -981,6 +1105,7 @@ window.AIDiagPage = (() => {
     if (!aborted) {
       _finishStream(assistantDiv, bubble, headerDiv, fullText, null, null);
     }
+    _publishState();
     return {
       fullText,
       pipeline: finalPipeline,
@@ -1026,6 +1151,7 @@ window.AIDiagPage = (() => {
     _setStatus('');
     _checkSendReady();
     _scrollThread();
+    _publishState();
   }
 
   /* ---- Deep Analysis panel --------------------------------- */
@@ -1162,12 +1288,15 @@ window.AIDiagPage = (() => {
 
   /* ---- Helpers --------------------------------------------- */
   function _setStatus(msg) {
+    _state.statusMessage = msg || '';
+    AppState.set('stream', _state.statusMessage);
     if (!_el.statusLine) return;
     if (msg) {
       _el.statusLine.innerHTML = `<div class="ai-status-spinner"></div><span>${_escHtml(msg)}</span>`;
     } else {
       _el.statusLine.innerHTML = '';
     }
+    _publishState();
   }
 
   function _scrollThread() {
@@ -1270,6 +1399,7 @@ window.AIDiagPage = (() => {
     _state.loopEnabled = false;
     _state.loopId = null;
     _updateLoopButton();
+    _publishState();
   }
 
   function _handleLoopEvent(evt) {
@@ -1277,22 +1407,26 @@ window.AIDiagPage = (() => {
     if (step === 'loop_started') {
       const planned = (evt.planned_steps || []).map((s, i) => `${i + 1}. ${s}`).join('\n');
       _appendMessage('assistant', `Loop started${_durationSuffix(evt)}.\n\nPlanned workflow:\n${planned || '1. apply\n2. validate\n3. rerun\n4. compare\n5. test\n6. report'}`, { auto_loop: true });
+      _publishState();
       return;
     }
     if (step === 'apply_done') {
       const applyResult = evt.apply_result || {};
       _state.lastApplied = applyResult;
       _appendMessage('assistant', `Applied update to **${applyResult.strategy || evt.strategy || 'strategy'}**${_durationSuffix(evt)}.\n\n${_renderLoopFileChanges(evt.file_changes || applyResult.file_changes || {})}`, { auto_loop: true });
+      _publishState();
       return;
     }
     if (step === 'validate_done') {
       _appendMessage('assistant', `Validation complete${_durationSuffix(evt)}:\n\n${evt.validation_text || '_No validation text._'}`, { auto_loop: true });
       if (_state.loopEnabled && _state.loopId === evt.loop_id) {
         _state.pendingRerunPrompt = true;
+        _publishState();
         const confirm = window.confirm('Loop validation finished. Run rerun now?');
         _state.pendingRerunPrompt = false;
         _confirmLoopRerun(evt.loop_id, confirm).catch(() => Toast.error('Could not send rerun confirmation'));
       }
+      _publishState();
       return;
     }
     if (step === 'rerun_started') {
@@ -1333,6 +1467,7 @@ window.AIDiagPage = (() => {
       _state.loopId = null;
       _closeLoopStream();
       _updateLoopButton();
+      _publishState();
       return;
     }
     if (step === 'loop_stopped') {
@@ -1342,6 +1477,7 @@ window.AIDiagPage = (() => {
       _state.loopId = null;
       _closeLoopStream();
       _updateLoopButton();
+      _publishState();
       return;
     }
     if (step === 'loop_failed') {
@@ -1350,10 +1486,12 @@ window.AIDiagPage = (() => {
       _state.loopId = null;
       _closeLoopStream();
       _updateLoopButton();
+      _publishState();
       return;
     }
     if (step === 'loop_recovered') {
       _appendMessage('assistant', `Loop recovered:\n\n${evt.message || 'Recovered after restart.'}`, { auto_loop: true });
+      _publishState();
     }
   }
 
@@ -1395,6 +1533,7 @@ window.AIDiagPage = (() => {
     _closeLoopStream();
     const es = new EventSource(`/ai/loop/${encodeURIComponent(data.loop_id)}/stream`);
     _state.loopStream = es;
+    _publishState();
     es.onmessage = (e) => {
       try {
         const evt = JSON.parse(e.data);
@@ -1402,6 +1541,7 @@ window.AIDiagPage = (() => {
         if (evt.done) {
           try { es.close(); } catch (_) {}
           if (_state.loopStream === es) _state.loopStream = null;
+          _publishState();
         }
       } catch (_) {}
     };
@@ -1413,6 +1553,7 @@ window.AIDiagPage = (() => {
         _state.loopId = null;
         _updateLoopButton();
         Toast.error('Loop stream disconnected');
+        _publishState();
       }
     };
   }
@@ -2012,6 +2153,65 @@ window.AIDiagPage = (() => {
     setTimeout(() => t.classList.remove('visible'), 3500);
   }
 
+  function _focusComposer() {
+    _el.textarea?.focus();
+    if (window.matchMedia('(max-width: 768px)').matches) {
+      DOM.$('[data-app-shell]')?.classList.add('ai-dock-open');
+    }
+  }
+
+  function _renderWorkspaceView(snapshot = _snapshot()) {
+    if (!_pageMounted) return;
+    const page = DOM.$('[data-view="ai-diagnosis"]');
+    if (!page) return;
+    DOM.setHTML(page, _buildWorkspace(snapshot));
+    page.querySelectorAll('[data-ai-workspace-action]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const action = btn.dataset.aiWorkspaceAction;
+        if (action === 'focus') {
+          _focusComposer();
+          return;
+        }
+        if (action === 'new') {
+          _newChat();
+          _focusComposer();
+          return;
+        }
+        if (action === 'inject') {
+          await _injectLatestBacktest();
+          _focusComposer();
+          return;
+        }
+        if (action === 'analyse') {
+          _openDeepPanel();
+          return;
+        }
+        if (action === 'evolve') {
+          _openEvolutionPanel();
+          return;
+        }
+        if (action === 'clear') {
+          _clearContext();
+        }
+      });
+    });
+  }
+
+  function initShell() {
+    if (_shellMounted) return;
+    const host = DOM.$('[data-ai-dock-mount]');
+    if (!host) return;
+
+    DOM.setHTML(host, _buildLayout());
+    _cacheRefs();
+    _updateLoopButton();
+    _bindEvents();
+    _loadProviders();
+    _loadConversations();
+    _publishState();
+    _shellMounted = true;
+  }
+
   /* ---- Bind events ----------------------------------------- */
   function _bindEvents() {
     // Provider buttons
@@ -2036,23 +2236,27 @@ window.AIDiagPage = (() => {
       _el.btnOpenRouter.classList.toggle('active', prov === 'openrouter');
       _el.providerWarning.classList.remove('visible');
       _updateModelDropdown();
+      _publishState();
     });
 
     // Model select
     _el.modelSelect.addEventListener('change', () => {
       _state.model = _el.modelSelect.value;
       _checkSendReady();
+      _publishState();
     });
 
     // Goal select
     _el.goalSelect.addEventListener('change', () => {
       _state.goal = _el.goalSelect.value;
+      _publishState();
     });
 
     // Textarea
     _el.textarea.addEventListener('input', () => {
       _resizeTextarea();
       _checkSendReady();
+      _publishState();
     });
     _el.textarea.addEventListener('keydown', e => {
       if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey) {
@@ -2182,28 +2386,46 @@ window.AIDiagPage = (() => {
       _el.sidebar.classList.remove('mobile-open');
       _el.sidebarOverlay.classList.remove('active');
     });
+
+    if (_el.dockOpenBtn) {
+      _el.dockOpenBtn.addEventListener('click', () => {
+        const shell = DOM.$('[data-app-shell]');
+        shell?.classList.remove('sidebar-open');
+        shell?.classList.add('ai-dock-open');
+      });
+    }
+
+    if (_el.dockOverlay) {
+      _el.dockOverlay.addEventListener('click', () => {
+        DOM.$('[data-app-shell]')?.classList.remove('ai-dock-open');
+      });
+    }
   }
 
   /* ---- Init ------------------------------------------------- */
   function init() {
-    const el = DOM.$('[data-view="ai-diagnosis"]');
-    if (!el) return;
-
-    DOM.setHTML(el, _buildLayout());
-    _cacheRefs();
-    _updateLoopButton();
-    _bindEvents();
-
-    // Initial loads
-    _loadProviders();
-    _loadConversations();
-
-    // Page fill handled by CSS #page-ai-diagnosis.page-view.active
+    initShell();
+    _pageMounted = true;
+    if (_pageUnsubscribe) _pageUnsubscribe();
+    _pageUnsubscribe = AppState.subscribe('aiRuntime', snapshot => _renderWorkspaceView(snapshot || _snapshot()));
+    _renderWorkspaceView(_snapshot());
   }
 
   function refresh() {
     _loadConversations();
+    _renderWorkspaceView(_snapshot());
   }
 
-  return { init, refresh, _openDiff };
+  return {
+    initShell,
+    init,
+    refresh,
+    focusComposer: _focusComposer,
+    injectLatestBacktest: _injectLatestBacktest,
+    openDeepPanel: _openDeepPanel,
+    openEvolutionPanel: _openEvolutionPanel,
+    clearContext: _clearContext,
+    getStateSnapshot: _snapshot,
+    _openDiff,
+  };
 })();

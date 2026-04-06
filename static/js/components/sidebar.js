@@ -8,18 +8,62 @@ window.Sidebar = (() => {
   const STORAGE_KEY = '4tie_sidebar_collapsed';
 
   function init() {
-    const shell  = DOM.$('[data-app-shell]');
+    const shell = DOM.$('[data-app-shell]');
     const toggle = DOM.$('[data-sidebar-toggle]');
+    const openBtn = DOM.$('[data-sidebar-open]');
+    const overlay = DOM.$('[data-sidebar-overlay]');
+    const mobileQuery = window.matchMedia('(max-width: 768px)');
 
     if (!shell || !toggle) return;
 
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === 'true') shell.classList.add('sidebar-collapsed');
+    if (stored === 'true' && !mobileQuery.matches) shell.classList.add('sidebar-collapsed');
 
     DOM.on(toggle, 'click', () => {
+      if (mobileQuery.matches) {
+        shell.classList.remove('sidebar-open');
+        return;
+      }
       const collapsed = shell.classList.toggle('sidebar-collapsed');
       localStorage.setItem(STORAGE_KEY, collapsed ? 'true' : 'false');
     });
+
+    if (openBtn) {
+      DOM.on(openBtn, 'click', () => {
+        if (mobileQuery.matches) {
+          shell.classList.add('sidebar-open');
+        }
+      });
+    }
+
+    if (overlay) {
+      DOM.on(overlay, 'click', () => shell.classList.remove('sidebar-open'));
+    }
+
+    DOM.$$('[data-nav-link]').forEach(link => {
+      DOM.on(link, 'click', () => {
+        if (mobileQuery.matches) {
+          shell.classList.remove('sidebar-open');
+        }
+      });
+    });
+
+    const syncResponsiveState = event => {
+      if (event.matches) {
+        shell.classList.remove('sidebar-collapsed');
+      } else {
+        shell.classList.remove('sidebar-open');
+        if (localStorage.getItem(STORAGE_KEY) === 'true') {
+          shell.classList.add('sidebar-collapsed');
+        }
+      }
+    };
+
+    if (typeof mobileQuery.addEventListener === 'function') {
+      mobileQuery.addEventListener('change', syncResponsiveState);
+    } else if (typeof mobileQuery.addListener === 'function') {
+      mobileQuery.addListener(syncResponsiveState);
+    }
 
     AppState.subscribe('activePage', page => _setActiveLink(page));
     AppState.subscribe('activeJobs', count => _updateBadge(count));

@@ -147,8 +147,8 @@ html[data-theme-preset="ocean"] {
   --accent-ring: rgba(42, 183, 199, 0.32);
   --bg-glow-top: rgba(42, 183, 199, 0.08);
   --bg-glow-bottom: rgba(34, 197, 94, 0.04);
-  --bg-gradient-start: #081116;
-  --bg-gradient-end: #0b151a;
+  --bg-gradient-start: #1a1a1a;
+  --bg-gradient-end: #2a2a2a;
 }
 
 html[data-theme-preset="ember"] {
@@ -159,8 +159,8 @@ html[data-theme-preset="ember"] {
   --accent-ring: rgba(251, 146, 60, 0.34);
   --bg-glow-top: rgba(249, 115, 22, 0.11);
   --bg-glow-bottom: rgba(250, 204, 21, 0.06);
-  --bg-gradient-start: #140d0a;
-  --bg-gradient-end: #1c120e;
+  --bg-gradient-start: #1a1a1a;
+  --bg-gradient-end: #2a2a2a;
 }
 
 html[data-theme-preset="aurora"] {
@@ -171,8 +171,8 @@ html[data-theme-preset="aurora"] {
   --accent-ring: rgba(74, 222, 128, 0.34);
   --bg-glow-top: rgba(20, 184, 166, 0.1);
   --bg-glow-bottom: rgba(34, 197, 94, 0.06);
-  --bg-gradient-start: #071410;
-  --bg-gradient-end: #0c1914;
+  --bg-gradient-start: #1a1a1a;
+  --bg-gradient-end: #2a2a2a;
 }
 
 html[data-theme-preset="cobalt"] {
@@ -183,8 +183,8 @@ html[data-theme-preset="cobalt"] {
   --accent-ring: rgba(96, 165, 250, 0.34);
   --bg-glow-top: rgba(59, 130, 246, 0.11);
   --bg-glow-bottom: rgba(34, 211, 238, 0.05);
-  --bg-gradient-start: #07111d;
-  --bg-gradient-end: #0c1520;
+  --bg-gradient-start: #1a1a1a;
+  --bg-gradient-end: #2a2a2a;
 }
 
 html[data-theme-preset="ruby"] {
@@ -195,8 +195,68 @@ html[data-theme-preset="ruby"] {
   --accent-ring: rgba(244, 114, 182, 0.32);
   --bg-glow-top: rgba(225, 29, 72, 0.1);
   --bg-glow-bottom: rgba(244, 114, 182, 0.05);
-  --bg-gradient-start: #160a11;
-  --bg-gradient-end: #1d0d17;
+  --bg-gradient-start: #1a1a1a;
+  --bg-gradient-end: #2a2a2a;
+}
+
+html[data-theme-preset="amethyst"] {
+  --accent: #8b5cf6;
+  --accent-light: #a78bfa;
+  --accent-dim: #7c3aed;
+  --accent-bg: rgba(139, 92, 246, 0.14);
+  --accent-ring: rgba(167, 139, 250, 0.34);
+  --bg-glow-top: rgba(139, 92, 246, 0.11);
+  --bg-glow-bottom: rgba(192, 132, 252, 0.06);
+  --bg-gradient-start: #1a1a1a;
+  --bg-gradient-end: #2a2a2a;
+}
+
+html[data-theme-preset="sunset"] {
+  --accent: #ea580c;
+  --accent-light: #fb923c;
+  --accent-dim: #c2410c;
+  --accent-bg: rgba(234, 88, 12, 0.14);
+  --accent-ring: rgba(251, 146, 60, 0.34);
+  --bg-glow-top: rgba(234, 88, 12, 0.11);
+  --bg-glow-bottom: rgba(253, 186, 116, 0.06);
+  --bg-gradient-start: #1a1a1a;
+  --bg-gradient-end: #2a2a2a;
+}
+
+html[data-theme-preset="forest"] {
+  --accent: #166534;
+  --accent-light: #16a34a;
+  --accent-dim: #14532d;
+  --accent-bg: rgba(22, 101, 52, 0.14);
+  --accent-ring: rgba(132, 204, 22, 0.32);
+  --bg-glow-top: rgba(22, 101, 52, 0.1);
+  --bg-glow-bottom: rgba(132, 204, 22, 0.05);
+  --bg-gradient-start: #1a1a1a;
+  --bg-gradient-end: #2a2a2a;
+}
+
+html[data-theme-preset="sakura"] {
+  --accent: #db2777;
+  --accent-light: #f472b6;
+  --accent-dim: #be185d;
+  --accent-bg: rgba(219, 39, 119, 0.14);
+  --accent-ring: rgba(244, 114, 182, 0.34);
+  --bg-glow-top: rgba(219, 39, 119, 0.11);
+  --bg-glow-bottom: rgba(251, 113, 133, 0.06);
+  --bg-gradient-start: #1a1a1a;
+  --bg-gradient-end: #2a2a2a;
+}
+
+html[data-theme-preset="midnight"] {
+  --accent: #1e293b;
+  --accent-light: #334155;
+  --accent-dim: #0f172a;
+  --accent-bg: rgba(30, 41, 59, 0.14);
+  --accent-ring: rgba(71, 85, 105, 0.32);
+  --bg-glow-top: rgba(30, 41, 59, 0.1);
+  --bg-glow-bottom: rgba(71, 85, 105, 0.05);
+  --bg-gradient-start: #1a1a1a;
+  --bg-gradient-end: #2a2a2a;
 }
 
 /* ============================================================

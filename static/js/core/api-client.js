@@ -96,6 +96,7 @@ window.API = (() => {
   /* ---- App Settings --------------------------------------- */
   const getSettings  = ()     => get('/settings');
   const saveSettings = (body) => post('/settings', body);
+  const testOpenRouterKey = (apiKey) => post('/settings/test-openrouter-key', { api_key: apiKey });
 
   /* ---- Compare ---------------------------------------------- */
   const compareRuns    = (body)      => post('/compare', body);
@@ -112,6 +113,6 @@ window.API = (() => {
     getLossFunctions, getHyperoptSpaces, applyHyperoptParams,
     getPresets, savePreset, deletePreset,
     compareRuns,
-    getSettings, saveSettings,
+    getSettings, saveSettings, testOpenRouterKey,
   };
 })();

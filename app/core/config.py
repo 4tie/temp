@@ -2,7 +2,9 @@ import os
 import sys
 from pathlib import Path
 
-BASE_DIR = Path(os.environ.get("USER_DATA_DIR", Path(__file__).resolve().parents[2] / "user_data"))
+# Resolve BASE_DIR to absolute path to avoid path concatenation issues
+_default_base = Path(__file__).resolve().parents[2] / "user_data"
+BASE_DIR = Path(os.environ.get("USER_DATA_DIR", str(_default_base))).resolve()
 USER_DATA_ROOT = BASE_DIR
 BACKTEST_RESULTS_DIR = BASE_DIR / "backtest_results"
 HYPEROPT_RESULTS_DIR = BASE_DIR / "hyperopt_results"

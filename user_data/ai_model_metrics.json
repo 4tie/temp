@@ -1,5 +1,5 @@
 {
-  "updated_at": 1775432810.7027476,
+  "updated_at": 1775457885.6451616,
   "roles": {
     "composer": {
       "openrouter/model:free": {
@@ -21,6 +21,15 @@
         "latency_samples": 12.0,
         "cooldown_until": 0.0,
         "updated_at": 1775432810.7027476
+      },
+      "qwen/qwen3.6-plus:free": {
+        "requests": 1.0,
+        "successes": 1.0,
+        "rate_limits": 0.0,
+        "latency_sum_ms": 21813.0,
+        "latency_samples": 1.0,
+        "cooldown_until": 0.0,
+        "updated_at": 1775457658.6861746
       }
     },
     "judge": {
@@ -32,6 +41,39 @@
         "latency_samples": 4.0,
         "cooldown_until": 0.0,
         "updated_at": 1775432810.6893373
+      }
+    },
+    "code_gen": {
+      "qwen/qwen3.6-plus:free": {
+        "requests": 6.0,
+        "successes": 2.0,
+        "rate_limits": 2.0,
+        "latency_sum_ms": 270559.0,
+        "latency_samples": 6.0,
+        "cooldown_until": 1775456416.0089145,
+        "updated_at": 1775456474.0536153
+      }
+    },
+    "tool_caller": {
+      "qwen/qwen3.6-plus:free": {
+        "requests": 1.0,
+        "successes": 0.0,
+        "rate_limits": 1.0,
+        "latency_sum_ms": 9765.0,
+        "latency_samples": 1.0,
+        "cooldown_until": 1775456453.7498877,
+        "updated_at": 1775456393.7498877
+      }
+    },
+    "reasoner": {
+      "qwen/qwen3.6-plus:free": {
+        "requests": 2.0,
+        "successes": 1.0,
+        "rate_limits": 1.0,
+        "latency_sum_ms": 175797.0,
+        "latency_samples": 2.0,
+        "cooldown_until": 1775456464.4642913,
+        "updated_at": 1775457885.6451616
       }
     }
   }

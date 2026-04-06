@@ -10,6 +10,7 @@ import json
 import logging
 import re
 import statistics
+import threading
 from collections import defaultdict
 from math import sqrt
 from typing import Any
@@ -1877,7 +1878,7 @@ def _try_ai_narrative(
             {"role": "user", "content": user_msg},
         ]
 
-        raw_text = asyncio.run(_chat_complete_with_timeout(messages))
+        raw_text = _run_async_sync(lambda: _chat_complete_with_timeout(messages))
 
         parsed = _parse_ai_narrative_response(raw_text)
         if parsed:
@@ -1895,7 +1896,35 @@ def _try_ai_narrative(
 
 async def _chat_complete_with_timeout(messages: list[dict]) -> str:
     from ..models.openrouter_client import chat_complete as _chat_complete
-    return await asyncio.wait_for(_chat_complete(messages), timeout=8.0)
+    return await asyncio.wait_for(
+        _chat_complete(messages, model="meta-llama/llama-3.3-70b-instruct:free"),
+        timeout=8.0,
+    )
+
+
+def _run_async_sync(coro_factory) -> Any:
+    """Run an async factory from sync code without constructing leaked coroutines."""
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(coro_factory())
+
+    result: dict[str, Any] = {}
+    error: dict[str, BaseException] = {}
+
+    def _runner() -> None:
+        try:
+            result["value"] = asyncio.run(coro_factory())
+        except BaseException as exc:  # noqa: BLE001
+            error["exc"] = exc
+
+    thread = threading.Thread(target=_runner, name="deep-analysis-async-bridge", daemon=True)
+    thread.start()
+    thread.join()
+
+    if "exc" in error:
+        raise error["exc"]
+    return result.get("value")
 
 
 def _parse_ai_narrative_response(raw: str) -> dict | None:
@@ -2082,7 +2111,6 @@ def _call_openrouter_narrative(
     loss_patterns: dict, signal_frequency: dict, exit_quality: dict,
     overfitting: dict, n_trades: int,
 ) -> dict | None:
-    import asyncio
     from ..models.openrouter_client import has_api_keys
 
     if not has_api_keys():
@@ -2172,18 +2200,7 @@ Rules you must follow:
         async def _call_async() -> str:
             return await _or_chat_complete(messages, model="meta-llama/llama-3.3-70b-instruct:free")
 
-        try:
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                import concurrent.futures
-                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as ex:
-                    future = ex.submit(asyncio.run, _call_async())
-                    content = future.result(timeout=20)
-            else:
-                content = loop.run_until_complete(_call_async())
-        except RuntimeError:
-            content = asyncio.run(_call_async())
-
+        content = _run_async_sync(_call_async)
 
         if content.startswith("```"):
             content = re.sub(r"^```[a-z]*\n?", "", content)

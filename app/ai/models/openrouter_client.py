@@ -155,7 +155,11 @@ async def chat_complete(messages: list[dict], model: str, *, api_key: str | None
                 json=payload,
             )
             resp.raise_for_status()
-            return resp.json()["choices"][0]["message"]["content"]
+            try:
+                payload_json = resp.json()
+                return payload_json["choices"][0]["message"]["content"]
+            except (KeyError, IndexError, TypeError) as exc:
+                raise RuntimeError("OpenRouter chat_complete returned malformed payload: missing choices") from exc
         except httpx.HTTPStatusError as exc:
             _raise_with_detail(exc, "OpenRouter chat_complete")
 
@@ -198,11 +202,48 @@ async def stream_chat(
                     try:
                         import json
                         chunk = json.loads(raw)
-                        delta = chunk["choices"][0]["delta"].get("content", "")
+                        try:
+                            delta = chunk["choices"][0]["delta"].get("content", "")
+                        except (KeyError, IndexError, TypeError) as exc:
+                            raise RuntimeError("OpenRouter stream_chat returned malformed payload: missing choices") from exc
                         if delta:
                             yield {"delta": delta, "done": False}
+                    except RuntimeError:
+                        raise
                     except Exception:
                         continue
         except httpx.HTTPStatusError as exc:
             _raise_with_detail(exc, "OpenRouter stream_chat")
     yield {"done": True}
+
+
+async def test_api_key(api_key: str) -> dict[str, bool | str]:
+    """
+    Test an OpenRouter API key by making a minimal request.
+    Returns {"valid": bool, "error": str or None}
+    """
+    if not api_key or not api_key.strip():
+        return {"valid": False, "error": "API key is empty"}
+    
+    api_key = api_key.strip()
+    
+    # Use a simple model list request to test the key
+    async with httpx.AsyncClient(timeout=httpx.Timeout(10.0, connect=5.0)) as client:
+        try:
+            resp = await client.get(
+                f"{_BASE_URL}/models",
+                headers=_headers_for(api_key),
+            )
+            resp.raise_for_status()
+            return {"valid": True, "error": None}
+        except httpx.HTTPStatusError as exc:
+            if exc.response.status_code == 401:
+                return {"valid": False, "error": "Invalid API key"}
+            elif exc.response.status_code == 429:
+                return {"valid": False, "error": "Rate limited"}
+            else:
+                return {"valid": False, "error": f"HTTP {exc.response.status_code}: {exc.response.text[:100]}"}
+        except httpx.TimeoutException:
+            return {"valid": False, "error": "Request timeout"}
+        except Exception as exc:
+            return {"valid": False, "error": f"Connection error: {str(exc)}"}

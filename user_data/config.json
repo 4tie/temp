@@ -1,5 +1,6 @@
 {
   "$schema": "https://schema.freqtrade.io/schema.json",
+  "user_data_dir": "T:\\SameGrossNetframework\\SameGrossNetframework\\user_data",
   "strategy": "MultiMa",
   "max_open_trades": 1,
   "stake_currency": "USDT",

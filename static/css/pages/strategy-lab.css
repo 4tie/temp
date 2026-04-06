@@ -9,8 +9,20 @@
 }
 
 .sl-layout {
-  grid-template-columns: 236px minmax(0, 1fr);
+  grid-template-columns: 260px minmax(0, 1fr);
   min-height: calc(100vh - var(--topbar-height) - var(--statusbar-height) - 154px);
+  min-height: calc(100dvh - var(--topbar-height) - var(--statusbar-height) - 154px);
+}
+
+@media (max-width: 1460px) {
+  .sl-layout {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .strategy-list {
+    max-height: 320px;
+  }
 }
 
 .sl-sidebar-card,
@@ -246,6 +258,10 @@
   .sl-layout {
     grid-template-columns: 1fr;
     min-height: auto;
+  }
+
+  .strategy-list {
+    max-height: 320px;
   }
 }
 

@@ -96,6 +96,7 @@ window.App = (() => {
     Sidebar.init();
     Tabs.initAll();
     Auth.startPolling();
+    window.AIDiagPage?.initShell?.();
 
     _bindNavLinks();
     _bindClock();

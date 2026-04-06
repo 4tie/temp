@@ -37,6 +37,36 @@ window.ThemeManager = (() => {
       description: 'Rose and magenta',
       swatches: ['#e11d48', '#fb7185', '#f472b6'],
     },
+    {
+      id: 'amethyst',
+      name: 'Amethyst',
+      description: 'Purple and lavender',
+      swatches: ['#8b5cf6', '#a78bfa', '#c084fc'],
+    },
+    {
+      id: 'sunset',
+      name: 'Sunset',
+      description: 'Orange and peach',
+      swatches: ['#ea580c', '#fb923c', '#fdba74'],
+    },
+    {
+      id: 'forest',
+      name: 'Forest',
+      description: 'Deep green and moss',
+      swatches: ['#166534', '#16a34a', '#84cc16'],
+    },
+    {
+      id: 'sakura',
+      name: 'Sakura',
+      description: 'Pink and cherry blossom',
+      swatches: ['#db2777', '#f472b6', '#fb7185'],
+    },
+    {
+      id: 'midnight',
+      name: 'Midnight',
+      description: 'Dark blue and slate',
+      swatches: ['#1e293b', '#334155', '#475569'],
+    },
   ];
 
   function getPresets() {

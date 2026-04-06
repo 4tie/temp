@@ -14,6 +14,8 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+from ..ai.models.openrouter_client import test_api_key
+
 router = APIRouter(prefix="/settings", tags=["settings"])
 
 _ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
@@ -177,3 +179,18 @@ async def save_settings(req: SettingsSaveRequest):
 
     _write_env_file(env)
     return {"saved": True}
+
+
+class TestKeyRequest(BaseModel):
+    api_key: str
+
+
+@router.post("/test-openrouter-key")
+async def test_openrouter_key(req: TestKeyRequest):
+    """Test an OpenRouter API key for validity."""
+    api_key = req.api_key.strip()
+    if not api_key:
+        raise HTTPException(status_code=400, detail="API key is required")
+    
+    result = await test_api_key(api_key)
+    return result

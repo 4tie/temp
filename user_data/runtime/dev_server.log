@@ -428,3 +428,398 @@ INFO:     127.0.0.1:58069 - "GET /healthz HTTP/1.1" 200 OK
 INFO:     127.0.0.1:60291 - "GET /healthz HTTP/1.1" 200 OK
 INFO:     127.0.0.1:55063 - "GET /healthz HTTP/1.1" 200 OK
 INFO:     127.0.0.1:59917 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     Will watch for changes in these directories: ['T:\\SameGrossNetframework\\SameGrossNetframework\\app', 'T:\\SameGrossNetframework\\SameGrossNetframework\\static', 'T:\\SameGrossNetframework\\SameGrossNetframework\\templates']
+INFO:     Uvicorn running on http://127.0.0.1:5000 (Press CTRL+C to quit)
+INFO:     Started reloader process [41396] using StatReload
+INFO:     Started server process [29564]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:64359 - "GET /health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:64360 - "GET /health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:64361 - "GET /health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:64363 - "GET /health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:64365 - "GET /health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:64366 - "GET /health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:64367 - "GET /health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:64368 - "GET /health HTTP/1.1" 404 Not Found
+INFO:     Will watch for changes in these directories: ['T:\\SameGrossNetframework\\SameGrossNetframework\\app', 'T:\\SameGrossNetframework\\SameGrossNetframework\\static', 'T:\\SameGrossNetframework\\SameGrossNetframework\\templates']
+INFO:     Uvicorn running on http://127.0.0.1:5000 (Press CTRL+C to quit)
+INFO:     Started reloader process [33644] using StatReload
+INFO:     Started server process [34136]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:52215 - "GET /health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:52217 - "GET /health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:60055 - "GET /health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:60056 - "GET /health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:60058 - "GET /health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:59801 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59801 - "GET /static/css/base.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55602 - "GET /static/css/pages/hyperopt.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:61265 - "GET /static/css/components.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:55596 - "GET /static/css/pages/backtesting.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:61051 - "GET /static/css/layout.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:57754 - "GET /static/css/pages/dashboard.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:57754 - "GET /static/css/pages/settings.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55602 - "GET /static/css/pages/strategy-lab.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:61265 - "GET /static/css/pages/ai-chat.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:61051 - "GET /static/css/pages/results.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:55596 - "GET /static/css/pages/jobs.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:55596 - "GET /static/js/core/api-client.js HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:57754 - "GET /static/js/core/theme.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61051 - "GET /static/js/pages/backtesting.js HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:61265 - "GET /static/js/pages/hyperopt.js HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:55596 - "GET /static/js/pages/dashboard.js HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:57754 - "GET /static/js/pages/strategy-lab.js HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:55602 - "GET /static/js/pages/ai-diagnosis.js?v=20260404-2 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:59801 - "GET /static/js/pages/jobs.js HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:55596 - "GET /static/js/pages/results.js HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:55596 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55596 - "GET /settings HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55602 - "GET /presets HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59801 - "GET /last-config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57875 - "GET /health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:57876 - "GET /health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:57877 - "GET /health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:59801 - "GET /sw.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57878 - "GET /health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:57882 - "GET /health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:59801 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59801 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59801 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59801 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53346 - "GET /settings HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64814 - "GET /presets HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53970 - "GET /last-config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53970 - "GET /runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64814 - "GET /hyperopt/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53346 - "GET /strategies HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53346 - "GET /sw.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53346 - "GET /runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64814 - "GET /result-metrics HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64814 - "GET /runs/20260405_232204_17d85a85 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53346 - "GET /runs/20260405_232204_17d85a85/raw HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53346 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64814 - "GET /ai/threads HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64814 - "GET /strategies HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64814 - "GET /strategies HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60773 - "GET /hyperopt/spaces HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64705 - "GET /hyperopt/loss-functions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64705 - "GET /pairs?exchange=binance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64705 - "GET /hyperopt/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53346 - "GET /ai/providers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53346 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53346 - "GET /runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64814 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60773 - "GET /last-config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64705 - "GET /strategies HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60773 - "GET /runs/20260405_232204_17d85a85 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64705 - "GET /pairs?exchange=binance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64705 - "GET /strategies/MultiMa/params HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64705 - "GET /strategies HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64705 - "GET /strategies HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64814 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60773 - "GET /last-config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53346 - "GET /runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64705 - "GET /pairs?exchange=binance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64705 - "GET /runs/20260405_232204_17d85a85 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64705 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64705 - "POST /data-coverage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64705 - "POST /download-data HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64705 - "GET /download-data/dl_20260406_061035_19f79cac HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64705 - "GET /download-data/dl_20260406_061035_19f79cac HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54540 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54540 - "GET /pairs?exchange=binance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54540 - "POST /data-coverage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54540 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54540 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54540 - "GET /runs/20260405_232204_17d85a85 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51628 - "GET /runs/20260405_232204_17d85a85/raw HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51628 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51628 - "POST /data-coverage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51628 - "POST /download-data HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51628 - "GET /download-data/dl_20260406_061059_0cfc8d9d HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51628 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51628 - "GET /download-data/dl_20260406_061059_0cfc8d9d HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51628 - "GET /download-data/dl_20260406_061059_0cfc8d9d HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51628 - "GET /pairs?exchange=binance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51628 - "POST /data-coverage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63313 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63313 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52825 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52825 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52825 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52825 - "POST /data-coverage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52825 - "POST /download-data HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52825 - "GET /download-data/dl_20260406_061127_656885a7 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52825 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52825 - "GET /download-data/dl_20260406_061127_656885a7 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52825 - "GET /download-data/dl_20260406_061127_656885a7 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52825 - "GET /pairs?exchange=binance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52825 - "POST /data-coverage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52825 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65126 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65126 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58931 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52198 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52198 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57191 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57191 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57191 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57191 - "POST /download-data HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57191 - "GET /download-data/dl_20260406_061216_a0e6acd3 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57191 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57191 - "GET /download-data/dl_20260406_061216_a0e6acd3 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57191 - "GET /pairs?exchange=binance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57191 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57191 - "POST /data-coverage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57191 - "POST /download-data HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57191 - "GET /download-data/dl_20260406_061227_1a44631c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57191 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57191 - "GET /download-data/dl_20260406_061227_1a44631c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57191 - "GET /download-data/dl_20260406_061227_1a44631c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57191 - "GET /pairs?exchange=binance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57191 - "POST /data-coverage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57191 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53903 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53903 - "POST /download-data HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53903 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53903 - "GET /download-data/dl_20260406_061242_107d4e82 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53903 - "GET /download-data/dl_20260406_061242_107d4e82 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53903 - "GET /pairs?exchange=binance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53903 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53903 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53903 - "POST /data-coverage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57732 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57732 - "POST /download-data HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57732 - "GET /download-data/dl_20260406_061259_e52b1e76 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57732 - "GET /download-data/dl_20260406_061259_e52b1e76 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57732 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57732 - "GET /download-data/dl_20260406_061259_e52b1e76 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57732 - "GET /pairs?exchange=binance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57732 - "POST /data-coverage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57732 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57732 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57732 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52288 - "GET /healthz HTTP/1.1" 200 OK
+WARNING:  StatReload detected changes in 'app\services\data_coverage.py'. Reloading...
+ INFO:     127.0.0.1:52288 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52288 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52288 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52288 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52288 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52288 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52424 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52424 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59628 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59628 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59628 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59628 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59628 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59628 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63890 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63890 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57374 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57374 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57374 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57374 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56981 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56981 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56981 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56981 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56981 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56995 - "GET /health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56998 - "GET /health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56999 - "GET /health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:57000 - "GET /health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56981 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52556 - "GET /health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:52557 - "GET /health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:52558 - "GET /health HTTINFO:     127.0.0.1:52561 - "GET /health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:52562 - "GET /health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:52563 - "GET /health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:59239 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59239 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59239 - "GET /static/css/base.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:50440 - "GET /static/css/pages/settings.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:54843 - "GET /static/css/pages/strategy-lab.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:62144 - "GET /static/css/pages/jobs.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:51434 - "GET /static/css/pages/hyperopt.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:54843 - "GET /static/js/pages/hyperopt.js HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:51168 - "GET /static/js/core/theme.js HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:51434 - "GET /static/js/pages/strategy-lab.js HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:62144 - "GET /static/js/pages/jobs.js HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:62144 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62144 - "GET /runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51434 - "GET /strategies HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54843 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51168 - "GET /last-config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62144 - "GET /runs/20260405_232204_17d85a85 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51168 - "GET /pairs?exchange=binance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51168 - "GET /strategies/MultiMa/params HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51168 - "GET /sw.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51168 - "POST /data-coverage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51168 - "POST /run HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51168 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51168 - "GET /runs/20260406_061545_142906d6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51168 - "GET /runs/20260406_061545_142906d6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51168 - "GET /runs/20260406_061545_142906d6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51168 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51168 - "GET /runs/20260406_061545_142906d6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51168 - "GET /strategies/MultiMa/params HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57347 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50151 - "GET /runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50151 - "GET /runs/20260406_061545_142906d6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50151 - "GET /runs/20260406_061545_142906d6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57347 - "GET /runs/20260406_061545_142906d6/raw HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57347 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57347 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57347 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57347 - "GET /strategies HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53091 - "GET /hyperopt/spaces HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62584 - "GET /hyperopt/loss-functions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62584 - "GET /pairs?exchange=binance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62584 - "GET /hyperopt/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62584 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62584 - "GET /strategies HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53091 - "GET /ai/threads HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53091 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62584 - "GET /ai/providers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62584 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62584 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62584 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62584 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62584 - "GET /runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62584 - "GET /strategies/MultiMa/source HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62584 - "GET /runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62584 - "GET /strategies/MultiMa/source HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62584 - "GET /runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62584 - "GET /strategies/MultiMa/source HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62584 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62584 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61293 - "GET /healthz HTTP/1.1" 200 OK
+T:\SameGrossNetframework\SameGrossNetframework\app\ai\tools\deep_analysis.py:2196: RuntimeWarning: coroutine '_call_openrouter_narrative.<locals>._call_async' was never awaited
+  logger.debug("OpenRouter narrative call failed: %s", exc)
+RuntimeWarning: Enable tracemalloc to get the object allocation traceback
+T:\SameGrossNetframework\SameGrossNetframework\app\ai\tools\deep_analysis.py:1889: RuntimeWarning: coroutine '_chat_complete_with_timeout' was never awaited
+  logger.info("AI narrative unavailable (%s), using deterministic fallback", exc)
+RuntimeWarning: Enable tracemalloc to get the object allocation traceback
+INFO:     127.0.0.1:61293 - "POST /ai/analyze/20260406_061545_142906d6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61293 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61293 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61293 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57002 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57002 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57002 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57002 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57002 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57002 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57002 - "GET /static/css/base.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:57772 - "GET /static/css/pages/settings.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:57772 - "GET /static/js/core/theme.js HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:57002 - "GET /static/js/components/result-explorer.js HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:57002 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57772 - "GET /ai/threads HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57772 - "GET /sw.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57002 - "GET /ai/providers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57002 - "GET /runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57002 - "GET /strategies/MultiMa/source HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57002 - "GET /runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57002 - "GET /strategies/MultiMa/source HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57002 - "GET /runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57772 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57772 - "GET /strategies/MultiMa/source HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57772 - "POST /evolution/start HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57772 - "GET /evolution/versions/MultiMa HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57002 - "GET /evolution/stream/4e98aac5-ad59-4909-8513-2ba5582eff18 HTTP/1.1" 200 OK
+openrouter attempt 1 failed for qwen/qwen3.6-plus:free: OpenRouter chat_complete failed (status=429): Provider returned error
+INFO:     127.0.0.1:57772 - "GET /healthz HTTP/1.1" 200 OK
+openrouter attempt 2 failed for qwen/qwen3.6-plus:free: OpenRouter chat_complete failed (status=429): Provider returned error
+openrouter attempt 3 failed for qwen/qwen3.6-plus:free: OpenRouter chat_complete failed (status=429): Provider returned error
+OpenRouter failed for qwen/qwen3.6-plus:free, falling back to Ollama: OpenRouter chat_complete failed (status=429): Provider returned error
+INFO:     127.0.0.1:57772 - "GET /healthz HTTP/1.1" 200 OK
+Model call failed for role code_gen using qwen/qwen3.6-plus:free: OpenRouter failed for qwen/qwen3.6-plus:free: OpenRouter chat_complete failed (status=429): Provider returned error. Ollama fallback unavailable: No Ollama models available for fallback
+INFO:     127.0.0.1:60629 - "GET /healthz HTTP/1.1" 200 OK
+openrouter attempt 1 failed for qwen/qwen3.6-plus:free: OpenRouter chat_complete failed (status=401): User not found.
+INFO:     127.0.0.1:60629 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59423 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59423 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59423 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49280 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49280 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49521 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49521 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49521 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49521 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55975 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55975 - "GET /evolution/run/4e98aac5-ad59-4909-8513-2ba5582eff18 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55975 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55975 - "GET /evolution/run/4e98aac5-ad59-4909-8513-2ba5582eff18 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55975 - "GET /evolution/run/4e98aac5-ad59-4909-8513-2ba5582eff18 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55975 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55975 - "POST /evolution/start HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55975 - "GET /evolution/versions/MultiMa HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62330 - "GET /evolution/stream/57c8f7fc-05e9-4e04-983b-7d7e244d1839 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55975 - "GET /healthz HTTP/1.1" 200 OK
+openrouter attempt 1 failed for qwen/qwen3.6-plus:free: OpenRouter chat_complete failed (status=429): Provider returned error
+openrouter attempt 2 failed for qwen/qwen3.6-plus:free: OpenRouter chat_complete failed (status=429): Provider returned error
+INFO:     127.0.0.1:55975 - "GET /healthz HTTP/1.1" 200 OK
+openrouter attempt 3 failed for qwen/qwen3.6-plus:free: OpenRouter chat_complete failed (status=429): Provider returned error
+OpenRouter failed for qwen/qwen3.6-plus:free, falling back to Ollama: OpenRouter chat_complete failed (status=429): Provider returned error
+INFO:     127.0.0.1:55975 - "GET /healthz HTTP/1.1" 200 OK
+Model call failed for role code_gen using qwen/qwen3.6-plus:free: OpenRouter failed for qwen/qwen3.6-plus:free: OpenRouter chat_complete failed (status=429): Provider returned error. Ollama fallback unavailable: No Ollama models available for fallback
+INFO:     127.0.0.1:55975 - "POST /ai/chat HTTP/1.1" 200 OK
+openrouter attempt 1 failed for qwen/qwen3.6-plus:free: OpenRouter chat_complete failed (status=429): Provider returned error
+openrouter attempt 1 failed for qwen/qwen3.6-plus:free: OpenRouter chat_complete failed (status=429): Provider returned error
+openrouter attempt 2 failed for qwen/qwen3.6-plus:free: OpenRouter chat_complete failed (status=401): User not found.
+INFO:     127.0.0.1:59958 - "GET /healthz HTTP/1.1" 200 OK
+openrouter attempt 2 failed for qwen/qwen3.6-plus:free: OpenRouter chat_complete failed (status=429): Provider returned error
+INFO:     127.0.0.1:58289 - "GET /healthz HTTP/1.1" 200 OK
+openrouter attempt 3 failed for qwen/qwen3.6-plus:free: 'choices'
+OpenRouter failed for qwen/qwen3.6-plus:free, falling back to Ollama: 'choices'
+INFO:     127.0.0.1:58289 - "GET /evolution/run/57c8f7fc-05e9-4e04-983b-7d7e244d1839 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58289 - "GET /healthz HTTP/1.1" 200 OK
+Model call failed for role code_gen using qwen/qwen3.6-plus:free: OpenRouter failed for qwen/qwen3.6-plus:free: 'choices'. Ollama fallback unavailable: No Ollama models available for fallback
+openrouter attempt 1 failed for qwen/qwen3.6-plus:free: OpenRouter chat_complete failed (status=429): Provider returned error
+INFO:     127.0.0.1:58289 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58289 - "GET /evolution/run/57c8f7fc-05e9-4e04-983b-7d7e244d1839 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58289 - "GET /evolution/run/57c8f7fc-05e9-4e04-983b-7d7e244d1839 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58289 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58289 - "GET /healthz HTTP/1.1" 200 OK
+openrouter attempt 1 failed for meta-llama/llama-3.2-3b-instruct:free: OpenRouter chat_complete failed (status=429): Provider returned error
+openrouter attempt 2 failed for meta-llama/llama-3.2-3b-instruct:free: OpenRouter chat_complete failed (status=401): User not found.
+openrouter attempt 3 failed for meta-llama/llama-3.2-3b-instruct:free: OpenRouter chat_complete failed (status=429): Provider returned error
+OpenRouter failed for meta-llama/llama-3.2-3b-instruct:free, falling back to Ollama: OpenRouter chat_complete failed (status=429): Provider returned error
+INFO:     127.0.0.1:58289 - "GET /healthz HTTP/1.1" 200 OK
+Model call failed for role tool_caller using meta-llama/llama-3.2-3b-instruct:free: OpenRouter failed for meta-llama/llama-3.2-3b-instruct:free: OpenRouter chat_complete failed (status=429): Provider returned error. Ollama fallback unavailable: No Ollama models available for fallback
+INFO:     127.0.0.1:51124 - "GET /healthz HTTP/1.1" 200 OK
+openrouter attempt 1 failed for qwen/qwen3.6-plus:free: OpenRouter chat_complete failed (status=429): Provider returned error
+openrouter attempt 2 failed for qwen/qwen3.6-plus:free: OpenRouter chat_complete failed (status=429): Provider returned error
+INFO:     127.0.0.1:56142 - "GET /healthz HTTP/1.1" 200 OK
+openrouter attempt 3 failed for qwen/qwen3.6-plus:free: OpenRouter chat_complete failed (status=429): Provider returned error
+OpenRouter failed for qwen/qwen3.6-plus:free, falling back to Ollama: OpenRouter chat_complete failed (status=429): Provider returned error
+openrouter attempt 1 failed for qwen/qwen3.6-plus:free: OpenRouter chat_complete failed (status=429): Provider returned error
+openrouter attempt 2 failed for qwen/qwen3.6-plus:free: OpenRouter chat_complete failed (status=429): Provider returned error
+INFO:     127.0.0.1:56142 - "GET /healthz HTTP/1.1" 200 OK
+Model call failed for role reasoner using qwen/qwen3.6-plus:free: OpenRouter failed for qwen/qwen3.6-plus:free: OpenRouter chat_complete failed (status=429): Provider returned error. Ollama fallback unavailable: No Ollama models available for fallback
+openrouter attempt 3 failed for qwen/qwen3.6-plus:free: OpenRouter chat_complete failed (status=401): User not found.
+OpenRouter failed for qwen/qwen3.6-plus:free, falling back to Ollama: OpenRouter chat_complete failed (status=401): User not found.
+Model call failed for role code_gen using qwen/qwen3.6-plus:free: OpenRouter failed for qwen/qwen3.6-plus:free: OpenRouter chat_complete failed (status=401): User not found.. Ollama fallback unavailable: No Ollama models available for fallback
+INFO:     127.0.0.1:51505 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57002 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57002 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57002 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49190 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49190 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58874 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58874 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58874 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58874 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59343 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59343 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59343 - "GET /evolution/run/57c8f7fc-05e9-4e04-983b-7d7e244d1839 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59343 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55456 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62330 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56298 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56298 - "GET /healthz HTTP/1.1" 200 OK

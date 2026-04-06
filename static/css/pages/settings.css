@@ -140,7 +140,7 @@
 .settings-api-row {
   display: grid;
   gap: var(--space-2);
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
 }
 
 .settings-api-input {
@@ -168,6 +168,11 @@
 .settings-api-btn--danger:hover {
   border-color: color-mix(in srgb, var(--red) 55%, var(--border-subtle));
   color: var(--red-light);
+}
+
+.settings-api-btn--test:hover {
+  border-color: color-mix(in srgb, var(--green) 55%, var(--border-subtle));
+  color: var(--green-light);
 }
 
 .settings-table-wrap {
@@ -289,4 +294,23 @@
 
 .settings-save-status--ok {
   color: var(--green);
+}
+
+/* ── Master Save ───────────────────────────────────────────── */
+
+.settings-master-save {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.018) 0%, var(--surface-1) 100%);
+}
+
+.settings-master-save .btn--lg {
+  padding: var(--space-3) var(--space-5);
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
 }

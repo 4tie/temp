@@ -3,7 +3,7 @@
    ============================================================ */
 
 .page-view[data-view="hyperopt"] .split-layout {
-  grid-template-columns: minmax(320px, 0.94fr) minmax(400px, 1.14fr);
+  grid-template-columns: minmax(300px, 0.96fr) minmax(360px, 1.1fr);
 }
 
 .hyperopt-page {
@@ -106,6 +106,17 @@
   min-width: 84px;
 }
 
+@media (max-width: 1460px) {
+  .page-view[data-view="hyperopt"] .split-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .page-view[data-view="hyperopt"] .split-layout__output {
+    max-height: none;
+    overflow: visible;
+  }
+}
+
 @media (max-width: 1080px) {
   .page-view[data-view="hyperopt"] .split-layout {
     grid-template-columns: 1fr;
@@ -140,5 +151,9 @@
   .hyperopt-card--history .data-table--sm,
   .hyperopt-card--results .data-table {
     min-width: 100%;
+  }
+
+  .hyperopt-layout {
+    gap: var(--space-4);
   }
 }

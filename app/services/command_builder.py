@@ -101,8 +101,7 @@ def build_hyperopt_command(
     random_state: Optional[int],
 ) -> list[str]:
     cmd = [
-        "freqtrade", "hyperopt",
-        "--userdir", str(BASE_DIR),
+        PYTHON_EXECUTABLE, "-m", "freqtrade", "hyperopt",
         "--strategy", strategy,
         "--timeframe", timeframe,
         "--epochs", str(epochs),

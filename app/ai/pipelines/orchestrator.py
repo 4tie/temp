@@ -11,6 +11,7 @@ import asyncio
 import contextvars
 import json
 import logging
+import os
 import time
 import uuid
 from dataclasses import dataclass, field, asdict
@@ -114,7 +115,12 @@ def _validate_python_code(code: str) -> CodeValidation:
             tmp_path = tmp.name
 
         proc = subprocess.run(
-            ["python", "-c", f"import ast; ast.parse(open('{tmp_path}').read())"],
+            [
+                "python",
+                "-c",
+                "import ast, pathlib, sys; ast.parse(pathlib.Path(sys.argv[1]).read_text(encoding='utf-8'))",
+                tmp_path,
+            ],
             capture_output=True, text=True, timeout=10,
         )
         if proc.returncode != 0:
@@ -154,7 +160,6 @@ def _validate_python_code(code: str) -> CodeValidation:
         method = "ast_parse_fallback"
     finally:
         try:
-            import os
             os.unlink(tmp_path)
         except Exception:
             pass

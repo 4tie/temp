@@ -593,20 +593,24 @@
 
 .split-layout {
   display: grid;
-  grid-template-columns: minmax(320px, 0.96fr) minmax(380px, 1.24fr);
+  grid-template-columns: minmax(300px, 0.96fr) minmax(360px, 1.18fr);
   gap: var(--space-3);
   align-items: start;
 }
 
+.split-layout > * {
+  min-width: 0;
+}
+
 .split-layout--lab {
-  grid-template-columns: 260px 1fr;
+  grid-template-columns: 240px minmax(0, 1fr);
   min-height: calc(100vh - var(--topbar-height) - var(--statusbar-height) - 160px);
 }
 
-.split-layout__sidebar { display: flex; flex-direction: column; gap: var(--space-3); }
-.split-layout__main    { display: flex; flex-direction: column; gap: var(--space-3); min-height: 400px; }
-.split-layout__form    { display: flex; flex-direction: column; gap: var(--space-3); }
-.split-layout__output  { display: flex; flex-direction: column; gap: var(--space-3); }
+.split-layout__sidebar { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
+.split-layout__main    { display: flex; flex-direction: column; gap: var(--space-3); min-height: 400px; min-width: 0; }
+.split-layout__form    { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
+.split-layout__output  { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
 
 /* ---- Strategy list ---------------------------------------- */
 

@@ -40,7 +40,7 @@
   <link rel="stylesheet" href="/static/css/pages/ai-diagnosis.css">
   <link rel="stylesheet" href="/static/css/pages/ai-chat.css">
   <link rel="stylesheet" href="/static/css/pages/jobs.css">
-  <link rel="stylesheet" href="/static/css/pages/results.css">
+  <link rel="stylesheet" href="/static/css/pages/results.css?v=20260406">
   <link rel="stylesheet" href="/static/css/pages/settings.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/addon/merge/merge.min.css">
@@ -55,6 +55,7 @@
 
   <!-- ---- Sidebar ----------------------------------------- -->
   {% include "partials/sidebar.html" %}
+  <button class="sidebar-overlay" id="sidebar-overlay" data-sidebar-overlay type="button" aria-label="Close navigation"></button>
 
   <!-- ---- Topbar ------------------------------------------ -->
   {% include "partials/topbar.html" %}
@@ -103,6 +104,12 @@
     </div>
 
   </main>
+
+  <!-- ---- Persistent AI dock ------------------------------ -->
+  <aside class="app-ai-dock" id="app-ai-dock" data-ai-dock aria-label="AI assistant panel">
+    <button class="app-ai-dock__overlay" data-ai-dock-overlay type="button" aria-label="Close AI panel"></button>
+    <div class="app-ai-dock__mount" id="app-ai-dock-mount" data-ai-dock-mount></div>
+  </aside>
 
   <!-- ---- Status bar -------------------------------------- -->
   {% include "partials/statusbar.html" %}
