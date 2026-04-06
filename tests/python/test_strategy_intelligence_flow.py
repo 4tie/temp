@@ -1,0 +1,94 @@
+from __future__ import annotations
+
+import unittest
+from unittest.mock import patch
+
+from app.services.results.strategy_intelligence_service import (
+    INTELLIGENCE_VERSION,
+    attach_strategy_intelligence,
+    build_strategy_intelligence,
+    has_strategy_intelligence,
+)
+
+
+class StrategyIntelligenceFlowTest(unittest.TestCase):
+    def test_build_strategy_intelligence_adapts_existing_analysis_without_parallel_schema(self) -> None:
+        result = {
+            "summary": {
+                "startingBalance": 1000,
+                "finalBalance": 920,
+                "totalProfit": -80,
+                "totalProfitPct": -8,
+                "totalTrades": 40,
+                "winRate": 42.5,
+                "profitFactor": 0.84,
+                "maxDrawdown": 18,
+            },
+            "overview": {},
+            "run_metadata": {"backtest_days": 20},
+        }
+        parent_result = {
+            "summary": {
+                "startingBalance": 1000,
+                "finalBalance": 980,
+                "totalProfit": -20,
+                "totalProfitPct": -2,
+                "totalTrades": 35,
+                "winRate": 48,
+                "profitFactor": 0.95,
+                "maxDrawdown": 11,
+            }
+        }
+
+        analysis_payload = {
+            "root_cause_diagnosis": {
+                "primary_failure_mode": "high_loss_rate",
+                "primary_failure_label": "High Loss Rate",
+                "severity": "critical",
+                "root_cause_conclusion": "Entries are poorly timed relative to reversals.",
+                "confidence": "medium",
+                "confidence_note": "Based on 40 trades.",
+                "causal_chain": [{"finding": "42.5% win rate vs 54.0% breakeven"}],
+                "fix_priority": ["Tighten entries", "Improve stoploss behavior"],
+                "secondary_issues": ["poor_risk_reward: Avg loss exceeds avg win"],
+            },
+            "weaknesses": [
+                {"title": "Weak Trade Quality", "impact": "Win rate and factor imply weak signal quality.", "evidence": "PF 0.84 across 40 trades"},
+            ],
+            "strengths": [
+                {"title": "Good Activity", "evidence": "2.0 trades/day gives enough sample size."},
+            ],
+            "parameter_recommendations": [
+                {"parameter": "stoploss", "suggestion": -0.08, "reason": "Average loss is too large.", "confidence": "high"},
+                {"parameter": "trailing_stop", "suggestion": True, "reason": "Lock in profit on winners.", "confidence": "medium"},
+            ],
+            "health_score": {"total": 41},
+            "signal_frequency": {"trades_per_day": 2.0, "diagnosis": "Activity is high enough for evaluation."},
+            "exit_quality": {"notes": "Winners are cut early."},
+            "overfitting": {"overfitting_risk": "low"},
+            "data_warnings": [],
+        }
+
+        with patch("app.services.results.strategy_intelligence_service.analyze", return_value=analysis_payload):
+            intelligence = build_strategy_intelligence(
+                run_id="run-1",
+                result=result,
+                meta={"parent_run_id": "run-0", "improvement_source": "strategy_intelligence"},
+                parent_result=parent_result,
+            )
+
+        self.assertEqual(intelligence["version"], INTELLIGENCE_VERSION)
+        self.assertEqual(intelligence["summary"]["trades_per_day"], 2.0)
+        self.assertEqual(intelligence["diagnosis"]["primary"]["title"], "High Loss Rate")
+        self.assertEqual(intelligence["suggestions"][0]["parameter"], "stoploss")
+        self.assertTrue(intelligence["suggestions"][0]["auto_applicable"])
+        self.assertEqual(intelligence["comparison_to_parent"]["parent_run_id"], "run-0")
+        self.assertEqual(intelligence["comparison_to_parent"]["metrics"]["profit_percent"]["diff"], -6.0)
+
+    def test_attach_and_detect_strategy_intelligence(self) -> None:
+        enriched = attach_strategy_intelligence({"summary": {}}, {"version": INTELLIGENCE_VERSION})
+        self.assertTrue(has_strategy_intelligence(enriched))
+
+
+if __name__ == "__main__":
+    unittest.main()

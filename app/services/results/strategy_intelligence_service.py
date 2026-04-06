@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from app.ai.tools.deep_analysis import analyze
 from app.services.results.comparison_metrics import compare_results
@@ -90,21 +91,21 @@ def _build_summary(summary: Mapping[str, Any], result: Mapping[str, Any]) -> dic
     overview = result.get("overview") or {}
     run_metadata = result.get("run_metadata") or {}
     risk = result.get("risk_metrics") or {}
-    total_trades = _number(summary.get("totalTrades") or overview.get("total_trades"))
+    total_trades = _number(_coalesce(summary.get("totalTrades"), overview.get("total_trades")))
     backtest_days = _number(run_metadata.get("backtest_days"))
     trades_per_day = (total_trades / backtest_days) if total_trades is not None and backtest_days and backtest_days > 0 else None
 
     return {
-        "starting_wallet": _number(summary.get("startingBalance") or overview.get("starting_balance")),
-        "final_wallet": _number(summary.get("finalBalance") or overview.get("final_balance")),
-        "net_profit_abs": _number(summary.get("totalProfit") or overview.get("profit_total_abs")),
-        "net_profit_pct": _number(summary.get("totalProfitPct") or overview.get("profit_percent")),
+        "starting_wallet": _number(_coalesce(summary.get("startingBalance"), overview.get("starting_balance"))),
+        "final_wallet": _number(_coalesce(summary.get("finalBalance"), overview.get("final_balance"))),
+        "net_profit_abs": _number(_coalesce(summary.get("totalProfit"), overview.get("profit_total_abs"))),
+        "net_profit_pct": _number(_coalesce(summary.get("totalProfitPct"), overview.get("profit_percent"))),
         "total_trades": total_trades,
         "trades_per_day": trades_per_day,
-        "win_rate": _number(summary.get("winRate") or overview.get("win_rate")),
-        "max_drawdown": _number(summary.get("maxDrawdown") or overview.get("max_drawdown") or risk.get("max_drawdown_pct")),
-        "profit_factor": _number(summary.get("profitFactor") or overview.get("profit_factor")),
-        "avg_trade_duration": summary.get("avgTradeDuration") or summary.get("avg_trade_duration") or overview.get("avg_trade_duration"),
+        "win_rate": _number(_coalesce(summary.get("winRate"), overview.get("win_rate"))),
+        "max_drawdown": _number(_coalesce(summary.get("maxDrawdown"), overview.get("max_drawdown"), risk.get("max_drawdown_pct"))),
+        "profit_factor": _number(_coalesce(summary.get("profitFactor"), overview.get("profit_factor"))),
+        "avg_trade_duration": _coalesce(summary.get("avgTradeDuration"), summary.get("avg_trade_duration"), overview.get("avg_trade_duration")),
     }
 
 
@@ -261,3 +262,10 @@ def _number(value: Any) -> float | None:
         return float(value)
     except (TypeError, ValueError):
         return None
+
+
+def _coalesce(*values: Any) -> Any:
+    for value in values:
+        if value is not None and value != "":
+            return value
+    return None
