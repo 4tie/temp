@@ -13,6 +13,8 @@
     radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 12%, transparent), transparent 24%),
     var(--bg-base);
   min-width: 0;
+  min-height: 0;
+  flex-direction: column;
 }
 
 .app-ai-dock .ai-layout {
@@ -70,6 +72,69 @@
 
 .ai-new-chat-btn:hover {
   background: var(--accent-dim);
+}
+.ai-new-chat-btn__label {
+  white-space: nowrap;
+}
+
+.ai-conv-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface-2) 90%, transparent);
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: var(--font-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.ai-conv-toggle:hover {
+  background: color-mix(in srgb, var(--surface-3) 92%, transparent);
+  color: var(--text-primary);
+}
+
+.ai-conv-toggle svg {
+  transition: transform 0.18s ease;
+}
+
+.ai-sidebar:not(.ai-sidebar--conv-collapsed) .ai-conv-toggle svg {
+  transform: rotate(90deg);
+}
+
+.ai-sidebar--conv-collapsed {
+  width: 86px;
+}
+
+.ai-sidebar--conv-collapsed .ai-conv-list {
+  display: none;
+}
+
+.ai-sidebar--conv-collapsed .ai-sidebar__header {
+  justify-content: center;
+}
+
+.ai-sidebar--conv-collapsed .ai-conv-toggle {
+  min-width: 32px;
+  padding: 0 8px;
+}
+
+.ai-sidebar--conv-collapsed .ai-conv-toggle__label,
+.ai-sidebar--conv-collapsed .ai-new-chat-btn__label {
+  display: none;
+}
+
+.ai-sidebar--conv-collapsed .ai-new-chat-btn {
+  min-width: 32px;
+  width: 32px;
+  padding: 0;
+  justify-content: center;
 }
 
 .ai-conv-list {
@@ -883,7 +948,7 @@
 .ai-deep-panel {
   position: fixed;
   top: var(--topbar-height);
-  right: var(--ai-dock-width, 430px);
+  right: max(var(--ai-dock-width, 430px), 0px);
   width: 480px;
   height: calc(100vh - var(--topbar-height) - var(--statusbar-height));
   background: var(--bg-primary);
@@ -1224,7 +1289,7 @@
 .evo-panel {
   position: fixed;
   top: var(--topbar-height);
-  right: var(--ai-dock-width, 430px);
+  right: max(var(--ai-dock-width, 430px), 0px);
   width: 440px;
   height: calc(100vh - var(--topbar-height) - var(--statusbar-height));
   background: var(--bg-primary);
@@ -1900,5 +1965,4 @@
     display: none; /* hide on very small screens — accessible via settings */
   }
 }
-
 

@@ -15,7 +15,7 @@
     "sell_ma_gap": 68
   },
   "command_override": null,
-  "parent_run_id": "20260406_114027_88ca8e96",
+  "parent_run_id": "20260406_123541_4a0d37b2",
   "improvement_source": "strategy_intelligence",
   "improvement_items": [
     "stoploss",

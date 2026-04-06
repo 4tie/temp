@@ -1,7 +1,5 @@
 const { test, expect } = require('@playwright/test');
 
-const LOCAL_ORIGIN = 'http://127.0.0.1:5417';
-
 const STRATEGIES = ['MomentumPulse', 'AtlasTrend', 'RangeKeeper'];
 const STRATEGY_PARAMS = {
   parameters: [
@@ -30,12 +28,12 @@ function fulfillJson(route, payload) {
   });
 }
 
-async function installApiMocks(page) {
+async function installApiMocks(page, appOrigin) {
   await page.route('**/*', async (route) => {
     const request = route.request();
     const url = new URL(request.url());
 
-    if (url.origin !== LOCAL_ORIGIN) {
+    if (url.origin !== appOrigin) {
       return route.continue();
     }
 
@@ -113,6 +111,22 @@ async function installApiMocks(page) {
       });
     }
 
+    if (method === 'GET' && pathname === '/healthz') {
+      return fulfillJson(route, { status: 'ok' });
+    }
+
+    if (method === 'GET' && pathname === '/ai/threads') {
+      return fulfillJson(route, []);
+    }
+
+    if (method === 'GET' && pathname === '/ai/conversations') {
+      return fulfillJson(route, []);
+    }
+
+    if (method === 'GET' && pathname === '/ai/pipeline-logs') {
+      return fulfillJson(route, []);
+    }
+
     if (method === 'GET' && pathname.endsWith('/params') && pathname.startsWith('/strategies/')) {
       return fulfillJson(route, STRATEGY_PARAMS);
     }
@@ -155,8 +169,9 @@ function screenshotOptions(page) {
 }
 
 test.describe('Visual regression', () => {
-  test.beforeEach(async ({ page }) => {
-    await installApiMocks(page);
+  test.beforeEach(async ({ page, baseURL }) => {
+    const appOrigin = new URL(baseURL || 'http://127.0.0.1:5000').origin;
+    await installApiMocks(page, appOrigin);
   });
 
   test('hyperopt desktop shell stays visually stable', async ({ page }) => {

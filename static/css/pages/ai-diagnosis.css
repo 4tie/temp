@@ -69,6 +69,7 @@
     linear-gradient(180deg, color-mix(in srgb, var(--text-primary) 1.8%, transparent), transparent 20%),
     var(--surface-1);
   box-shadow: var(--shadow-sm);
+  color-scheme: var(--color-scheme, dark);
 }
 
 .ai-diagnosis-stage__mount > .ai-layout {
@@ -77,6 +78,9 @@
   width: 100%;
   min-width: 0;
   overflow: hidden;
+  max-height: 100%;
+  position: absolute;
+  inset: 0;
 }
 
 .ai-diagnosis-rail {

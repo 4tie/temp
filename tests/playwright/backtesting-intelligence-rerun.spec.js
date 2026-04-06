@@ -240,6 +240,28 @@ async function installBacktestingMocks(page, { strategyParamsDelayMs = 0, dataCo
 }
 
 test.describe('Backtesting Strategy Intelligence rerun', () => {
+  test('core app + AI pipeline endpoints are healthy', async ({ request }) => {
+    const health = await request.get('/healthz');
+    expect(health.ok()).toBeTruthy();
+
+    const threads = await request.get('/ai/threads');
+    expect(threads.ok()).toBeTruthy();
+    const threadPayload = await threads.json();
+    expect(Array.isArray(threadPayload)).toBeTruthy();
+
+    const logs = await request.get('/ai/pipeline-logs');
+    expect(logs.ok()).toBeTruthy();
+    const logsPayload = await logs.json();
+    expect(Array.isArray(logsPayload)).toBeTruthy();
+    if (logsPayload.length > 0) {
+      const first = logsPayload[0];
+      expect(typeof first).toBe('object');
+      expect(first).toHaveProperty('pipeline_type');
+      expect(first).toHaveProperty('steps');
+      expect(first).toHaveProperty('trace');
+    }
+  });
+
   test('Improve & Run submits rerun payload with intelligence metadata and auto-applied params', async ({ page }) => {
     const mocks = await installBacktestingMocks(page);
 

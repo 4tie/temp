@@ -8,12 +8,12 @@ function fulfillJson(route, payload) {
   });
 }
 
-async function installBasicApiMocks(page) {
+async function installBasicApiMocks(page, appOrigin) {
   await page.route('**/*', async (route) => {
     const request = route.request();
     const url = new URL(request.url());
 
-    if (url.origin !== 'http://127.0.0.1:5417') {
+    if (url.origin !== appOrigin) {
       return route.continue();
     }
 
@@ -45,6 +45,22 @@ async function installBasicApiMocks(page) {
       });
     }
 
+    if (method === 'GET' && pathname === '/healthz') {
+      return fulfillJson(route, { status: 'ok' });
+    }
+
+    if (method === 'GET' && pathname === '/ai/threads') {
+      return fulfillJson(route, []);
+    }
+
+    if (method === 'GET' && pathname === '/ai/conversations') {
+      return fulfillJson(route, []);
+    }
+
+    if (method === 'GET' && pathname === '/ai/pipeline-logs') {
+      return fulfillJson(route, []);
+    }
+
     return route.continue();
   });
 }
@@ -72,8 +88,9 @@ async function readOverflowMetrics(page) {
 }
 
 test.describe('Layout and shell integrity', () => {
-  test.beforeEach(async ({ page }) => {
-    await installBasicApiMocks(page);
+  test.beforeEach(async ({ page, baseURL }) => {
+    const appOrigin = new URL(baseURL || 'http://127.0.0.1:5000').origin;
+    await installBasicApiMocks(page, appOrigin);
   });
 
   test('shell boots and hash navigation activates the expected core pages', async ({ page }) => {

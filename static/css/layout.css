@@ -24,8 +24,13 @@
   --sidebar-width: var(--sidebar-collapsed-width);
 }
 
+.app-shell.sidebar-collapsed.app-shell--ai-diagnosis-focus {
+  grid-template-columns: var(--sidebar-collapsed-width) minmax(0, 1fr) 0px;
+}
+
 .app-shell.app-shell--ai-diagnosis-focus {
   --ai-dock-width: 0px;
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr) 0px;
 }
 
 .app-shell.app-shell--ai-diagnosis-focus .page-content {
@@ -516,6 +521,22 @@
   min-height: 0;
   background: var(--bg-base);
   overflow: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.app-ai-dock::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.app-ai-dock::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.app-ai-dock::-webkit-scrollbar-thumb {
+  background: rgba(78, 103, 116, 0.72);
+  border-radius: var(--radius-full);
 }
 
 .app-shell.app-shell--ai-diagnosis-focus .app-ai-dock {

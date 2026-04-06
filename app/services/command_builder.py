@@ -58,8 +58,9 @@ def build_backtest_command(
     if pairs:
         cmd.extend(["--pairs"] + pairs)
 
-    for key, value in strategy_params.items():
-        cmd.extend(["--strategy-opt", f"{key}={value}"])
+    # Strategy runtime params are persisted through sidecar/config flows in this app.
+    # Some Freqtrade builds do not support --strategy-opt, so we intentionally avoid
+    # passing CLI parameter overrides here to keep backtests portable.
 
     return cmd
 

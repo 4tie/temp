@@ -460,6 +460,7 @@ def _compute_health_score(trades: list[dict], summary: dict, has_mae_mfe: bool, 
 
     return {
         "total": total,
+        "max_total": 120,
         "components": {
             "profitability": p_score,
             "risk_control": r_score,
@@ -2003,6 +2004,7 @@ def _compute_narrative(
     n = len(trades)
     total = health.get("total", 0)
     comps = health.get("components", {})
+    max_total = health.get("max_total") or (len(comps) * 20 if comps else 120)
 
     win_rate = summary.get("winRate")
     total_profit_pct = summary.get("totalProfitPct")
@@ -2014,7 +2016,7 @@ def _compute_narrative(
 
     fallback = _compute_narrative_fallback(
         n, total, comps, win_rate, total_profit_pct, profit_factor, max_drawdown,
-        total_profit, avg_profit, strengths, weaknesses, analysis, strategy_name, low_data, am
+        total_profit, avg_profit, strengths, weaknesses, analysis, strategy_name, low_data, am, int(max_total)
     )
 
     try:
@@ -2044,7 +2046,7 @@ def _compute_narrative(
 def _compute_narrative_fallback(
     n: int, total: int, comps: dict, win_rate, total_profit_pct, profit_factor,
     max_drawdown, total_profit, avg_profit, strengths: list, weaknesses: list,
-    analysis: dict, strategy_name: str, low_data: bool, am: dict
+    analysis: dict, strategy_name: str, low_data: bool, am: dict, max_total: int = 120
 ) -> dict:
     low_data_note = (
         " Note: This analysis is based on fewer than 30 trades, so conclusions should be treated as preliminary indicators rather than definitive findings."
@@ -2061,7 +2063,7 @@ def _compute_narrative_fallback(
     summary_text = (
         f"The {strategy_name} strategy completed {n} trade(s) during the backtest period, "
         f"{perf_str}. "
-        f"The overall health score is {total}/120, driven by: "
+        f"The overall health score is {total}/{max_total}, driven by: "
         f"Profitability {comps.get('profitability',0)}/20, "
         f"Risk Control {comps.get('risk_control',0)}/20, "
         f"Consistency {comps.get('consistency',0)}/20, "
