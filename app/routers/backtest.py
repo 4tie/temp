@@ -2,6 +2,7 @@ import json
 import re
 import tempfile
 import os
+from contextlib import suppress
 from typing import Optional
 from pathlib import Path as SysPath
 
@@ -44,10 +45,8 @@ def _write_config_json(cfg: dict) -> None:
             json.dump(cfg, f, indent=2)
         os.replace(tmp_path, FREQTRADE_CONFIG_FILE)
     except Exception:
-        try:
+        with suppress(OSError):
             os.unlink(tmp_path)
-        except OSError:
-            pass
         raise
 
 _SAFE_ID_RE = re.compile(r"^[A-Za-z0-9_\-]+$")

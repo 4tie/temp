@@ -64,7 +64,7 @@ def copy_hyperopt_results(run_dir: Path, strategy: str) -> None:
                     shutil.copy2(src, run_dir / src.name)
                     return
         except (json.JSONDecodeError, OSError):
-            pass
+            latest_name = ""
 
     if HYPEROPT_RESULTS_DIR.exists():
         fthypt_files = list(HYPEROPT_RESULTS_DIR.glob(f"strategy_{strategy}_*.fthypt"))

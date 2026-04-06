@@ -7,11 +7,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 try:
     from app.ai.models import provider_dispatch
-    from app.ai.pipelines.orchestrator import _validate_python_code
+    from app.ai.evolution import strategy_editor
+    from app.ai.pipelines.orchestrator import _call_model, _validate_python_code
     from app.ai.tools import deep_analysis
     _IMPORT_ERROR: Exception | None = None
 except Exception as exc:  # pragma: no cover - environment guard for missing deps
     provider_dispatch = None
+    strategy_editor = None
     _validate_python_code = None
     deep_analysis = None
     _IMPORT_ERROR = exc
@@ -19,6 +21,34 @@ except Exception as exc:  # pragma: no cover - environment guard for missing dep
 
 @unittest.skipIf(_IMPORT_ERROR is not None, f"App AI dependencies unavailable: {_IMPORT_ERROR}")
 class DeepAnalysisReliabilityTest(unittest.TestCase):
+    def test_narrative_fallback_does_not_reference_undefined_health_variable(self) -> None:
+        narrative = deep_analysis._compute_narrative_fallback(
+            n=12,
+            total=47,
+            comps={
+                "profitability": 10,
+                "risk_control": 7,
+                "consistency": 8,
+                "trade_quality": 9,
+                "stability": 7,
+                "edge_quality": 6,
+            },
+            win_rate=41.7,
+            total_profit_pct=-3.2,
+            profit_factor=0.94,
+            max_drawdown=22.5,
+            total_profit=-32.0,
+            avg_profit=-2.7,
+            strengths=[],
+            weaknesses=[],
+            analysis={},
+            strategy_name="TestStrategy",
+            low_data=True,
+            am={},
+            max_total=120,
+        )
+
+        self.assertIn("overall health score is 47/120", narrative["summary"])
     def test_ai_narrative_fallback_emits_no_unawaited_coroutine_warning(self) -> None:
         async def _fail(messages: list[dict]) -> str:
             raise RuntimeError("provider unavailable")
@@ -77,6 +107,69 @@ class DeepAnalysisReliabilityTest(unittest.TestCase):
 
 
 @unittest.skipIf(_IMPORT_ERROR is not None, f"App AI dependencies unavailable: {_IMPORT_ERROR}")
+class OrchestratorModelFallbackReliabilityTest(unittest.IsolatedAsyncioTestCase):
+    async def test_code_gen_model_outage_returns_fenced_source_fallback(self) -> None:
+        messages = [
+            {
+                "role": "user",
+                "content": "STRATEGY SOURCE:\n```python\nclass DemoStrategy:\n    pass\n```",
+            }
+        ]
+
+        with patch("app.ai.pipelines.orchestrator.chat_complete", new=AsyncMock(side_effect=RuntimeError("provider outage"))):
+            step = await _call_model(
+                "code_gen",
+                messages,
+                models=[],
+                role_overrides={"code_gen": "meta-llama/llama-3.2-1b-instruct:free"},
+            )
+
+        self.assertIn("[Error: model unavailable for code_gen]", step.output_full)
+        self.assertIn("```python", step.output_full)
+        self.assertIn("class DemoStrategy", step.output_full)
+        self.assertIn("# CHANGES:", step.output_full)
+
+
+@unittest.skipIf(_IMPORT_ERROR is not None, f"App AI dependencies unavailable: {_IMPORT_ERROR}")
+class EvolutionMutationReliabilityTest(unittest.IsolatedAsyncioTestCase):
+    async def test_mutate_strategy_recovers_from_model_outage_with_source_fallback(self) -> None:
+        source_code = (
+            "class DemoStrategy(object):\n"
+            "    timeframe = '5m'\n"
+            "    startup_candle_count = 1\n"
+        )
+
+        fitness = type("Fitness", (), {"value": 42.0, "breakdown": {"profitability": 7}})()
+
+        with patch(
+            "app.ai.evolution.strategy_editor.fetch_free_models",
+            new=AsyncMock(return_value=[]),
+        ), patch(
+            "app.ai.pipelines.orchestrator.chat_complete",
+            new=AsyncMock(side_effect=RuntimeError("provider outage")),
+        ), patch(
+            "app.ai.evolution.strategy_editor.create_version",
+            return_value="DemoStrategy_evo_g1",
+        ):
+            result = await strategy_editor.mutate_strategy(
+                strategy_name="DemoStrategy",
+                source_code=source_code,
+                analysis={},
+                fitness=fitness,
+                goal_id=None,
+                provider="openrouter",
+                model=None,
+                generation=1,
+                feedback_history=[],
+                regime_context=None,
+            )
+
+        self.assertTrue(result.success)
+        self.assertEqual(result.version_name, "DemoStrategy_evo_g1")
+        self.assertIn("class DemoStrategy", result.new_code)
+        self.assertFalse(result.validation_errors)
+
+
 class OrchestratorValidationReliabilityTest(unittest.TestCase):
     def test_windows_temp_path_is_passed_as_subprocess_argument(self) -> None:
         fake_tmp = MagicMock()
@@ -212,3 +305,5 @@ class ProviderDispatchReliabilityTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(meta.get("provider"), "ollama")
         self.assertEqual(meta.get("model"), "llama3")
         self.assertIn("openrouter:qwen/qwen3.6-plus:free", meta.get("fallback_chain", []))
+
+

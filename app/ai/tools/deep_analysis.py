@@ -51,8 +51,8 @@ def _narrative_cache_set(run_id: str, narrative: dict) -> None:
         _NARRATIVE_CACHE_DIR.mkdir(parents=True, exist_ok=True)
         cache_file = _NARRATIVE_CACHE_DIR / f"{run_id}_narrative_cache.json"
         cache_file.write_text(json.dumps(narrative), encoding="utf-8")
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug("Failed to persist narrative cache for %s: %s", run_id, exc)
 
 
 def _narrative_cache_load_from_disk(run_id: str) -> dict | None:
@@ -62,8 +62,8 @@ def _narrative_cache_load_from_disk(run_id: str) -> dict | None:
             data = json.loads(cache_file.read_text(encoding="utf-8"))
             _narrative_cache_set(run_id, data)
             return data
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug("Failed to load narrative cache for %s: %s", run_id, exc)
     return None
 
 
@@ -1056,7 +1056,7 @@ def _detect_conflicting_signals(source: str) -> list[str]:
                                 elif any(p in col for p in EXIT_PATTERNS):
                                     exits.add(col)
                     except Exception:
-                        pass
+                        continue
                 elif isinstance(node, ast.Assign):
                     for target in node.targets:
                         if isinstance(target, ast.Name):
@@ -1490,7 +1490,7 @@ def _analyze_loss_patterns(trades: list[dict]) -> dict:
                 by_hour[dt.hour] = by_hour.get(dt.hour, 0) + 1
                 by_day[day_names[dt.weekday()]] = by_day.get(day_names[dt.weekday()], 0) + 1
             except Exception:
-                pass
+                continue
 
     total = len(lost)
 
@@ -1542,7 +1542,7 @@ def _analyze_signal_frequency(
             try:
                 dates.append(datetime.fromisoformat(dt_str.replace("Z", "+00:00")))
             except Exception:
-                pass
+                continue
 
     if len(dates) < 2:
         trading_days = 1
@@ -1573,7 +1573,7 @@ def _analyze_signal_frequency(
                             if count > entry_condition_count:
                                 entry_condition_count = count
         except Exception:
-            pass
+            entry_condition_count = 0
 
     if efficiency_pct is not None:
         if efficiency_pct < 5:
@@ -1631,7 +1631,7 @@ def _analyze_exit_quality(trades: list[dict], summary: dict | None = None) -> di
         try:
             sl_pct = abs(float(stoploss)) * 100
         except Exception:
-            pass
+            sl_pct = None
 
     early_exit_flag = mfe_captured is not None and mfe_captured < 60
     late_stop_flag = sl_pct is not None and avg_mae > sl_pct
@@ -1679,7 +1679,7 @@ def _detect_overfitting(trades: list[dict]) -> dict:
                 dt = datetime.fromisoformat(dt_str.replace("Z", "+00:00"))
                 dated.append((dt, t))
             except Exception:
-                pass
+                continue
 
     if len(dated) < 10:
         return {"first_half": {}, "second_half": {}, "degradation_score": 0.0, "overfitting_risk": "low", "evidence": "Insufficient dated trades."}
@@ -2495,7 +2495,7 @@ def _read_strategy_source(strategy_name: str) -> str | None:
         if path.exists():
             return path.read_text("utf-8")
     except Exception:
-        pass
+        return None
     return None
 
 
@@ -2988,7 +2988,7 @@ def _diagnose_root_causes(
                 from datetime import datetime as _dt
                 open_dates.append(_dt.fromisoformat(val.replace("Z", "+00:00")))
             except Exception:
-                pass
+                continue
     trading_days = max(
         (max(open_dates) - min(open_dates)).total_seconds() / 86400.0, 1.0
     ) if len(open_dates) >= 2 else 1.0

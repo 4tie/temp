@@ -17,7 +17,7 @@ def read_config_json() -> dict[str, Any]:
 
             return json.loads(FREQTRADE_CONFIG_FILE.read_text(encoding="utf-8"))
         except Exception:
-            pass
+            return {}
     return {}
 
 

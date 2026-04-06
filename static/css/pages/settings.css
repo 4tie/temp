@@ -7,18 +7,24 @@
 }
 
 .settings-layout .card {
-  border: 1px solid var(--border-subtle);
-  box-shadow: var(--shadow-xs);
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  border-top: 1px solid var(--border-subtle);
+  border-radius: 0;
 }
 
 .settings-layout .card__header {
   min-height: 46px;
   border-bottom: 1px solid var(--border-subtle);
+  padding-inline: 0;
+  background: transparent;
 }
 
 .settings-layout .card__body {
-  padding-top: var(--space-3);
+  padding: var(--space-3) 0 0;
   overflow: visible;
+  background: transparent;
 }
 
 .settings-layout .form-row {
@@ -195,24 +201,21 @@
 .theme-preset-card {
   display: grid;
   gap: var(--space-3);
-  padding: var(--space-3);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.028) 0%, rgba(255, 255, 255, 0.01) 100%),
-    var(--surface-1);
+  padding: var(--space-3) 0;
+  border: 0;
+  border-bottom: 1px solid var(--border-subtle);
+  border-radius: 0;
+  background: transparent;
   text-align: left;
-  transition: border-color var(--ease), transform var(--ease), box-shadow var(--ease);
+  transition: border-color var(--ease), transform var(--ease);
 }
 
 .theme-preset-card:hover {
   border-color: var(--border-strong);
-  transform: translateY(-1px);
 }
 
 .theme-preset-card.is-active {
   border-color: color-mix(in srgb, var(--accent) 65%, var(--border-subtle));
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 28%, transparent), var(--shadow-xs);
 }
 
 .theme-preset-card__swatches {

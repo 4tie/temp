@@ -467,22 +467,25 @@ def loop_worker(loop_id: str) -> None:
         overview = {r.get("metric"): r for r in table_rows if r.get("section") == "core"}
         profit_delta = overview.get("profit_percent", {}).get("delta")
         drawdown_delta = overview.get("max_drawdown", {}).get("delta")
-        try:
-            min_profit_delta = stop_rules.get("min_profit_delta")
-            if min_profit_delta is not None and float(profit_delta) < float(min_profit_delta):
-                stop_rule_violations.append(
-                    f"profit delta {profit_delta} below threshold {min_profit_delta}"
-                )
-        except Exception:
-            pass
-        try:
-            max_drawdown_increase = stop_rules.get("max_drawdown_increase")
-            if max_drawdown_increase is not None and float(drawdown_delta) > float(max_drawdown_increase):
-                stop_rule_violations.append(
-                    f"max drawdown delta {drawdown_delta} above threshold {max_drawdown_increase}"
-                )
-        except Exception:
-            pass
+        min_profit_delta = stop_rules.get("min_profit_delta")
+        if min_profit_delta is not None:
+            try:
+                if float(profit_delta) < float(min_profit_delta):
+                    stop_rule_violations.append(
+                        f"profit delta {profit_delta} below threshold {min_profit_delta}"
+                    )
+            except (TypeError, ValueError):
+                stop_rule_violations.append("invalid min_profit_delta threshold")
+
+        max_drawdown_increase = stop_rules.get("max_drawdown_increase")
+        if max_drawdown_increase is not None:
+            try:
+                if float(drawdown_delta) > float(max_drawdown_increase):
+                    stop_rule_violations.append(
+                        f"max drawdown delta {drawdown_delta} above threshold {max_drawdown_increase}"
+                    )
+            except (TypeError, ValueError):
+                stop_rule_violations.append("invalid max_drawdown_increase threshold")
         if stop_rules.get("require_tests_pass") and not tests_ok:
             stop_rule_violations.append("tests must pass but one or more validations failed")
         if run_status != "completed":

@@ -17,17 +17,24 @@
 }
 
 .hyperopt-card {
-  border: 1px solid var(--border-subtle);
-  box-shadow: var(--shadow-xs);
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  border-top: 1px solid var(--border-subtle);
+  border-radius: 0;
 }
 
 .hyperopt-card .card__header {
   min-height: 46px;
   border-bottom: 1px solid var(--border-subtle);
+  padding-inline: 0;
+  background: transparent;
 }
 
 .hyperopt-card .card__body {
   overflow: visible;
+  padding-inline: 0;
+  background: transparent;
 }
 
 .hyperopt-pairs-hint {

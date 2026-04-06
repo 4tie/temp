@@ -55,7 +55,7 @@ def _parse_fthypt(fthypt_path: Path) -> list[dict[str, Any]]:
                 except json.JSONDecodeError:
                     continue
     except OSError:
-        pass
+        return epochs
     return epochs
 
 
@@ -158,7 +158,7 @@ def save_params_file(strategy: str, params: dict[str, Any], spaces: list[str] | 
         try:
             existing = json.loads(params_file.read_text())
         except (json.JSONDecodeError, OSError):
-            pass
+            existing = {}
 
     _VALID_SPACES = {"buy", "sell", "roi", "stoploss", "trailing", "protection", "other"}
     allowed_spaces: set[str] | None = None

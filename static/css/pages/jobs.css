@@ -33,20 +33,26 @@
 
 .jobs-activity-card,
 .jobs-table-card {
-  border: 1px solid var(--border-subtle);
-  box-shadow: var(--shadow-xs);
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  border-top: 1px solid var(--border-subtle);
+  border-radius: 0;
 }
 
 .jobs-activity-card .card__header,
 .jobs-table-card .card__header {
   min-height: 46px;
   border-bottom: 1px solid var(--border-subtle);
+  padding-inline: 0;
+  background: transparent;
 }
 
 .jobs-activity-card .card__body,
 .jobs-table-card .card__body {
   padding: 0;
   overflow: auto;
+  background: transparent;
 }
 
 #jobs-table-wrap .data-table {

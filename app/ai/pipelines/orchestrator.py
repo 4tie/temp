@@ -1,5 +1,5 @@
 """
-AI Pipeline Orchestrator — multi-model pipeline engine.
+AI Pipeline Orchestrator - multi-model pipeline engine.
 Supports 6 pipeline types: simple, analysis, debate, code, structured, tool.
 Supports true streaming for the final pipeline step.
 Logs every run to configured AI pipeline logs directory.
@@ -134,7 +134,6 @@ def _validate_python_code(code: str) -> CodeValidation:
         if ft_bin and "IStrategy" in code_block:
             method = "subprocess_ast+freqtrade"
             try:
-                import os
                 strategy_dir = os.path.dirname(tmp_path)
                 ft_proc = subprocess.run(
                     [ft_bin, "strategy-check", "--strategy-path", strategy_dir,
@@ -145,8 +144,8 @@ def _validate_python_code(code: str) -> CodeValidation:
                     ft_err = (ft_proc.stderr or ft_proc.stdout or "").strip()
                     if ft_err and "Error" in ft_err:
                         errors.append(f"FreqTrade check: {ft_err[:300]}")
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("Skipping freqtrade strategy-check due to runtime error: %s", exc)
 
     except subprocess.TimeoutExpired:
         errors.append("Validation timed out")
@@ -161,8 +160,10 @@ def _validate_python_code(code: str) -> CodeValidation:
     finally:
         try:
             os.unlink(tmp_path)
-        except Exception:
-            pass
+        except FileNotFoundError:
+            tmp_path = ""
+        except OSError as exc:
+            logger.debug("Temporary validation file cleanup failed: %s", exc)
 
     if errors:
         return CodeValidation(valid=False, errors=errors, method=method)
@@ -423,6 +424,46 @@ def _classifier_step(classification: Classification) -> PipelineStep:
     )
 
 
+def _extract_python_from_messages(messages: list[dict]) -> str | None:
+    # Prefer user-provided code context and ignore instructional placeholder blocks.
+    for message in reversed(messages):
+        if message.get("role") != "user":
+            continue
+        content = message.get("content")
+        if not isinstance(content, str):
+            continue
+        code = _extract_python_code(content)
+        if code:
+            normalized = code.strip()
+            if normalized and normalized not in {"...", "…"}:
+                return normalized
+    return None
+
+
+def _fallback_output_for_role(role: str, messages: list[dict], error_text: str) -> str:
+    prefix = f"[Error: model unavailable for {role}]"
+    if role == "code_gen":
+        source_code = _extract_python_from_messages(messages)
+        if source_code:
+            return (
+                f"{prefix}\n"
+                "```python\n"
+                f"{source_code}\n"
+                "```\n"
+                "# CHANGES: No changes made due to model provider outage; returned original code unchanged."
+            )
+        return prefix
+
+    if role in {"reasoner", "composer", "analyst_a", "analyst_b", "judge", "tool_caller", "explainer"}:
+        return (
+            f"{prefix}\n"
+            "Provider outage prevented live model output. "
+            "Returning deterministic fallback guidance so the pipeline can continue safely."
+        )
+
+    return prefix
+
+
 async def _call_model(
     role: str,
     messages: list[dict],
@@ -441,13 +482,14 @@ async def _call_model(
             output_text=output_text,
         )
     except Exception as exc:
-        logger.error("Model call failed for role %s using %s: %s", role, requested_model_id, exc)
+        logger.warning("Model call failed for role %s using %s: %s", role, requested_model_id, exc)
+        fallback_output = _fallback_output_for_role(role, messages, str(exc))
         return _step_from_output(
             role=role,
             requested_model_id=requested_model_id,
             selection_reason=selection_reason,
             started_at=started_at,
-            output_text=f"[Error: model unavailable for {role}]",
+            output_text=fallback_output,
             error_text=str(exc),
         )
 

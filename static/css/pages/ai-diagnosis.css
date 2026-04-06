@@ -23,13 +23,11 @@
 .ai-diagnosis-stage__header,
 .ai-diagnosis-card {
   padding: var(--space-4);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--text-primary) 2.2%, transparent), transparent 72%),
-    linear-gradient(135deg, color-mix(in srgb, var(--accent) 7%, transparent), transparent 42%),
-    var(--surface-panel);
-  box-shadow: var(--shadow-xs);
+  border: 0;
+  border-top: 1px solid var(--border-subtle);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
   min-width: 0;
 }
 
@@ -38,7 +36,7 @@
   justify-content: space-between;
   gap: var(--space-3);
   align-items: flex-start;
-  border-color: color-mix(in srgb, var(--accent-ring) 80%, var(--border-subtle));
+  border-color: color-mix(in srgb, var(--accent-ring) 64%, var(--border-subtle));
   flex-shrink: 0;
 }
 

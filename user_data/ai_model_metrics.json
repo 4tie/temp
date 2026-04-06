@@ -1,5 +1,5 @@
 {
-  "updated_at": 1775471686.6646438,
+  "updated_at": 1775484663.1087143,
   "roles": {
     "composer": {
       "openrouter/model:free": {
@@ -52,28 +52,46 @@
         "latency_samples": 9.0,
         "cooldown_until": 1775456416.0089145,
         "updated_at": 1775471686.6646438
+      },
+      "nvidia/nemotron-3-nano-30b-a3b:free": {
+        "requests": 5.0,
+        "successes": 5.0,
+        "rate_limits": 0.0,
+        "latency_sum_ms": 111263.0,
+        "latency_samples": 5.0,
+        "cooldown_until": 0.0,
+        "updated_at": 1775482107.2847097
+      },
+      "meta-llama/llama-3.2-1b-instruct:free": {
+        "requests": 20.0,
+        "successes": 0.0,
+        "rate_limits": 0.0,
+        "latency_sum_ms": 0.0,
+        "latency_samples": 20.0,
+        "cooldown_until": 0.0,
+        "updated_at": 1775484663.1087143
       }
     },
     "tool_caller": {
       "qwen/qwen3.6-plus:free": {
-        "requests": 1.0,
+        "requests": 2.0,
         "successes": 0.0,
-        "rate_limits": 1.0,
-        "latency_sum_ms": 9765.0,
-        "latency_samples": 1.0,
-        "cooldown_until": 1775456453.7498877,
-        "updated_at": 1775456393.7498877
+        "rate_limits": 2.0,
+        "latency_sum_ms": 20687.0,
+        "latency_samples": 2.0,
+        "cooldown_until": 1775482365.0463614,
+        "updated_at": 1775482305.0463614
       }
     },
     "reasoner": {
       "qwen/qwen3.6-plus:free": {
-        "requests": 2.0,
-        "successes": 1.0,
+        "requests": 3.0,
+        "successes": 2.0,
         "rate_limits": 1.0,
-        "latency_sum_ms": 175797.0,
-        "latency_samples": 2.0,
+        "latency_sum_ms": 282327.0,
+        "latency_samples": 3.0,
         "cooldown_until": 1775456464.4642913,
-        "updated_at": 1775457885.6451616
+        "updated_at": 1775482411.5863523
       }
     }
   }

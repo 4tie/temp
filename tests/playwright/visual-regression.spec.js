@@ -111,6 +111,33 @@ async function installApiMocks(page, appOrigin) {
       });
     }
 
+    if (method === 'GET' && pathname === '/activity') {
+      return fulfillJson(route, {
+        events: [
+          {
+            timestamp: '2026-04-06T08:20:00Z',
+            category: 'job',
+            source: 'backtest',
+            action: 'completed',
+            status: 'completed',
+            message: 'Backtest completed for MomentumPulse.',
+            run_id: 'bt_20260406_004',
+            strategy: 'MomentumPulse',
+          },
+          {
+            timestamp: '2026-04-06T08:10:00Z',
+            category: 'job',
+            source: 'hyperopt',
+            action: 'failed',
+            status: 'failed',
+            message: 'Hyperopt failed for AtlasTrend.',
+            run_id: 'ho_20260405_007',
+            strategy: 'AtlasTrend',
+          },
+        ],
+      });
+    }
+
     if (method === 'GET' && pathname === '/healthz') {
       return fulfillJson(route, { status: 'ok' });
     }

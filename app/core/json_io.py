@@ -27,5 +27,5 @@ def read_json(path: Path, default: Any = None) -> Any:
         if path.exists():
             return json.loads(path.read_text(encoding="utf-8"))
     except Exception:
-        pass
+        return default
     return default

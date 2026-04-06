@@ -21,7 +21,7 @@ def calc_win_rate(data: dict[str, Any]) -> float:
             winrate = float(data["winrate"])
             return round(winrate * 100 if abs(winrate) <= 1 else winrate, 2)
         except (TypeError, ValueError):
-            pass
+            winrate = None
 
     wins = data.get("wins", 0)
     return round((wins / total) * 100, 2)
