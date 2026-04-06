@@ -22,7 +22,7 @@ module.exports = defineConfig({
     },
   ],
   webServer: {
-    command: '4t/Scripts/python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 5417',
+    command: '4t\\Scripts\\python.exe run.py start --foreground --no-reload --port 5417',
     url: 'http://127.0.0.1:5417/healthz',
     reuseExistingServer: true,
     timeout: 90_000,

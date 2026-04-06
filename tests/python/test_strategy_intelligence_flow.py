@@ -20,6 +20,7 @@ class StrategyIntelligenceFlowTest(unittest.TestCase):
                 "totalProfit": -80,
                 "totalProfitPct": -8,
                 "totalTrades": 40,
+                "tradesPerDay": 2.0,
                 "winRate": 42.5,
                 "profitFactor": 0.84,
                 "maxDrawdown": 18,
@@ -59,8 +60,27 @@ class StrategyIntelligenceFlowTest(unittest.TestCase):
                 {"title": "Good Activity", "evidence": "2.0 trades/day gives enough sample size."},
             ],
             "parameter_recommendations": [
-                {"parameter": "stoploss", "suggestion": -0.08, "reason": "Average loss is too large.", "confidence": "high"},
-                {"parameter": "trailing_stop", "suggestion": True, "reason": "Lock in profit on winners.", "confidence": "medium"},
+                {
+                    "parameter": "stoploss",
+                    "suggestion": -0.08,
+                    "reason": "Average loss is too large.",
+                    "evidence": "Median losing trade = -5.4% while stoploss = -15.0%.",
+                    "confidence": "high",
+                },
+                {
+                    "parameter": "trailing_stop",
+                    "suggestion": True,
+                    "reason": "Lock in profit on winners.",
+                    "evidence": "Max drawdown = 18.0% and trailing stop is disabled.",
+                    "confidence": "medium",
+                },
+                {
+                    "parameter": "Entry signal threshold",
+                    "suggestion": "Tighten entry conditions to improve trade selectivity",
+                    "reason": "Poor entries are driving losses.",
+                    "evidence": "Win rate = 42.5% with PF 0.84.",
+                    "confidence": "low",
+                },
             ],
             "health_score": {"total": 41},
             "signal_frequency": {"trades_per_day": 2.0, "diagnosis": "Activity is high enough for evaluation."},
@@ -69,19 +89,36 @@ class StrategyIntelligenceFlowTest(unittest.TestCase):
             "data_warnings": [],
         }
 
-        with patch("app.services.results.strategy_intelligence_service.analyze", return_value=analysis_payload):
+        with patch(
+            "app.services.results.strategy_intelligence_service.analyze",
+            return_value=analysis_payload,
+        ), patch(
+            "app.services.results.strategy_intelligence_service.load_strategy_param_metadata",
+            return_value={"parameters": [{"name": "stoploss"}, {"name": "trailing_stop"}]},
+        ):
             intelligence = build_strategy_intelligence(
                 run_id="run-1",
                 result=result,
-                meta={"parent_run_id": "run-0", "improvement_source": "strategy_intelligence"},
+                meta={
+                    "parent_run_id": "run-0",
+                    "improvement_source": "strategy_intelligence",
+                    "strategy_class": "ExampleStrategy",
+                },
                 parent_result=parent_result,
             )
 
         self.assertEqual(intelligence["version"], INTELLIGENCE_VERSION)
         self.assertEqual(intelligence["summary"]["trades_per_day"], 2.0)
         self.assertEqual(intelligence["diagnosis"]["primary"]["title"], "High Loss Rate")
+        self.assertIn("42.5% win rate", intelligence["diagnosis"]["issues"][0]["evidence"])
         self.assertEqual(intelligence["suggestions"][0]["parameter"], "stoploss")
         self.assertTrue(intelligence["suggestions"][0]["auto_applicable"])
+        self.assertEqual(intelligence["suggestions"][0]["action_type"], "quick_param")
+        self.assertEqual(intelligence["suggestions"][2]["action_type"], "manual_guidance")
+        self.assertFalse(intelligence["suggestions"][2]["auto_applicable"])
+        self.assertIn("Win rate = 42.5% with PF 0.84.", intelligence["suggestions"][2]["evidence"])
+        self.assertEqual(len(intelligence["rerun_plan"]["auto_param_changes"]), 2)
+        self.assertIn("Entry signal threshold", intelligence["rerun_plan"]["manual_actions"])
         self.assertEqual(intelligence["comparison_to_parent"]["parent_run_id"], "run-0")
         self.assertEqual(intelligence["comparison_to_parent"]["metrics"]["profit_percent"]["diff"], -6.0)
 

@@ -141,7 +141,7 @@ async def analyze_run(run_id: str):
     run_data = {**results, "strategy": meta.get("strategy", "")}
 
     try:
-        analysis = analyze(run_data, run_id=run_id)
+        analysis = analyze(run_data, run_id=run_id, include_ai_narrative=False)
         return analysis
     except Exception as exc:
         logger.error("Deep analysis failed for run %s: %s", run_id, exc)

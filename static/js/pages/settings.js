@@ -513,6 +513,7 @@ window.SettingsPage = (() => {
       >
         <div class="theme-preset-card__swatches">
           ${preset.swatches.map(color => `<span class="theme-preset-card__swatch" style="background:${_esc(color)}"></span>`).join('')}
+          ${preset.background ? `<span class="theme-preset-card__background" title="Background color" style="background:${_esc(preset.background)}"></span>` : ''}
         </div>
         <div class="theme-preset-card__meta">
           <div>

@@ -71,7 +71,7 @@ def _narrative_cache_load_from_disk(run_id: str) -> dict | None:
 # Public entry point
 # ─────────────────────────────────────────────────────────────────────────────
 
-def analyze(run: dict, run_id: str = "", include_ai_narrative: bool = True) -> dict:
+def analyze(run: dict, run_id: str = "", include_ai_narrative: bool = False) -> dict:
     run = normalize_backtest_result(run)
     trades: list[dict] = run.get("trades") or []
     summary: dict = run.get("summary") or {}
@@ -1136,6 +1136,10 @@ def _compute_param_recommendations(
                         f"Tightening to {max(suggested, -0.15)*100:.0f}% would have cut "
                         f"{trades_cut} of your {len(lost)} losing trades earlier."
                     ),
+                    "evidence": (
+                        f"Median losing trade = {median_loss_pct:.1f}% across {len(lost)} losing trades; "
+                        f"configured stoploss = {sl_val*100:.0f}%."
+                    ),
                     "confidence": confidence,
                     "trades_affected": trades_cut,
                     "total_losing_trades": len(lost),
@@ -1160,6 +1164,10 @@ def _compute_param_recommendations(
                     f"{trades_would_exit} of {len(lost)} losing trades exceeded the {int(cutoff)}-min cutoff "
                     f"and would have been exited earlier."
                 ),
+                "evidence": (
+                    f"Average winner duration = {avg_dur_won:.0f} min; "
+                    f"average loser duration = {avg_dur_lost:.0f} min."
+                ),
                 "confidence": confidence,
                 "trades_affected": trades_would_exit,
                 "total_losing_trades": len(lost),
@@ -1181,6 +1189,10 @@ def _compute_param_recommendations(
                 f"Average loss (${abs(avg_loss):.2f}) exceeds average win (${avg_win:.2f}) by "
                 f"${abs(avg_loss) - avg_win:.2f}. Stricter entry filters could improve selectivity."
             ),
+            "evidence": (
+                f"Win rate = {win_rate:.1f}% with average win ${avg_win:.2f} "
+                f"vs average loss ${abs(avg_loss):.2f}."
+            ),
             "confidence": "low",
             "trades_affected": len(lost),
             "total_trades": len(trades),
@@ -1199,6 +1211,10 @@ def _compute_param_recommendations(
                     f"Max drawdown reached {max_drawdown:.1f}% across {len(trades)} trades. "
                     f"Enabling trailing stop could lock in profits on your {len(won)} winning trades "
                     f"and reduce peak-to-trough drawdown."
+                ),
+                "evidence": (
+                    f"Max drawdown = {max_drawdown:.1f}% across {len(trades)} trades; "
+                    f"trailing stop is disabled in strategy source."
                 ),
                 "confidence": confidence,
                 "max_drawdown_pct": round(max_drawdown, 2),
@@ -2804,11 +2820,23 @@ def _diagnose_root_causes(
         confidence_note += " — high statistical confidence"
 
     if total_trades == 0:
+        backtest_days = summary.get("backtest_days") or summary.get("backtestDays") or 0
+        trade_finding = (
+            f"0 closed trades across {backtest_days} backtest day(s)"
+            if backtest_days
+            else "0 closed trades were recorded for this backtest"
+        )
         return {
             "primary_failure_mode": "no_trades",
             "primary_failure_label": "No Trades — Strategy Never Triggered",
             "severity": "critical",
-            "causal_chain": [],
+            "causal_chain": [
+                {
+                    "step": 1,
+                    "finding": trade_finding,
+                    "implication": "There is no executable trade sample to evaluate profitability, win rate, or drawdown behavior.",
+                }
+            ],
             "root_cause_conclusion": "No trades were generated during the backtest period.",
             "fix_priority": ["Check entry conditions", "Verify data availability for the selected pairs and timeframe"],
             "secondary_issues": [],

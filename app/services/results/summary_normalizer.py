@@ -149,6 +149,7 @@ def build_summary(result: dict[str, Any]) -> dict[str, Any]:
     run_metadata = dict(result.get("run_metadata") or {})
 
     total_trades = coalesce(summary.get("totalTrades"), overview.get("total_trades"), run_metadata.get("total_trades"))
+    backtest_days = to_float(run_metadata.get("backtest_days"))
     starting_balance = to_float(coalesce(summary.get("startingBalance"), balance_metrics.get("starting_balance"), overview.get("starting_balance")))
     final_balance = to_float(coalesce(summary.get("finalBalance"), balance_metrics.get("final_balance"), overview.get("final_balance")))
     total_profit_abs = to_float(coalesce(summary.get("totalProfit"), balance_metrics.get("profit_total_abs"), overview.get("profit_total_abs")))
@@ -177,6 +178,11 @@ def build_summary(result: dict[str, Any]) -> dict[str, Any]:
     max_drawdown_abs = to_float(coalesce(summary.get("maxDrawdownAbs"), overview.get("max_drawdown_abs"), risk_metrics.get("max_drawdown_abs")))
     max_drawdown_account = drawdown_to_pct(coalesce(summary.get("maxDrawdownAccount"), overview.get("max_drawdown_account"), risk_metrics.get("max_drawdown_account")))
     sharpe_ratio = to_float(coalesce(summary.get("sharpeRatio"), summary.get("sharpe_ratio"), summary_metrics.get("sharpe")))
+    trades_per_day = to_float(coalesce(summary.get("tradesPerDay"), run_metadata.get("trades_per_day")))
+    if trades_per_day is None:
+        total_trades_value = to_float(total_trades)
+        if total_trades_value is not None and backtest_days and backtest_days > 0:
+            trades_per_day = total_trades_value / backtest_days
 
     normalized = dict(summary)
     normalized.update(
@@ -193,6 +199,7 @@ def build_summary(result: dict[str, Any]) -> dict[str, Any]:
             "maxDrawdownAccount": max_drawdown_account,
             "startingBalance": starting_balance,
             "finalBalance": final_balance,
+            "tradesPerDay": trades_per_day,
             "timeframe": coalesce(summary.get("timeframe"), run_metadata.get("timeframe"), overview.get("timeframe"), ""),
             "stakeCurrency": coalesce(summary.get("stakeCurrency"), run_metadata.get("stake_currency"), overview.get("stake_currency"), ""),
             "stakeAmount": coalesce(summary.get("stakeAmount"), run_metadata.get("stake_amount"), overview.get("stake_amount"), ""),
@@ -257,6 +264,7 @@ def build_summary(result: dict[str, Any]) -> dict[str, Any]:
             "win_rate": normalized["winRate"],
             "max_drawdown_pct": normalized["maxDrawdown"],
             "max_drawdown_abs": normalized["maxDrawdownAbs"],
+            "trades_per_day": normalized["tradesPerDay"],
             "sharpe_ratio": normalized["sharpe_ratio"],
         }
     )

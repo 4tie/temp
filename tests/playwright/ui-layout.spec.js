@@ -1,5 +1,54 @@
 const { test, expect } = require('@playwright/test');
 
+function fulfillJson(route, payload) {
+  return route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify(payload),
+  });
+}
+
+async function installBasicApiMocks(page) {
+  await page.route('**/*', async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+
+    if (url.origin !== 'http://127.0.0.1:5417') {
+      return route.continue();
+    }
+
+    const { pathname } = url;
+    const method = request.method();
+
+    // Mock basic API endpoints needed for page loading
+    if (method === 'GET' && pathname === '/runs') {
+      return fulfillJson(route, { runs: [] });
+    }
+
+    if (method === 'GET' && pathname === '/result-metrics') {
+      return fulfillJson(route, { metrics: [] });
+    }
+
+    if (method === 'GET' && pathname === '/strategies') {
+      return fulfillJson(route, { strategies: ['TestStrategy'] });
+    }
+
+    if (method === 'GET' && pathname === '/hyperopt/runs') {
+      return fulfillJson(route, { runs: [] });
+    }
+
+    if (method === 'GET' && pathname === '/pairs') {
+      return fulfillJson(route, {
+        local_pairs: ['BTC/USDT'],
+        config_pairs: ['BTC/USDT'],
+        popular_pairs: ['BTC/USDT']
+      });
+    }
+
+    return route.continue();
+  });
+}
+
 async function gotoPage(page, viewName, waitSelector = null) {
   await page.goto(`/#${viewName}`);
   await page.waitForSelector(`.page-view.active[data-view="${viewName}"]`);
@@ -23,6 +72,10 @@ async function readOverflowMetrics(page) {
 }
 
 test.describe('Layout and shell integrity', () => {
+  test.beforeEach(async ({ page }) => {
+    await installBasicApiMocks(page);
+  });
+
   test('shell boots and hash navigation activates the expected core pages', async ({ page }) => {
     const cases = [
       ['dashboard', '#dash-stats'],

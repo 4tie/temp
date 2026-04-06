@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from pathlib import Path
 from typing import Any
 
 from app.ai.tools.deep_analysis import analyze
+from app.core.config import STRATEGIES_DIR
 from app.services.results.comparison_metrics import compare_results
 from app.services.results.metric_registry import CORE_RESULT_METRICS
+from app.services.strategies import load_strategy_param_metadata
 
 
 INTELLIGENCE_VERSION = 1
@@ -31,9 +34,10 @@ def build_strategy_intelligence(
     weaknesses = list(analysis.get("weaknesses") or [])
     strengths = list(analysis.get("strengths") or [])
     parameter_recommendations = list(analysis.get("parameter_recommendations") or [])
+    editable_param_lookup = _editable_param_lookup(meta)
 
     diagnosis_items = _build_diagnosis_items(root, weaknesses, analysis)
-    suggestions, rerun_plan = _build_suggestions(root, parameter_recommendations)
+    suggestions, rerun_plan = _build_suggestions(root, parameter_recommendations, editable_param_lookup)
     summary_card = _build_summary(summary, normalized_result)
     comparison = _build_parent_comparison(
         current_result=normalized_result,
@@ -93,7 +97,9 @@ def _build_summary(summary: Mapping[str, Any], result: Mapping[str, Any]) -> dic
     risk = result.get("risk_metrics") or {}
     total_trades = _number(_coalesce(summary.get("totalTrades"), overview.get("total_trades")))
     backtest_days = _number(run_metadata.get("backtest_days"))
-    trades_per_day = (total_trades / backtest_days) if total_trades is not None and backtest_days and backtest_days > 0 else None
+    trades_per_day = _number(_coalesce(summary.get("tradesPerDay"), run_metadata.get("trades_per_day")))
+    if trades_per_day is None and total_trades is not None and backtest_days and backtest_days > 0:
+        trades_per_day = total_trades / backtest_days
 
     return {
         "starting_wallet": _number(_coalesce(summary.get("startingBalance"), overview.get("starting_balance"))),
@@ -116,17 +122,18 @@ def _build_diagnosis_items(
 ) -> list[dict[str, Any]]:
     items: list[dict[str, Any]] = []
     if root:
+        evidence_text = " ".join(
+            step.get("finding", "")
+            for step in (root.get("causal_chain") or [])
+            if isinstance(step, Mapping) and step.get("finding")
+        ).strip()
         items.append(
             {
                 "id": root.get("primary_failure_mode") or "primary",
                 "title": root.get("primary_failure_label") or "Primary issue",
                 "severity": root.get("severity") or "warning",
                 "explanation": root.get("root_cause_conclusion") or "No conclusion available.",
-                "evidence": " ".join(
-                    step.get("finding", "")
-                    for step in (root.get("causal_chain") or [])
-                    if isinstance(step, Mapping)
-                ).strip(),
+                "evidence": evidence_text or "No supporting metric evidence was captured.",
                 "source": "root_cause",
             }
         )
@@ -166,6 +173,7 @@ def _build_diagnosis_items(
 def _build_suggestions(
     root: Mapping[str, Any],
     parameter_recommendations: list[dict[str, Any]],
+    editable_param_lookup: Mapping[str, str],
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     suggestions: list[dict[str, Any]] = []
     auto_param_changes: list[dict[str, Any]] = []
@@ -174,8 +182,9 @@ def _build_suggestions(
         parameter = str(item.get("parameter") or "").strip()
         suggestion_value = item.get("suggestion")
         title = parameter or f"Adjustment {idx}"
-        auto_param = _normalize_auto_param_change(parameter, suggestion_value)
+        auto_param = _normalize_auto_param_change(parameter, suggestion_value, editable_param_lookup)
         auto_applicable = auto_param is not None
+        evidence = str(item.get("evidence") or "").strip()
         suggestions.append(
             {
                 "id": f"param-{idx}",
@@ -185,6 +194,8 @@ def _build_suggestions(
                 "auto_applicable": auto_applicable,
                 "parameter": auto_param["name"] if auto_param else parameter,
                 "suggested_value": auto_param["value"] if auto_param else suggestion_value,
+                "evidence": evidence,
+                "action_type": "quick_param" if auto_applicable else "manual_guidance",
                 "source": "parameter_recommendation",
             }
         )
@@ -194,6 +205,7 @@ def _build_suggestions(
                     **auto_param,
                     "label": title,
                     "reason": str(item.get("reason") or ""),
+                    "evidence": evidence,
                 }
             )
 
@@ -207,6 +219,8 @@ def _build_suggestions(
                 "auto_applicable": False,
                 "parameter": None,
                 "suggested_value": None,
+                "evidence": "",
+                "action_type": "manual_guidance",
                 "source": "fix_priority",
             }
         )
@@ -228,15 +242,54 @@ def _build_suggestions(
             if not suggestion.get("auto_applicable")
         ][:4],
     }
-
-
-def _normalize_auto_param_change(parameter: str, suggestion_value: Any) -> dict[str, Any] | None:
+def _normalize_auto_param_change(
+    parameter: str,
+    suggestion_value: Any,
+    editable_param_lookup: Mapping[str, str],
+) -> dict[str, Any] | None:
     key = parameter.strip().lower()
-    if key in {"stoploss", "trailing_stop", "max_open_trades", "stake_amount"}:
-        return {"name": key, "value": suggestion_value}
-    if "minimal_roi" in key:
-        return {"name": "minimal_roi", "value": suggestion_value}
-    return None
+    if not key or not _is_scalar_suggestion_value(suggestion_value):
+        return None
+    mapped_name = editable_param_lookup.get(key)
+    if not mapped_name:
+        return None
+    return {"name": mapped_name, "value": suggestion_value}
+
+
+def _editable_param_lookup(meta: Mapping[str, Any] | None) -> dict[str, str]:
+    strategy_name = str(
+        (meta or {}).get("strategy_class")
+        or (meta or {}).get("base_strategy")
+        or (meta or {}).get("strategy")
+        or ""
+    ).strip()
+    strategy_path = (meta or {}).get("strategy_path")
+    if not strategy_name or not _is_default_strategy_path(strategy_path):
+        return {}
+    try:
+        metadata = load_strategy_param_metadata(strategy_name, strategies_dir=STRATEGIES_DIR)
+    except Exception:
+        return {}
+
+    lookup: dict[str, str] = {}
+    for item in metadata.get("parameters") or []:
+        name = item.get("name")
+        if isinstance(name, str) and name.strip():
+            lookup[name.strip().lower()] = name.strip()
+    return lookup
+
+
+def _is_default_strategy_path(strategy_path: Any) -> bool:
+    if not strategy_path:
+        return True
+    try:
+        return Path(strategy_path).resolve() == STRATEGIES_DIR.resolve()
+    except Exception:
+        return False
+
+
+def _is_scalar_suggestion_value(value: Any) -> bool:
+    return isinstance(value, (str, int, float, bool)) and value != ""
 
 
 def _build_parent_comparison(

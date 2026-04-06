@@ -9,7 +9,7 @@
 }
 
 .sl-layout {
-  grid-template-columns: 260px minmax(0, 1fr);
+  grid-template-columns: 240px minmax(0, 1fr);
   min-height: calc(100vh - var(--topbar-height) - var(--statusbar-height) - 154px);
   min-height: calc(100dvh - var(--topbar-height) - var(--statusbar-height) - 154px);
 }

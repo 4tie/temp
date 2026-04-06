@@ -610,7 +610,7 @@ window.ResultExplorer = (() => {
             <article class="result-explorer__insight-card result-explorer__insight-card--${_severityTone(issue.severity)}">
               <div class="result-explorer__insight-title">${_esc(issue.title || 'Issue')}</div>
               <div class="result-explorer__insight-body">${_esc(issue.explanation || issue.evidence || '')}</div>
-              ${issue.evidence ? `<div class="result-explorer__insight-meta">${_esc(issue.evidence)}</div>` : ''}
+              ${issue.evidence ? `<div class="result-explorer__insight-meta">Metric evidence: ${_esc(issue.evidence)}</div>` : ''}
             </article>
           `).join('')}
         </div>
@@ -622,7 +622,12 @@ window.ResultExplorer = (() => {
             <article class="result-explorer__insight-card">
               <div class="result-explorer__insight-title">${_esc(item.title || 'Suggestion')}</div>
               <div class="result-explorer__insight-body">${_esc(item.description || '')}</div>
-              <div class="result-explorer__insight-meta">${item.auto_applicable ? 'Auto-applicable through Quick Params' : 'Manual strategy or exit logic adjustment'}</div>
+              <div class="result-explorer__insight-meta">
+                ${item.auto_applicable
+                  ? _esc(`Quick Params can apply ${item.parameter} = ${item.suggested_value}`)
+                  : _esc('Manual guidance only. No strategy code will be changed automatically.')}
+              </div>
+              ${item.evidence ? `<div class="result-explorer__insight-meta">Metric evidence: ${_esc(item.evidence)}</div>` : ''}
             </article>
           `).join('')}
         </div>

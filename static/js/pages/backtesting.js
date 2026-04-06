@@ -1818,9 +1818,9 @@ window.BacktestPage = (() => {
     const risk = results.risk_metrics || {};
     const lossStreak = FMT.toNumber(risk.max_consecutive_losses ?? results.summary?.maxConsecutiveLosses);
     const duration = risk.drawdown_duration || results.summary?.drawdownDuration;
-    if (duration) return `Drawdown stretch ${_esc(duration)}`;
-    if (lossStreak != null && lossStreak > 0) return `Worst streak ${FMT.integer(lossStreak)} losses`;
-    if (drawdownAbs != null) return `Peak-to-trough ${FMT.currency(drawdownAbs)}`;
+    if (duration) return `Peak-to-trough drawdown lasted ${_esc(duration)}`;
+    if (lossStreak != null && lossStreak > 0) return `Worst losing streak reached ${FMT.integer(lossStreak)} trades`;
+    if (drawdownAbs != null) return `Peak-to-trough wallet drop was ${FMT.currency(drawdownAbs)}`;
     return '';
   }
 
@@ -1894,7 +1894,12 @@ window.BacktestPage = (() => {
                 <div class="bt-intelligence__item">
                   <div class="bt-intelligence__item-title">${_esc(suggestion.title || 'Suggestion')}</div>
                   <div class="bt-intelligence__item-body">${_esc(suggestion.description || '')}</div>
-                  <div class="bt-intelligence__item-evidence">${suggestion.auto_applicable ? 'Can be applied through Quick Params' : 'Requires manual strategy logic change'}</div>
+                  <div class="bt-intelligence__item-evidence">
+                    ${suggestion.auto_applicable
+                      ? _esc(`Quick Params can apply ${suggestion.parameter} = ${suggestion.suggested_value}`)
+                      : _esc('Manual guidance only. No strategy code will be changed automatically.')}
+                  </div>
+                  ${suggestion.evidence ? `<div class="bt-intelligence__item-evidence">${_esc(suggestion.evidence)}</div>` : ''}
                 </div>
               `).join('')}
             </div>
@@ -1963,7 +1968,7 @@ window.BacktestPage = (() => {
       improvementItems,
       toastMessage: appliedChanges > 0
         ? `Applied ${appliedChanges} suggested change${appliedChanges === 1 ? '' : 's'} and started a rerun.`
-        : 'Started a rerun from the diagnosed run context. Suggestions were recorded for comparison.',
+        : 'Started a rerun from the diagnosed run context. Manual guidance was recorded, and no strategy code was changed.',
     });
   }
 
@@ -1972,18 +1977,20 @@ window.BacktestPage = (() => {
     const ov = results.overview || {};
     const summary = results.summary || {};
     const risk = results.risk_metrics || {};
-    const profitPct = FMT.resultProfitPercent(summary);
-    const totalProfitAbs = FMT.toNumber(summary.totalProfit ?? ov.profit_total_abs);
-    const totalTrades = FMT.toNumber(summary.totalTrades ?? ov.total_trades);
-    const winRate = FMT.resultWinRate(summary.winRate ?? ov.win_rate);
-    const drawdownPct = FMT.resultDrawdownPercent(summary.maxDrawdown ?? ov.max_drawdown ?? risk.max_drawdown);
+    const intelligenceSummary = results.strategy_intelligence?.summary || {};
+    const profitPct = FMT.toNumber(intelligenceSummary.net_profit_pct ?? FMT.resultProfitPercent(summary));
+    const totalProfitAbs = FMT.toNumber(intelligenceSummary.net_profit_abs ?? summary.totalProfit ?? ov.profit_total_abs);
+    const totalTrades = FMT.toNumber(intelligenceSummary.total_trades ?? summary.totalTrades ?? ov.total_trades);
+    const winRate = FMT.toNumber(intelligenceSummary.win_rate ?? FMT.resultWinRate(summary.winRate ?? ov.win_rate));
+    const drawdownPct = FMT.toNumber(intelligenceSummary.max_drawdown ?? FMT.resultDrawdownPercent(summary.maxDrawdown ?? ov.max_drawdown ?? risk.max_drawdown));
     const drawdownAbs = FMT.toNumber(summary.maxDrawdownAbs ?? ov.max_drawdown_abs ?? risk.max_drawdown_abs);
     const sharpe = FMT.toNumber(summary.sharpeRatio ?? summary.sharpe_ratio ?? ov.sharpe_ratio);
-    const startingBalance = FMT.toNumber(ov.starting_balance ?? summary.startingBalance);
-    const finalBalance = FMT.toNumber(ov.final_balance ?? summary.finalBalance);
+    const startingBalance = FMT.toNumber(intelligenceSummary.starting_wallet ?? ov.starting_balance ?? summary.startingBalance);
+    const finalBalance = FMT.toNumber(intelligenceSummary.final_wallet ?? ov.final_balance ?? summary.finalBalance);
     const walletDelta = (startingBalance != null && finalBalance != null) ? (finalBalance - startingBalance) : null;
     const backtestDays = _deriveBacktestDays(results);
-    const tradesPerDay = (totalTrades != null && backtestDays) ? (totalTrades / backtestDays) : null;
+    const tradesPerDay = FMT.toNumber(intelligenceSummary.trades_per_day ?? summary.tradesPerDay ?? summary.trades_per_day)
+      ?? ((totalTrades != null && backtestDays) ? (totalTrades / backtestDays) : null);
     const tradeMeta = tradesPerDay != null
       ? `${FMT.number(tradesPerDay, 1)} trades/day${backtestDays ? ` · ${FMT.number(backtestDays, 1)} day${backtestDays === 1 ? '' : 's'}` : ''}`
       : '';
@@ -2002,12 +2009,16 @@ window.BacktestPage = (() => {
       resultCard.setAttribute('role', 'button');
       resultCard.setAttribute('aria-label', 'Open result explorer');
     }
+    const walletFlowLabel = walletDelta != null && walletDelta !== 0
+      ? `${walletDelta > 0 ? 'Gained' : 'Lost'} ${FMT.currency(Math.abs(walletDelta))} from the starting wallet`
+      : 'Start and final wallet ended at the same level';
+    const netResultMeta = profitPct != null ? `Profit moved ${FMT.pct(profitPct)} versus the starting wallet` : 'Profit percentage was unavailable';
     el.innerHTML = `
       <div class="result-explorer-card__hint">Click anywhere in this card to open the full explorer.</div>
       <div class="bt-results-summary">
         <div class="bt-results-primary">
           <article class="bt-summary-card bt-summary-card--wallet">
-            <div class="bt-summary-card__label">Wallet Change</div>
+            <div class="bt-summary-card__label">Start Wallet → Final Wallet</div>
             <div class="bt-wallet-flow">
               <div class="bt-wallet-flow__item">
                 <span class="bt-wallet-flow__tag">Start</span>
@@ -2019,17 +2030,19 @@ window.BacktestPage = (() => {
                 <span class="bt-wallet-flow__value ${walletDelta != null ? `text-${FMT.toneProfit(walletDelta)}` : ''}">${FMT.currency(finalBalance)}</span>
               </div>
             </div>
+            <div class="bt-summary-card__meta">${walletFlowLabel}</div>
           </article>
           <article class="bt-summary-card bt-summary-card--net">
-            <div class="bt-summary-card__label">Net Result</div>
+            <div class="bt-summary-card__label">Net Profit / Loss</div>
             <div class="bt-summary-card__hero ${totalProfitAbs != null ? `text-${FMT.toneProfit(totalProfitAbs)}` : ''}">${totalProfitAbs != null ? FMT.currency(totalProfitAbs) : '—'}</div>
             <div class="bt-summary-card__subvalue ${profitPct != null ? `text-${FMT.toneProfit(profitPct)}` : ''}">${profitPct != null ? FMT.pct(profitPct) : '—'}</div>
+            <div class="bt-summary-card__meta">${_esc(netResultMeta)}</div>
           </article>
         </div>
         <div class="bt-results-grid">
-          ${_resultSummaryCard('Trading Activity', totalTrades != null ? `${FMT.integer(totalTrades)} trades` : '—', tradeMeta, tradesPerDay != null ? (tradesPerDay >= 4 ? 'amber' : 'muted') : '', 'activity')}
-          ${_resultSummaryCard('Win / Loss Quality', winRate != null ? FMT.pct(winRate, 1, false) : '—', winLossMeta, FMT.toneWinRate(winRate), 'quality')}
-          ${_resultSummaryCard('Risk', drawdownPct != null ? FMT.pct(drawdownPct, 1, false) : '—', _resultRiskMeta(results, drawdownAbs), FMT.toneDrawdown(drawdownPct), 'risk')}
+          ${_resultSummaryCard('Trade Activity', totalTrades != null ? `${FMT.integer(totalTrades)} total trades` : '—', tradeMeta || 'Trading frequency was unavailable', tradesPerDay != null ? (tradesPerDay >= 4 ? 'amber' : 'muted') : '', 'activity')}
+          ${_resultSummaryCard('Win Rate Across Closed Trades', winRate != null ? FMT.pct(winRate, 1, false) : '—', winLossMeta || 'Win/loss breakdown was unavailable', FMT.toneWinRate(winRate), 'quality')}
+          ${_resultSummaryCard('Maximum Drawdown', drawdownPct != null ? FMT.pct(drawdownPct, 1, false) : '—', _resultRiskMeta(results, drawdownAbs) || 'Peak-to-trough drawdown context was unavailable', FMT.toneDrawdown(drawdownPct), 'risk')}
         </div>
         ${sharpe != null ? `
           <div class="bt-results-tech">
