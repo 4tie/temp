@@ -86,16 +86,19 @@ window.ResultExplorer = (() => {
     const detail = _state.detail || {};
     const results = detail.results || {};
     const meta = detail.meta || {};
+    const intelligence = results.strategy_intelligence || {};
+    const intelligenceSummary = intelligence.summary || {};
     const displayStrategy = meta.display_strategy || meta.strategy || results.display_strategy || results.strategy_name || 'Run';
     const displayVersion = meta.display_version || meta.strategy_version || results.display_version || null;
     const summary = results.summary || {};
-    const profitPct = FMT.resultProfitPercent(summary);
+    const profitPct = intelligenceSummary.net_profit_pct ?? FMT.resultProfitPercent(summary);
     const winRate = FMT.resultWinRate(summary.winRate ?? summary.win_rate);
     const drawdownPct = FMT.resultDrawdownPercent(summary.maxDrawdown ?? summary.max_drawdown_pct);
-    const sharpe = summary.sharpeRatio ?? summary.sharpe_ratio;
+    const tradesPerDay = intelligenceSummary.trades_per_day;
+    const profitFactor = intelligenceSummary.profit_factor ?? summary.profitFactor ?? summary.profit_factor;
     const winRateTone = FMT.toneWinRate(winRate);
     const drawdownTone = FMT.toneDrawdown(drawdownPct);
-    const sharpeTone = FMT.toneRatio(sharpe, 1);
+    const profitFactorTone = FMT.toneRatio(profitFactor, 1);
 
     DOM.setText(
       _title,
@@ -117,19 +120,23 @@ window.ResultExplorer = (() => {
               </div>
               <div style="margin-top:8px">
                 <button class="btn btn--secondary btn--sm" data-action="apply-config">Apply Run Config</button>
+                <button class="btn btn--primary btn--sm" data-action="improve-rerun" style="margin-left:8px">Improve & Re-run</button>
               </div>
             </div>
             <div class="result-explorer__hero-stats">
-              ${_heroStat('Profit', _formatPct(profitPct), _toneFromNumber(profitPct))}
+              ${_heroStat('Net P/L', intelligenceSummary.net_profit_abs != null ? FMT.currency(intelligenceSummary.net_profit_abs) : _formatPct(profitPct), _toneFromNumber(intelligenceSummary.net_profit_abs ?? profitPct))}
+              ${_heroStat('Profit %', _formatPct(profitPct), _toneFromNumber(profitPct))}
               ${_heroStat('Trades', FMT.integer(summary.totalTrades))}
+              ${_heroStat('Trades / Day', tradesPerDay != null ? FMT.number(tradesPerDay, 2) : '—')}
               ${_heroStat('Win Rate', _formatPct(winRate, 1, false), winRateTone)}
               ${_heroStat('Drawdown', _formatPct(drawdownPct, 1, false), drawdownTone)}
-              ${_heroStat('Sharpe', FMT.number(sharpe, 2), sharpeTone)}
+              ${_heroStat('Profit Factor', FMT.number(profitFactor, 2), profitFactorTone)}
             </div>
           </div>
 
           <div class="result-explorer__tabs" role="tablist">
             ${_tabButton('overview', 'Overview')}
+            ${_tabButton('intelligence', 'Intelligence')}
             ${_tabButton('charts', 'Charts')}
             ${_tabButton('trades', 'Trades')}
             ${_tabButton('per-pair', 'Per Pair')}
@@ -141,6 +148,7 @@ window.ResultExplorer = (() => {
           </div>
 
           <section class="tab-panel" data-tab-panel="overview">${_renderOverviewTab(detail)}</section>
+          <section class="tab-panel" data-tab-panel="intelligence">${_renderIntelligenceTab(detail)}</section>
           <section class="tab-panel" data-tab-panel="charts">${_renderChartsTab(results)}</section>
           <section class="tab-panel" data-tab-panel="trades">${_renderTradesTab(results)}</section>
           <section class="tab-panel" data-tab-panel="per-pair">${_renderPerPairTab(results)}</section>
@@ -232,6 +240,20 @@ window.ResultExplorer = (() => {
         } catch (err) {
           Toast.error('Failed to apply run config: ' + err.message);
         }
+      });
+    }
+
+    const improveRerun = _body.querySelector('[data-action="improve-rerun"]');
+    if (improveRerun) {
+      DOM.on(improveRerun, 'click', () => {
+        if (!_state.runId) return;
+        window.App?.navigate?.('backtesting');
+        window.dispatchEvent(new CustomEvent('strategy-intelligence:rerun', {
+          detail: {
+            runId: _state.runId,
+            intelligence: _state.detail?.results?.strategy_intelligence || null,
+          },
+        }));
       });
     }
   }
@@ -553,6 +575,81 @@ window.ResultExplorer = (() => {
     `;
   }
 
+  function _renderIntelligenceTab(detail) {
+    const results = detail.results || {};
+    const intelligence = results.strategy_intelligence || {};
+    const diagnosis = intelligence.diagnosis || {};
+    const primary = diagnosis.primary || {};
+    const issues = Array.isArray(diagnosis.issues) ? diagnosis.issues : [];
+    const suggestions = Array.isArray(intelligence.suggestions) ? intelligence.suggestions : [];
+    const comparison = intelligence.comparison_to_parent || {};
+    const comparisonRows = comparison.metrics
+      ? ['profit_percent', 'win_rate', 'profit_factor', 'max_drawdown']
+          .map((key) => comparison.metrics[key])
+          .filter(Boolean)
+      : [];
+
+    if (!issues.length && !suggestions.length) {
+      return '<div class="empty-state">No strategy intelligence is available for this run yet.</div>';
+    }
+
+    return `
+      <div class="result-explorer__section">
+        <div class="section-heading">Primary Diagnosis</div>
+        <div class="detail-grid">
+          ${_detailItem('Issue', _esc(primary.title || '—'), _severityTone(primary.severity))}
+          ${_detailItem('Severity', _esc(primary.severity || '—'), _severityTone(primary.severity))}
+          ${_detailItem('Confidence', _esc(primary.confidence || '—'))}
+          ${_detailItem('Why It Matters', _esc(primary.explanation || '—'))}
+        </div>
+      </div>
+      <div class="result-explorer__section">
+        <div class="section-heading">Detected Issues</div>
+        <div class="result-explorer__stack">
+          ${issues.map((issue) => `
+            <article class="result-explorer__insight-card result-explorer__insight-card--${_severityTone(issue.severity)}">
+              <div class="result-explorer__insight-title">${_esc(issue.title || 'Issue')}</div>
+              <div class="result-explorer__insight-body">${_esc(issue.explanation || issue.evidence || '')}</div>
+              ${issue.evidence ? `<div class="result-explorer__insight-meta">${_esc(issue.evidence)}</div>` : ''}
+            </article>
+          `).join('')}
+        </div>
+      </div>
+      <div class="result-explorer__section">
+        <div class="section-heading">Suggested Improvements</div>
+        <div class="result-explorer__stack">
+          ${suggestions.map((item) => `
+            <article class="result-explorer__insight-card">
+              <div class="result-explorer__insight-title">${_esc(item.title || 'Suggestion')}</div>
+              <div class="result-explorer__insight-body">${_esc(item.description || '')}</div>
+              <div class="result-explorer__insight-meta">${item.auto_applicable ? 'Auto-applicable through Quick Params' : 'Manual strategy or exit logic adjustment'}</div>
+            </article>
+          `).join('')}
+        </div>
+      </div>
+      ${comparisonRows.length ? `
+        <div class="result-explorer__section">
+          <div class="section-heading">Compared To Parent Run</div>
+          <div class="detail-grid">
+            ${comparisonRows.map((row) => _detailItem(
+              row.label,
+              row.diff == null
+                ? '—'
+                : (row.format === 'currency'
+                  ? FMT.currency(row.diff)
+                  : row.format === 'integer'
+                    ? `${row.diff > 0 ? '+' : ''}${FMT.integer(row.diff)}`
+                    : row.format === 'ratio'
+                      ? `${row.diff > 0 ? '+' : ''}${FMT.number(row.diff, 2)}`
+                      : FMT.pct(row.diff, 1, true)),
+              row.diff == null ? '' : (row.higher_is_better === false ? _toneFromNumber(-row.diff) : _toneFromNumber(row.diff))
+            )).join('')}
+          </div>
+        </div>
+      ` : ''}
+    `;
+  }
+
   function _renderRawTab() {
     const raw = _state.raw || {};
     const artifact = raw.artifact || {};
@@ -809,6 +906,14 @@ window.ResultExplorer = (() => {
         <span class="${tone ? `text-${tone}` : ''}">${value}</span>
       </div>
     `;
+  }
+
+  function _severityTone(value) {
+    const severity = String(value || '').toLowerCase();
+    if (severity === 'critical' || severity === 'high') return 'red';
+    if (severity === 'warning' || severity === 'medium') return 'amber';
+    if (severity === 'ok' || severity === 'low') return 'green';
+    return '';
   }
 
   function _jsonMini(value) {

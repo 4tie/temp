@@ -17,9 +17,14 @@ from app.services.execution_context_service import (
     validate_selected_pair_data,
 )
 from app.services.results.metric_registry import metric_registry_payload
+from app.services.results.strategy_intelligence_service import (
+    attach_strategy_intelligence,
+    build_strategy_intelligence,
+    has_strategy_intelligence,
+)
 from app.services.storage import (
     load_run_meta, load_run_results, list_runs, delete_run,
-    save_last_config, load_last_config, save_run_logs, load_run_raw_payload, get_run_dir,
+    save_last_config, load_last_config, save_run_logs, load_run_raw_payload, get_run_dir, save_run_results,
 )
 from app.services.strategies import save_strategy_current_values
 from app.services.runs.base_run_service import run_logs_path
@@ -131,6 +136,11 @@ async def run_backtest(req: BacktestRequest):
         strategy_path=req.strategy_path,
         strategy_label=req.strategy_label,
         command_override=req.command_override,
+        extra_meta={
+            "parent_run_id": req.parent_run_id,
+            "improvement_source": req.improvement_source,
+            "improvement_items": req.improvement_items,
+        },
     )
     return {"run_id": run_id, "status": "running"}
 
@@ -160,6 +170,19 @@ async def get_run(run_id: str):
 
     if status in ("completed", "failed") or (meta and meta.get("status") in ("completed", "failed")):
         results = load_run_results(run_id)
+        if results and meta and not has_strategy_intelligence(results):
+            parent_run_id = meta.get("parent_run_id")
+            parent_results = load_run_results(parent_run_id) if parent_run_id else None
+            parent_meta = load_run_meta(parent_run_id) if parent_run_id else None
+            intelligence = build_strategy_intelligence(
+                run_id=run_id,
+                result=results,
+                meta=meta,
+                parent_result=parent_results,
+                parent_meta=parent_meta,
+            )
+            results = attach_strategy_intelligence(results, intelligence)
+            save_run_results(run_id, results)
         if not logs and meta:
             log_path = run_logs_path(get_run_dir(run_id))
             if log_path.exists():

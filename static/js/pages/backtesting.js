@@ -10,6 +10,7 @@ window.BacktestPage = (() => {
   let _resultRunId = null;
   let _loadedResult = null;
   let _quickParamsState = _createQuickParamsState();
+  let _intelligenceEventBound = false;
 
   /* ── Favourites ── */
   const _FAV_KEY  = '4tie_fav_pairs';
@@ -462,6 +463,13 @@ window.BacktestPage = (() => {
     DOM.on(resultCard, 'click', (e) => {
       if (!_resultRunId) return;
       if (e.target.closest('#bt-delete-btn')) return;
+      const intelligenceAction = e.target.closest('[data-intelligence-action]');
+      if (intelligenceAction) {
+        e.preventDefault();
+        e.stopPropagation();
+        _onStrategyIntelligenceAction(intelligenceAction.dataset.intelligenceAction || '');
+        return;
+      }
       ResultExplorer.open(_resultRunId);
     });
     DOM.on(resultCard, 'keydown', (e) => {
@@ -483,6 +491,11 @@ window.BacktestPage = (() => {
 
     const dlFormBtn = DOM.$('#bt-dl-form-btn', _el);
     DOM.on(dlFormBtn, 'click', _onDownload);
+
+    if (!_intelligenceEventBound) {
+      _intelligenceEventBound = true;
+      window.addEventListener('strategy-intelligence:rerun', _onStrategyIntelligenceEvent);
+    }
 
     _syncRunState();
   }
@@ -1327,7 +1340,7 @@ window.BacktestPage = (() => {
     _refreshCommandPreview();
   }
 
-  async function _runQuickParamsBacktest() {
+  async function _runQuickParamsBacktest(options = {}) {
     if (!_loadedResult?.meta) {
       Toast.warning('No completed run is loaded.');
       return;
@@ -1353,6 +1366,9 @@ window.BacktestPage = (() => {
       timeframe: meta.timeframe || '5m',
       timerange: meta.timerange || null,
       exchange: meta.exchange || 'binance',
+      parent_run_id: _resultRunId || null,
+      improvement_source: options.improvementSource || null,
+      improvement_items: Array.isArray(options.improvementItems) ? options.improvementItems : [],
       strategy_params: _quickHasParams()
         ? { ..._quickParamsState.currentValues }
         : { ...(meta.strategy_params || {}) },
@@ -1374,7 +1390,7 @@ window.BacktestPage = (() => {
       AppState.set('stream', `Backtest started: ${_activeRunId}`);
       Auth.setRunning(true);
       _startPoll(_activeRunId);
-      Toast.success('Backtest started from the loaded result context.');
+      Toast.success(options.toastMessage || 'Backtest started from the loaded result context.');
     } catch (err) {
       _setRunning(false);
       Toast.error('Failed to start backtest: ' + err.message);
@@ -1808,6 +1824,149 @@ window.BacktestPage = (() => {
     return '';
   }
 
+  function _issueTone(severity) {
+    const value = String(severity || '').toLowerCase();
+    if (value === 'critical' || value === 'high') return 'red';
+    if (value === 'warning' || value === 'medium') return 'amber';
+    if (value === 'ok' || value === 'low') return 'green';
+    return 'muted';
+  }
+
+  function _comparisonDeltaValue(row) {
+    if (!row || row.diff == null) return '—';
+    if (row.format === 'currency') return FMT.currency(row.diff);
+    if (row.format === 'integer') return `${row.diff > 0 ? '+' : ''}${FMT.integer(row.diff)}`;
+    if (row.format === 'ratio') return `${row.diff > 0 ? '+' : ''}${FMT.number(row.diff, 2)}`;
+    return FMT.pct(row.diff, 1, true);
+  }
+
+  function _comparisonTone(row) {
+    if (!row || row.diff == null) return '';
+    const signed = row.higher_is_better === false ? -row.diff : row.diff;
+    return FMT.toneProfit(signed);
+  }
+
+  function _renderIntelligenceSummary(results) {
+    const intelligence = results.strategy_intelligence || {};
+    const diagnosis = intelligence.diagnosis || {};
+    const primary = diagnosis.primary || {};
+    const issues = Array.isArray(diagnosis.issues) ? diagnosis.issues : [];
+    const suggestions = Array.isArray(intelligence.suggestions) ? intelligence.suggestions : [];
+    const comparison = intelligence.comparison_to_parent || null;
+    if (!issues.length && !suggestions.length) return '';
+
+    const comparisonRows = comparison?.metrics
+      ? ['profit_percent', 'win_rate', 'profit_factor', 'max_drawdown']
+          .map((key) => comparison.metrics[key])
+          .filter(Boolean)
+      : [];
+
+    return `
+      <section class="bt-intelligence">
+        <div class="bt-intelligence__header">
+          <div class="bt-intelligence__copy">
+            <div class="bt-intelligence__eyebrow">Strategy Intelligence</div>
+            <div class="bt-intelligence__title">${_esc(primary.title || 'Run diagnosis')}</div>
+            <div class="bt-intelligence__subtitle">${_esc(primary.explanation || 'Review the issues and suggested next moves before rerunning.')}</div>
+          </div>
+          <div class="bt-intelligence__actions">
+            <button type="button" class="btn btn--primary btn--sm" data-intelligence-action="rerun">Improve & Run</button>
+            <button type="button" class="btn btn--secondary btn--sm" data-intelligence-action="explore">Open Full Explorer</button>
+          </div>
+        </div>
+        <div class="bt-intelligence__grid">
+          <article class="bt-intelligence__panel">
+            <div class="bt-intelligence__panel-title">Detected Issues</div>
+            <div class="bt-intelligence__list">
+              ${issues.slice(0, 3).map((issue) => `
+                <div class="bt-intelligence__item bt-intelligence__item--${_issueTone(issue.severity)}">
+                  <div class="bt-intelligence__item-title">${_esc(issue.title || 'Issue')}</div>
+                  <div class="bt-intelligence__item-body">${_esc(issue.explanation || issue.evidence || '')}</div>
+                  ${issue.evidence ? `<div class="bt-intelligence__item-evidence">${_esc(issue.evidence)}</div>` : ''}
+                </div>
+              `).join('')}
+            </div>
+          </article>
+          <article class="bt-intelligence__panel">
+            <div class="bt-intelligence__panel-title">Suggested Improvements</div>
+            <div class="bt-intelligence__list">
+              ${suggestions.slice(0, 4).map((suggestion) => `
+                <div class="bt-intelligence__item">
+                  <div class="bt-intelligence__item-title">${_esc(suggestion.title || 'Suggestion')}</div>
+                  <div class="bt-intelligence__item-body">${_esc(suggestion.description || '')}</div>
+                  <div class="bt-intelligence__item-evidence">${suggestion.auto_applicable ? 'Can be applied through Quick Params' : 'Requires manual strategy logic change'}</div>
+                </div>
+              `).join('')}
+            </div>
+          </article>
+          ${comparisonRows.length ? `
+            <article class="bt-intelligence__panel bt-intelligence__panel--comparison">
+              <div class="bt-intelligence__panel-title">Compared To Previous Iteration</div>
+              <div class="bt-intelligence__compare-grid">
+                ${comparisonRows.map((row) => `
+                  <div class="bt-intelligence__compare-item">
+                    <span class="bt-intelligence__compare-label">${_esc(row.label)}</span>
+                    <span class="bt-intelligence__compare-value ${_comparisonTone(row) ? `text-${_comparisonTone(row)}` : ''}">${_comparisonDeltaValue(row)}</span>
+                  </div>
+                `).join('')}
+              </div>
+            </article>
+          ` : ''}
+        </div>
+      </section>
+    `;
+  }
+
+  async function _onStrategyIntelligenceEvent(event) {
+    const detail = event?.detail || {};
+    if (detail.runId && detail.runId !== _resultRunId) {
+      await _loadLatestResult(detail.runId);
+    }
+    await _runStrategyIntelligenceRerun(detail.intelligence || _loadedResult?.results?.strategy_intelligence || null);
+  }
+
+  function _onStrategyIntelligenceAction(action) {
+    if (action === 'explore') {
+      if (_resultRunId) ResultExplorer.open(_resultRunId);
+      return;
+    }
+    if (action === 'rerun') {
+      void _runStrategyIntelligenceRerun(_loadedResult?.results?.strategy_intelligence || null);
+    }
+  }
+
+  async function _runStrategyIntelligenceRerun(intelligence) {
+    if (!_loadedResult?.meta || !intelligence) {
+      Toast.warning('No strategy intelligence is available for this run yet.');
+      return;
+    }
+    await _ensureQuickParamsForRun(_loadedResult);
+
+    const rerunPlan = intelligence.rerun_plan || {};
+    const autoChanges = Array.isArray(rerunPlan.auto_param_changes) ? rerunPlan.auto_param_changes : [];
+    let appliedChanges = 0;
+    autoChanges.forEach((change) => {
+      const param = _findQuickParam(change.name);
+      if (!param) return;
+      _quickParamsState.currentValues[change.name] = _coerceQuickParamValue(param, change.value);
+      appliedChanges += 1;
+    });
+    if (appliedChanges > 0) _renderQuickParams();
+
+    const improvementItems = (Array.isArray(intelligence.suggestions) ? intelligence.suggestions : [])
+      .slice(0, 4)
+      .map((item) => item.title)
+      .filter(Boolean);
+
+    await _runQuickParamsBacktest({
+      improvementSource: 'strategy_intelligence',
+      improvementItems,
+      toastMessage: appliedChanges > 0
+        ? `Applied ${appliedChanges} suggested change${appliedChanges === 1 ? '' : 's'} and started a rerun.`
+        : 'Started a rerun from the diagnosed run context. Suggestions were recorded for comparison.',
+    });
+  }
+
   function _renderResults(el, results) {
     if (!el || !results) return;
     const ov = results.overview || {};
@@ -1881,6 +2040,7 @@ window.BacktestPage = (() => {
             </div>
           </div>
         ` : ''}
+        ${_renderIntelligenceSummary(results)}
       </div>`;
   }
 

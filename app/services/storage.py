@@ -57,7 +57,7 @@ def _read_json_file(path: Path) -> Optional[dict[str, Any]]:
     if not path.exists():
         return None
     try:
-        payload = json.loads(path.read_text())
+        payload = json.loads(path.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError):
         return None
     return payload if isinstance(payload, dict) else None
@@ -65,7 +65,10 @@ def _read_json_file(path: Path) -> Optional[dict[str, Any]]:
 
 def _write_json_file(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2, default=str))
+    try:
+        path.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
+    except (TypeError, ValueError) as e:
+        raise ValueError(f"Failed to serialize JSON: {e}") from e
 
 
 def _persist_normalized_run_results(run_dir: Path, normalized: dict[str, Any]) -> None:

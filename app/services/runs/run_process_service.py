@@ -44,11 +44,12 @@ def spawn_and_stream(run_id: str, cmd: list[str], on_line: Callable[[str], None]
     )
     set_process(run_id, proc)
 
-    for line in proc.stdout:
-        text = line.rstrip()
-        append_log(run_id, text)
-        if on_line:
-            on_line(text)
+    if proc.stdout:
+        for line in proc.stdout:
+            text = line.rstrip()
+            append_log(run_id, text)
+            if on_line:
+                on_line(text)
 
     proc.wait()
     return proc.returncode

@@ -71,7 +71,7 @@ def _narrative_cache_load_from_disk(run_id: str) -> dict | None:
 # Public entry point
 # ─────────────────────────────────────────────────────────────────────────────
 
-def analyze(run: dict, run_id: str = "") -> dict:
+def analyze(run: dict, run_id: str = "", include_ai_narrative: bool = True) -> dict:
     run = normalize_backtest_result(run)
     trades: list[dict] = run.get("trades") or []
     summary: dict = run.get("summary") or {}
@@ -136,22 +136,26 @@ def analyze(run: dict, run_id: str = "") -> dict:
     )
 
     # Try AI narrative (with caching); fall back to deterministic on any error
-    ai_narrative = _try_ai_narrative(
-        run_id=run_id,
-        run=run,
-        summary=summary,
-        strategy_name=strategy_name,
-        trades=trades,
-        advanced_metrics=advanced_metrics,
-        root_cause_diagnosis=root_cause_diagnosis,
-        loss_patterns=loss_patterns,
-        signal_frequency=signal_frequency,
-        exit_quality=exit_quality,
-        overfitting=overfitting,
-        strengths=strengths,
-        weaknesses=weaknesses,
-        deterministic_narrative=narrative,
-    )
+    if include_ai_narrative:
+        ai_narrative = _try_ai_narrative(
+            run_id=run_id,
+            run=run,
+            summary=summary,
+            strategy_name=strategy_name,
+            trades=trades,
+            advanced_metrics=advanced_metrics,
+            root_cause_diagnosis=root_cause_diagnosis,
+            loss_patterns=loss_patterns,
+            signal_frequency=signal_frequency,
+            exit_quality=exit_quality,
+            overfitting=overfitting,
+            strengths=strengths,
+            weaknesses=weaknesses,
+            deterministic_narrative=narrative,
+        )
+    else:
+        ai_narrative = dict(narrative)
+        ai_narrative["ai_narrative"] = False
 
     return {
         "health_score": health,

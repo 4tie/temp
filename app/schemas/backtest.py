@@ -12,6 +12,9 @@ class BacktestRequest(BaseModel):
     strategy_label: Optional[str] = None
     strategy_params: dict[str, Any] = Field(default_factory=dict)
     command_override: Optional[list[str]] = None
+    parent_run_id: Optional[str] = None
+    improvement_source: Optional[str] = None
+    improvement_items: list[str] = Field(default_factory=list)
 
 
 class ConfigPatchRequest(BaseModel):

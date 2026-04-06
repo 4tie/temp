@@ -1,0 +1,263 @@
+from __future__ import annotations
+
+from typing import Any, Mapping
+
+from app.ai.tools.deep_analysis import analyze
+from app.services.results.comparison_metrics import compare_results
+from app.services.results.metric_registry import CORE_RESULT_METRICS
+
+
+INTELLIGENCE_VERSION = 1
+
+
+def has_strategy_intelligence(result: Mapping[str, Any] | None) -> bool:
+    intelligence = result.get("strategy_intelligence") if isinstance(result, Mapping) else None
+    return isinstance(intelligence, Mapping) and intelligence.get("version") == INTELLIGENCE_VERSION
+
+
+def build_strategy_intelligence(
+    *,
+    run_id: str,
+    result: Mapping[str, Any],
+    meta: Mapping[str, Any] | None = None,
+    parent_result: Mapping[str, Any] | None = None,
+    parent_meta: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    normalized_result = dict(result or {})
+    summary = normalized_result.get("summary") or {}
+    analysis = analyze(normalized_result, run_id=run_id, include_ai_narrative=False)
+    root = analysis.get("root_cause_diagnosis") or {}
+    weaknesses = list(analysis.get("weaknesses") or [])
+    strengths = list(analysis.get("strengths") or [])
+    parameter_recommendations = list(analysis.get("parameter_recommendations") or [])
+
+    diagnosis_items = _build_diagnosis_items(root, weaknesses, analysis)
+    suggestions, rerun_plan = _build_suggestions(root, parameter_recommendations)
+    summary_card = _build_summary(summary, normalized_result)
+    comparison = _build_parent_comparison(
+        current_result=normalized_result,
+        parent_result=parent_result,
+        parent_run_id=(meta or {}).get("parent_run_id") or (parent_meta or {}).get("run_id"),
+    )
+
+    return {
+        "version": INTELLIGENCE_VERSION,
+        "summary": summary_card,
+        "diagnosis": {
+            "primary": {
+                "id": root.get("primary_failure_mode") or "unknown",
+                "title": root.get("primary_failure_label") or "No clear primary issue detected",
+                "severity": root.get("severity") or "neutral",
+                "explanation": root.get("root_cause_conclusion") or "No root-cause conclusion available.",
+                "confidence": root.get("confidence") or "low",
+                "confidence_note": root.get("confidence_note") or "",
+            },
+            "issues": diagnosis_items,
+            "secondary_issues": list(root.get("secondary_issues") or []),
+            "strengths": [
+                {
+                    "title": item.get("title") or "Strength",
+                    "evidence": item.get("evidence") or "",
+                }
+                for item in strengths[:3]
+            ],
+        },
+        "suggestions": suggestions,
+        "rerun_plan": rerun_plan,
+        "analysis_snapshot": {
+            "health_score": analysis.get("health_score") or {},
+            "signal_frequency": analysis.get("signal_frequency") or {},
+            "exit_quality": analysis.get("exit_quality") or {},
+            "overfitting": analysis.get("overfitting") or {},
+            "data_warnings": list(analysis.get("data_warnings") or []),
+        },
+        "comparison_to_parent": comparison,
+        "iteration_memory": {
+            "parent_run_id": (meta or {}).get("parent_run_id"),
+            "improvement_source": (meta or {}).get("improvement_source"),
+            "improvement_items": list((meta or {}).get("improvement_items") or []),
+        },
+    }
+
+
+def attach_strategy_intelligence(result: Mapping[str, Any], intelligence: Mapping[str, Any]) -> dict[str, Any]:
+    enriched = dict(result or {})
+    enriched["strategy_intelligence"] = dict(intelligence or {})
+    return enriched
+
+
+def _build_summary(summary: Mapping[str, Any], result: Mapping[str, Any]) -> dict[str, Any]:
+    overview = result.get("overview") or {}
+    run_metadata = result.get("run_metadata") or {}
+    risk = result.get("risk_metrics") or {}
+    total_trades = _number(summary.get("totalTrades") or overview.get("total_trades"))
+    backtest_days = _number(run_metadata.get("backtest_days"))
+    trades_per_day = (total_trades / backtest_days) if total_trades is not None and backtest_days and backtest_days > 0 else None
+
+    return {
+        "starting_wallet": _number(summary.get("startingBalance") or overview.get("starting_balance")),
+        "final_wallet": _number(summary.get("finalBalance") or overview.get("final_balance")),
+        "net_profit_abs": _number(summary.get("totalProfit") or overview.get("profit_total_abs")),
+        "net_profit_pct": _number(summary.get("totalProfitPct") or overview.get("profit_percent")),
+        "total_trades": total_trades,
+        "trades_per_day": trades_per_day,
+        "win_rate": _number(summary.get("winRate") or overview.get("win_rate")),
+        "max_drawdown": _number(summary.get("maxDrawdown") or overview.get("max_drawdown") or risk.get("max_drawdown_pct")),
+        "profit_factor": _number(summary.get("profitFactor") or overview.get("profit_factor")),
+        "avg_trade_duration": summary.get("avgTradeDuration") or summary.get("avg_trade_duration") or overview.get("avg_trade_duration"),
+    }
+
+
+def _build_diagnosis_items(
+    root: Mapping[str, Any],
+    weaknesses: list[dict[str, Any]],
+    analysis: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    items: list[dict[str, Any]] = []
+    if root:
+        items.append(
+            {
+                "id": root.get("primary_failure_mode") or "primary",
+                "title": root.get("primary_failure_label") or "Primary issue",
+                "severity": root.get("severity") or "warning",
+                "explanation": root.get("root_cause_conclusion") or "No conclusion available.",
+                "evidence": " ".join(
+                    step.get("finding", "")
+                    for step in (root.get("causal_chain") or [])
+                    if isinstance(step, Mapping)
+                ).strip(),
+                "source": "root_cause",
+            }
+        )
+
+    for weakness in weaknesses[:3]:
+        title = weakness.get("title") or "Observed issue"
+        if any(item["title"] == title for item in items):
+            continue
+        items.append(
+            {
+                "id": title.lower().replace(" ", "_"),
+                "title": title,
+                "severity": weakness.get("severity") or "warning",
+                "explanation": weakness.get("impact") or weakness.get("evidence") or "",
+                "evidence": weakness.get("evidence") or "",
+                "source": "weakness",
+            }
+        )
+
+    signal_frequency = analysis.get("signal_frequency") or {}
+    diagnosis = signal_frequency.get("diagnosis")
+    if diagnosis and not any(item["id"] == "signal_frequency" for item in items):
+        items.append(
+            {
+                "id": "signal_frequency",
+                "title": "Signal Frequency",
+                "severity": "warning",
+                "explanation": str(diagnosis),
+                "evidence": f"{signal_frequency.get('trades_per_day', 0)} trades/day",
+                "source": "analysis",
+            }
+        )
+
+    return items[:4]
+
+
+def _build_suggestions(
+    root: Mapping[str, Any],
+    parameter_recommendations: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    suggestions: list[dict[str, Any]] = []
+    auto_param_changes: list[dict[str, Any]] = []
+
+    for idx, item in enumerate(parameter_recommendations[:4], start=1):
+        parameter = str(item.get("parameter") or "").strip()
+        suggestion_value = item.get("suggestion")
+        title = parameter or f"Adjustment {idx}"
+        auto_param = _normalize_auto_param_change(parameter, suggestion_value)
+        auto_applicable = auto_param is not None
+        suggestions.append(
+            {
+                "id": f"param-{idx}",
+                "title": title,
+                "description": str(item.get("reason") or item.get("suggestion") or ""),
+                "priority": item.get("confidence") or "medium",
+                "auto_applicable": auto_applicable,
+                "parameter": auto_param["name"] if auto_param else parameter,
+                "suggested_value": auto_param["value"] if auto_param else suggestion_value,
+                "source": "parameter_recommendation",
+            }
+        )
+        if auto_param:
+            auto_param_changes.append(
+                {
+                    **auto_param,
+                    "label": title,
+                    "reason": str(item.get("reason") or ""),
+                }
+            )
+
+    for idx, text in enumerate(root.get("fix_priority") or [], start=1):
+        suggestions.append(
+            {
+                "id": f"fix-{idx}",
+                "title": str(text),
+                "description": str(text),
+                "priority": "high" if idx == 1 else "medium",
+                "auto_applicable": False,
+                "parameter": None,
+                "suggested_value": None,
+                "source": "fix_priority",
+            }
+        )
+
+    seen: set[str] = set()
+    deduped: list[dict[str, Any]] = []
+    for suggestion in suggestions:
+        key = f"{suggestion.get('title')}::{suggestion.get('parameter')}::{suggestion.get('suggested_value')}"
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(suggestion)
+
+    return deduped[:6], {
+        "auto_param_changes": auto_param_changes,
+        "manual_actions": [
+            suggestion["title"]
+            for suggestion in deduped
+            if not suggestion.get("auto_applicable")
+        ][:4],
+    }
+
+
+def _normalize_auto_param_change(parameter: str, suggestion_value: Any) -> dict[str, Any] | None:
+    key = parameter.strip().lower()
+    if key in {"stoploss", "trailing_stop", "max_open_trades", "stake_amount"}:
+        return {"name": key, "value": suggestion_value}
+    if "minimal_roi" in key:
+        return {"name": "minimal_roi", "value": suggestion_value}
+    return None
+
+
+def _build_parent_comparison(
+    *,
+    current_result: Mapping[str, Any],
+    parent_result: Mapping[str, Any] | None,
+    parent_run_id: str | None,
+) -> dict[str, Any] | None:
+    if not isinstance(parent_result, Mapping):
+        return None
+
+    metrics = compare_results(parent_result, current_result, keys=list(CORE_RESULT_METRICS))
+    return {
+        "parent_run_id": parent_run_id,
+        "metrics": metrics,
+    }
+
+
+def _number(value: Any) -> float | None:
+    try:
+        if value in (None, ""):
+            return None
+        return float(value)
+    except (TypeError, ValueError):
+        return None
