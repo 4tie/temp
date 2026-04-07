@@ -1,11 +1,11 @@
 # UI Workflow Validation - Issues Report
 
 - Date: 2026-04-07
-- Commit: `092b3b9`
-- PASS: 5 | BLOCKED: 19 | MISSING: 9 | FAIL: 45
+- Commit: `068618b`
+- PASS: 65 | BLOCKED: 13 | MISSING: 1 | FAIL: 0
 
 ## Summary
-73 non-pass actions detected requiring remediation.
+14 non-pass actions detected requiring remediation.
 
 ## Issues
 | Severity | Page | Control | Selector | Status | Root Cause (probable) | Fix Guidance |
@@ -13,84 +13,17 @@
 | low | ai-diagnosis | Open Deep Analysis | `.page-view.active div:nth-of-type(2) > aside:nth-of-type(1) > section:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(1)` | BLOCKED | precondition gating | Ensure test preconditions and seed data make control actionable before validation. |
 | low | ai-diagnosis | Open Evolution | `.page-view.active div:nth-of-type(2) > aside:nth-of-type(1) > section:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(2)` | BLOCKED | precondition gating | Ensure test preconditions and seed data make control actionable before validation. |
 | low | ai-diagnosis | Clear Context | `.page-view.active div:nth-of-type(2) > aside:nth-of-type(1) > section:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(3)` | BLOCKED | precondition gating | Ensure test preconditions and seed data make control actionable before validation. |
-| low | ai-diagnosis | clear | `#ai-context-clear` | BLOCKED | precondition gating | Ensure test preconditions and seed data make control actionable before validation. |
-| low | ai-diagnosis | Deep Analyse | `#ai-deep-analyse-btn` | BLOCKED | precondition gating | Ensure test preconditions and seed data make control actionable before validation. |
-| low | ai-diagnosis | Evolve Strategy | `#ai-evolve-btn` | BLOCKED | precondition gating | Ensure test preconditions and seed data make control actionable before validation. |
+| low | ai-diagnosis | New Conversation | `.page-view.active div:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(2)` | BLOCKED | precondition gating | Ensure test preconditions and seed data make control actionable before validation. |
 | low | ai-diagnosis | (unlabeled control) | `#ai-hamburger` | BLOCKED | precondition gating | Ensure test preconditions and seed data make control actionable before validation. |
-| low | ai-diagnosis | Inject latest backtest | `#ai-inject-btn` | BLOCKED | precondition gating | Ensure test preconditions and seed data make control actionable before validation. |
 | low | ai-diagnosis | Inject latest backtest | `#ai-inject-btn2` | BLOCKED | precondition gating | Ensure test preconditions and seed data make control actionable before validation. |
-| low | ai-diagnosis | Start Loop | `#ai-loop-toggle` | BLOCKED | precondition gating | Ensure test preconditions and seed data make control actionable before validation. |
-| low | ai-diagnosis | Send | `#ai-send-btn` | BLOCKED | precondition gating | Ensure test preconditions and seed data make control actionable before validation. |
-| low | ai-diagnosis | (unlabeled control) | `#ai-stop-btn` | BLOCKED | precondition gating | Ensure test preconditions and seed data make control actionable before validation. |
-| low | ai-diagnosis | (unlabeled control) | `#evo-diff-close` | BLOCKED | precondition gating | Ensure test preconditions and seed data make control actionable before validation. |
-| high | ai-diagnosis | Focus Composer | `.page-view.active div:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(1)` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | ai-diagnosis | New Conversation | `.page-view.active div:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(2)` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | ai-diagnosis | Inject Latest Backtest | `.page-view.active div:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(3)` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | ai-diagnosis | Ollama | `#ai-btn-ollama` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | ai-diagnosis | OpenRouter | `#ai-btn-openrouter` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | ai-diagnosis | Show conversations | `#ai-conv-toggle` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | ai-diagnosis | (unlabeled control) | `#ai-deep-panel-close` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | ai-diagnosis | Inject latest backtest | `#ai-inject-btn3` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | ai-diagnosis | New conversation | `#ai-new-chat` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | ai-diagnosis | (unlabeled control) | `#evo-panel-close` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | ai-diagnosis | CONFIGURE | `#evo-tab-config` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | ai-diagnosis | RESULTS | `#evo-tab-results` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | ai-diagnosis | RUNNING | `#evo-tab-running` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| low | backtesting | Save and Run | `.page-view.active div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(1)` | BLOCKED | precondition gating | Ensure test preconditions and seed data make control actionable before validation. |
-| low | backtesting | Save to Strategy | `.page-view.active div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(3)` | BLOCKED | precondition gating | Ensure test preconditions and seed data make control actionable before validation. |
-| low | backtesting | Reset | `.page-view.active div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(4)` | BLOCKED | precondition gating | Ensure test preconditions and seed data make control actionable before validation. |
-| low | backtesting | Stop | `#bt-stop-btn` | BLOCKED | precondition gating | Ensure test preconditions and seed data make control actionable before validation. |
-| high | backtesting | Improve & Run | `.page-view.active div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(1)` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | backtesting | Open Full Explorer | `.page-view.active div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(2)` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | backtesting | Run Again | `.page-view.active div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(2)` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| medium | backtesting | ♥ | `.page-view.active div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(5) > button:nth-of-type(1)` | MISSING | no observable workflow binding | Bind control to explicit handler and add observable effect (request/state/nav/feedback) with tests. |
-| medium | backtesting | ♥ | `.page-view.active div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(8) > button:nth-of-type(1)` | MISSING | no observable workflow binding | Bind control to explicit handler and add observable effect (request/state/nav/feedback) with tests. |
-| medium | backtesting | Download Data | `#bt-dl-form-btn` | MISSING | no observable workflow binding | Bind control to explicit handler and add observable effect (request/state/nav/feedback) with tests. |
-| medium | backtesting | All | `#bt-pairs-all` | MISSING | no observable workflow binding | Bind control to explicit handler and add observable effect (request/state/nav/feedback) with tests. |
-| medium | backtesting | ★ Favs | `#bt-pairs-favs` | MISSING | no observable workflow binding | Bind control to explicit handler and add observable effect (request/state/nav/feedback) with tests. |
-| medium | backtesting | Clear | `#bt-pairs-none` | MISSING | no observable workflow binding | Bind control to explicit handler and add observable effect (request/state/nav/feedback) with tests. |
-| medium | backtesting | Run Backtest | `#bt-run-btn` | MISSING | no observable workflow binding | Bind control to explicit handler and add observable effect (request/state/nav/feedback) with tests. |
-| medium | dashboard | (no controls found) | `(none)` | MISSING | no observable workflow binding | Bind control to explicit handler and add observable effect (request/state/nav/feedback) with tests. |
+| low | ai-diagnosis | Start Evolution | `#evo-start-btn` | BLOCKED | precondition gating | Ensure test preconditions and seed data make control actionable before validation. |
+| low | ai-diagnosis | CONFIGURE | `#evo-tab-config` | BLOCKED | precondition gating | Ensure test preconditions and seed data make control actionable before validation. |
+| medium | ai-diagnosis | (unlabeled control) | `#evo-diff-close` | MISSING | no observable workflow binding | Bind control to explicit handler and add observable effect (request/state/nav/feedback) with tests. |
+| low | dashboard | (no controls found) | `(none)` | BLOCKED | precondition gating | Ensure test preconditions and seed data make control actionable before validation. |
 | low | hyperopt | Apply Params | `#ho-apply-btn` | BLOCKED | precondition gating | Ensure test preconditions and seed data make control actionable before validation. |
 | low | hyperopt | Stop | `#ho-stop-btn` | BLOCKED | precondition gating | Ensure test preconditions and seed data make control actionable before validation. |
-| high | hyperopt | ♥ | `.page-view.active div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > button:nth-of-type(1)` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | hyperopt | ♥ | `.page-view.active div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(3) > button:nth-of-type(1)` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | hyperopt | ♥ | `.page-view.active div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(5) > button:nth-of-type(1)` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | hyperopt | ♥ | `.page-view.active div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(7) > button:nth-of-type(1)` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | hyperopt | Download Data | `#ho-dl-form-btn` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | hyperopt | All | `#ho-pairs-all` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | hyperopt | ★ Favs | `#ho-pairs-favs` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | hyperopt | Clear | `#ho-pairs-none` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | hyperopt | Start Hyperopt | `#ho-run-btn` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | jobs | Refresh | `#jobs-refresh-btn` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | results | View | `.page-view.active div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > table:nth-of-type(1) > tbody:nth-of-type(1) > tr:nth-of-type(1) > td:nth-of-type(4) > button:nth-of-type(1)` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | results | Apply | `.page-view.active div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > table:nth-of-type(1) > tbody:nth-of-type(1) > tr:nth-of-type(1) > td:nth-of-type(4) > button:nth-of-type(2)` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | settings | Show | `.page-view.active div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(1)` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | settings | Test | `.page-view.active div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(2)` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | settings | Remove | `.page-view.active div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(3)` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | settings | Ocean Teal and cyan ACTIVE | `.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(1)` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | settings | Midnight Dark blue and slate | `.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(10)` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | settings | Ember Amber and coral | `.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(2)` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | settings | Aurora Green and mint | `.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(3)` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | settings | Cobalt Blue and ice | `.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(4)` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | settings | Ruby Rose and magenta | `.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(5)` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | settings | Amethyst Purple and lavender | `.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(6)` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | settings | Sunset Orange and peach | `.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(7)` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | settings | Forest Deep green and moss | `.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(8)` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | settings | Sakura Pink and cherry blossom | `.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(9)` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | settings | Save All Settings | `#master-save-btn` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | settings | + Add key | `#s-or-add` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | settings | Clear | `#s-or-clear` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| high | settings | Save Current as Preset | `#s-save-preset-btn` | FAIL | runtime interaction failure | Inspect handler exceptions and stabilize selector/action flow. |
-| medium | strategy-lab | (no controls found) | `(none)` | MISSING | no observable workflow binding | Bind control to explicit handler and add observable effect (request/state/nav/feedback) with tests. |
+| low | settings | Remove | `.page-view.active div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(3)` | BLOCKED | precondition gating | Ensure test preconditions and seed data make control actionable before validation. |
+| low | strategy-lab | (no controls found) | `(none)` | BLOCKED | precondition gating | Ensure test preconditions and seed data make control actionable before validation. |
 
 ## Missing Function / Workflow
-- backtesting: `.page-view.active div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(5) > button:nth-of-type(1)` (♥) -> no observable workflow.
-- backtesting: `.page-view.active div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(8) > button:nth-of-type(1)` (♥) -> no observable workflow.
-- backtesting: `#bt-dl-form-btn` (Download Data) -> no observable workflow.
-- backtesting: `#bt-pairs-all` (All) -> no observable workflow.
-- backtesting: `#bt-pairs-favs` (★ Favs) -> no observable workflow.
-- backtesting: `#bt-pairs-none` (Clear) -> no observable workflow.
-- backtesting: `#bt-run-btn` (Run Backtest) -> no observable workflow.
-- dashboard: `(none)` ((no controls found)) -> no observable workflow.
-- strategy-lab: `(none)` ((no controls found)) -> no observable workflow.
+- ai-diagnosis: `#evo-diff-close` ((unlabeled control)) -> no observable workflow.

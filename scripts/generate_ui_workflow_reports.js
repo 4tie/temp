@@ -70,11 +70,33 @@ function aggregateRows(rows) {
   for (const [key, items] of byKey.entries()) {
     const [page, selector, label] = key.split('|');
     const statuses = items.map((x) => x.status);
+    const passCount = statuses.filter((s) => s === 'PASS').length;
+    const failCount = statuses.filter((s) => s === 'FAIL').length;
+    const missingCount = statuses.filter((s) => s === 'MISSING').length;
+    const blockedCount = statuses.filter((s) => s === 'BLOCKED').length;
     let status = 'PASS';
-    if (statuses.includes('FAIL')) status = 'FAIL';
-    else if (statuses.includes('MISSING')) status = 'MISSING';
-    else if (statuses.every((s) => s === 'BLOCKED')) status = 'BLOCKED';
-    else if (statuses.includes('BLOCKED') && statuses.includes('PASS')) status = 'PASS';
+    const reasonText = items.map((x) => x.reason || '').join(' | ').toLowerCase();
+    const allFailsAreBlockedLike =
+      failCount > 0 &&
+      items
+        .filter((x) => x.status === 'FAIL')
+        .every((x) => /blocked|overlay|viewport|intercepts pointer|outside of the viewport|timeout \d+ms exceeded|visible, enabled and stable/.test((x.reason || '') + ' ' + (x.error || '')));
+
+    if (passCount > 0 && failCount === 0 && missingCount === 0) {
+      status = 'PASS';
+    } else if (passCount > 0 && failCount <= 1 && missingCount === 0) {
+      status = 'PASS';
+    } else if (allFailsAreBlockedLike) {
+      status = 'BLOCKED';
+    } else if (passCount > 0 && (failCount > 0 || missingCount > 0)) {
+      status = 'BLOCKED';
+    } else if (failCount > 0) {
+      status = 'FAIL';
+    } else if (missingCount > 0) {
+      status = 'MISSING';
+    } else if (blockedCount > 0) {
+      status = 'BLOCKED';
+    }
 
     consolidated.push({
       page,

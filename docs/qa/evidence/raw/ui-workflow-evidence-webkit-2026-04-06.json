@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-04-06T22:46:38.476Z",
+  "generated_at": "2026-04-06T23:28:14.199Z",
   "browser": "webkit",
   "totals": {
-    "PASS": 6,
-    "FAIL": 41,
-    "BLOCKED": 19,
-    "MISSING": 8
+    "PASS": 5,
+    "FAIL": 49,
+    "BLOCKED": 21,
+    "MISSING": 5
   },
   "rows": [
     {
@@ -13,11 +13,11 @@
       "page": "dashboard",
       "selector": "(none)",
       "label": "(no controls found)",
-      "status": "MISSING",
+      "status": "BLOCKED",
       "reason": "No actionable controls were discovered in active view.",
       "observed_requests": [],
       "observed_effects": [],
-      "timestamp": "2026-04-06T22:44:56.871Z"
+      "timestamp": "2026-04-06T23:25:30.816Z"
     },
     {
       "browser": "webkit",
@@ -25,12 +25,12 @@
       "selector": "#bt-pairs-all",
       "label": "All",
       "trigger_type": "click",
-      "status": "MISSING",
-      "reason": "No observable request/navigation/state/modal effect after click.",
+      "status": "FAIL",
+      "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "",
-      "timestamp": "2026-04-06T22:44:56.927Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#bt-pairs-all').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" id=\"bt-pairs-all\" class=\"pairs-picker__action\">All</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:25:30.893Z"
     },
     {
       "browser": "webkit",
@@ -38,12 +38,12 @@
       "selector": "#bt-pairs-none",
       "label": "Clear",
       "trigger_type": "click",
-      "status": "MISSING",
-      "reason": "No observable request/navigation/state/modal effect after click.",
+      "status": "FAIL",
+      "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "",
-      "timestamp": "2026-04-06T22:44:58.283Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#bt-pairs-none').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" id=\"bt-pairs-none\" class=\"pairs-picker__action\">Clear</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:25:32.154Z"
     },
     {
       "browser": "webkit",
@@ -51,12 +51,12 @@
       "selector": "#bt-pairs-favs",
       "label": "★ Favs",
       "trigger_type": "click",
-      "status": "MISSING",
-      "reason": "No observable request/navigation/state/modal effect after click.",
+      "status": "FAIL",
+      "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "",
-      "timestamp": "2026-04-06T22:44:59.519Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#bt-pairs-favs').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" id=\"bt-pairs-favs\" class=\"pairs-picker__action\">★ Favs</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:25:33.210Z"
     },
     {
       "browser": "webkit",
@@ -64,17 +64,12 @@
       "selector": ".page-view.active div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > button:nth-of-type(1)",
       "label": "♥",
       "trigger_type": "click",
-      "status": "PASS",
-      "reason": "Trigger-to-end observable effect detected.",
-      "observed_requests": [
-        "GET /healthz"
-      ],
-      "observed_effects": [
-        "request",
-        "state-change"
-      ],
-      "error": "",
-      "timestamp": "2026-04-06T22:45:01.023Z"
+      "status": "FAIL",
+      "reason": "Unhandled click execution error.",
+      "observed_requests": [],
+      "observed_effects": [],
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > button:nth-of-type(1)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" title=\"Favourite\" data-fav=\"BTC/USDT\" class=\"pairs-row__fav\">♥</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:25:34.384Z"
     },
     {
       "browser": "webkit",
@@ -82,14 +77,12 @@
       "selector": ".page-view.active div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(3) > button:nth-of-type(1)",
       "label": "♥",
       "trigger_type": "click",
-      "status": "PASS",
-      "reason": "Trigger-to-end observable effect detected.",
+      "status": "FAIL",
+      "reason": "Unhandled click execution error.",
       "observed_requests": [],
-      "observed_effects": [
-        "state-change"
-      ],
-      "error": "",
-      "timestamp": "2026-04-06T22:45:02.408Z"
+      "observed_effects": [],
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(3) > button:nth-of-type(1)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" title=\"Favourite\" data-fav=\"ETH/USDT\" class=\"pairs-row__fav\">♥</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:25:35.632Z"
     },
     {
       "browser": "webkit",
@@ -97,12 +90,12 @@
       "selector": ".page-view.active div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(5) > button:nth-of-type(1)",
       "label": "♥",
       "trigger_type": "click",
-      "status": "MISSING",
-      "reason": "No observable request/navigation/state/modal effect after click.",
+      "status": "FAIL",
+      "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "",
-      "timestamp": "2026-04-06T22:45:03.708Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(5) > button:nth-of-type(1)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" title=\"Favourite\" data-fav=\"BTC/USDT\" class=\"pairs-row__fav\">♥</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:25:36.797Z"
     },
     {
       "browser": "webkit",
@@ -110,14 +103,12 @@
       "selector": ".page-view.active div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(7) > button:nth-of-type(1)",
       "label": "♥",
       "trigger_type": "click",
-      "status": "PASS",
-      "reason": "Trigger-to-end observable effect detected.",
+      "status": "FAIL",
+      "reason": "Unhandled click execution error.",
       "observed_requests": [],
-      "observed_effects": [
-        "state-change"
-      ],
-      "error": "",
-      "timestamp": "2026-04-06T22:45:05.044Z"
+      "observed_effects": [],
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(7) > button:nth-of-type(1)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" title=\"Favourite\" data-fav=\"BTC/USDT\" class=\"pairs-row__fav\">♥</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:25:37.950Z"
     },
     {
       "browser": "webkit",
@@ -125,16 +116,12 @@
       "selector": ".page-view.active div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(8) > button:nth-of-type(1)",
       "label": "♥",
       "trigger_type": "click",
-      "status": "PASS",
-      "reason": "Trigger-to-end observable effect detected.",
-      "observed_requests": [
-        "GET /healthz"
-      ],
-      "observed_effects": [
-        "request"
-      ],
-      "error": "",
-      "timestamp": "2026-04-06T22:45:06.287Z"
+      "status": "FAIL",
+      "reason": "Unhandled click execution error.",
+      "observed_requests": [],
+      "observed_effects": [],
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(8) > button:nth-of-type(1)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" title=\"Favourite\" data-fav=\"ETH/USDT\" class=\"pairs-row__fav\">♥</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:25:39.209Z"
     },
     {
       "browser": "webkit",
@@ -142,14 +129,12 @@
       "selector": ".page-view.active div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(9) > button:nth-of-type(1)",
       "label": "♥",
       "trigger_type": "click",
-      "status": "PASS",
-      "reason": "Trigger-to-end observable effect detected.",
+      "status": "FAIL",
+      "reason": "Unhandled click execution error.",
       "observed_requests": [],
-      "observed_effects": [
-        "state-change"
-      ],
-      "error": "",
-      "timestamp": "2026-04-06T22:45:07.564Z"
+      "observed_effects": [],
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(9) > button:nth-of-type(1)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" title=\"Favourite\" data-fav=\"SOL/USDT\" class=\"pairs-row__fav\">♥</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:25:40.441Z"
     },
     {
       "browser": "webkit",
@@ -157,12 +142,12 @@
       "selector": "#bt-run-btn",
       "label": "Run Backtest",
       "trigger_type": "click",
-      "status": "MISSING",
-      "reason": "No observable request/navigation/state/modal effect after click.",
+      "status": "FAIL",
+      "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "",
-      "timestamp": "2026-04-06T22:45:08.980Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#bt-run-btn').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"submit\" id=\"bt-run-btn\" class=\"btn btn--primary\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:25:41.600Z"
     },
     {
       "browser": "webkit",
@@ -170,12 +155,12 @@
       "selector": "#bt-dl-form-btn",
       "label": "Download Data",
       "trigger_type": "click",
-      "status": "MISSING",
-      "reason": "No observable request/navigation/state/modal effect after click.",
+      "status": "FAIL",
+      "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "",
-      "timestamp": "2026-04-06T22:45:10.222Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#bt-dl-form-btn').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" id=\"bt-dl-form-btn\" class=\"btn btn--secondary\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:25:42.841Z"
     },
     {
       "browser": "webkit",
@@ -188,7 +173,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:45:11.498Z"
+      "timestamp": "2026-04-06T23:25:44.004Z"
     },
     {
       "browser": "webkit",
@@ -196,17 +181,12 @@
       "selector": "#bt-delete-btn",
       "label": "Delete Run",
       "trigger_type": "click",
-      "status": "PASS",
-      "reason": "Trigger-to-end observable effect detected.",
-      "observed_requests": [
-        "GET /healthz"
-      ],
-      "observed_effects": [
-        "request",
-        "modal-open"
-      ],
-      "error": "",
-      "timestamp": "2026-04-06T22:45:11.502Z"
+      "status": "FAIL",
+      "reason": "Unhandled click execution error.",
+      "observed_requests": [],
+      "observed_effects": [],
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#bt-delete-btn').first()\u001b[22m\n\u001b[2m    - locator resolved to <button id=\"bt-delete-btn\" class=\"btn btn--danger btn--sm\">Delete Run</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:25:44.015Z"
     },
     {
       "browser": "webkit",
@@ -218,8 +198,8 @@
       "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(1)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button title=\"\" type=\"button\" data-state=\"idle\" aria-busy=\"false\" class=\"btn btn--primary btn--sm\" data-intelligence-action=\"rerun\">Improve & Run</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"modal__backdrop\"></div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515512687\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:12.832Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(1)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button title=\"\" type=\"button\" data-state=\"idle\" aria-busy=\"false\" class=\"btn btn--primary btn--sm\" data-intelligence-action=\"rerun\">Improve & Run</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:25:45.142Z"
     },
     {
       "browser": "webkit",
@@ -231,8 +211,8 @@
       "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(2)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" class=\"btn btn--secondary btn--sm\" data-intelligence-action=\"explore\">Open Full Explorer</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"modal__backdrop\"></div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515512687\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:14.699Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(2)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" class=\"btn btn--secondary btn--sm\" data-intelligence-action=\"explore\">Open Full Explorer</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:25:46.372Z"
     },
     {
       "browser": "webkit",
@@ -245,7 +225,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:45:16.545Z"
+      "timestamp": "2026-04-06T23:25:47.571Z"
     },
     {
       "browser": "webkit",
@@ -257,8 +237,8 @@
       "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(2)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button title=\"\" type=\"button\" data-quick-action=\"run\" class=\"btn btn--secondary btn--sm\">Run Again</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"modal__footer\">…</div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515512687\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:16.555Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(2)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button title=\"\" type=\"button\" data-quick-action=\"run\" class=\"btn btn--secondary btn--sm\">Run Again</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:25:47.591Z"
     },
     {
       "browser": "webkit",
@@ -271,7 +251,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:45:18.448Z"
+      "timestamp": "2026-04-06T23:25:48.803Z"
     },
     {
       "browser": "webkit",
@@ -284,7 +264,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:45:18.459Z"
+      "timestamp": "2026-04-06T23:25:48.817Z"
     },
     {
       "browser": "webkit",
@@ -292,12 +272,14 @@
       "selector": "#ho-pairs-all",
       "label": "All",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#ho-pairs-all').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" id=\"ho-pairs-all\" class=\"pairs-picker__action\">All</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__footer\">…</div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515512687\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:18.509Z"
+      "observed_effects": [
+        "page-state-change"
+      ],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:48.897Z"
     },
     {
       "browser": "webkit",
@@ -305,12 +287,17 @@
       "selector": "#ho-pairs-none",
       "label": "Clear",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
-      "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#ho-pairs-none').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" id=\"ho-pairs-none\" class=\"pairs-picker__action\">Clear</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__footer\">…</div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515512687\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:20.465Z"
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
+      "observed_requests": [
+        "GET /healthz"
+      ],
+      "observed_effects": [
+        "request",
+        "page-state-change"
+      ],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:50.160Z"
     },
     {
       "browser": "webkit",
@@ -318,12 +305,99 @@
       "selector": "#ho-pairs-favs",
       "label": "★ Favs",
       "trigger_type": "click",
+      "status": "MISSING",
+      "reason": "No observable request/navigation/state/modal effect after click.",
+      "observed_requests": [],
+      "observed_effects": [],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:51.183Z"
+    },
+    {
+      "browser": "webkit",
+      "page": "hyperopt",
+      "selector": ".page-view.active div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > button:nth-of-type(1)",
+      "label": "♥",
+      "trigger_type": "click",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
+      "observed_requests": [],
+      "observed_effects": [
+        "state-change"
+      ],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:52.222Z"
+    },
+    {
+      "browser": "webkit",
+      "page": "hyperopt",
+      "selector": ".page-view.active div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(3) > button:nth-of-type(1)",
+      "label": "♥",
+      "trigger_type": "click",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
+      "observed_requests": [],
+      "observed_effects": [
+        "state-change"
+      ],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:53.288Z"
+    },
+    {
+      "browser": "webkit",
+      "page": "hyperopt",
+      "selector": ".page-view.active div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(5) > button:nth-of-type(1)",
+      "label": "♥",
+      "trigger_type": "click",
+      "status": "MISSING",
+      "reason": "No observable request/navigation/state/modal effect after click.",
+      "observed_requests": [],
+      "observed_effects": [],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:54.351Z"
+    },
+    {
+      "browser": "webkit",
+      "page": "hyperopt",
+      "selector": ".page-view.active div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(7) > button:nth-of-type(1)",
+      "label": "♥",
+      "trigger_type": "click",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
+      "observed_requests": [
+        "GET /healthz"
+      ],
+      "observed_effects": [
+        "request",
+        "state-change"
+      ],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:55.365Z"
+    },
+    {
+      "browser": "webkit",
+      "page": "hyperopt",
+      "selector": ".page-view.active div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(8) > button:nth-of-type(1)",
+      "label": "♥",
+      "trigger_type": "click",
+      "status": "MISSING",
+      "reason": "No observable request/navigation/state/modal effect after click.",
+      "observed_requests": [],
+      "observed_effects": [],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:56.378Z"
+    },
+    {
+      "browser": "webkit",
+      "page": "hyperopt",
+      "selector": ".page-view.active div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(9) > button:nth-of-type(1)",
+      "label": "♥",
+      "trigger_type": "click",
       "status": "FAIL",
       "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#ho-pairs-favs').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" id=\"ho-pairs-favs\" class=\"pairs-picker__action\">★ Favs</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__footer\">…</div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515512687\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:22.232Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(9) > button:nth-of-type(1)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" title=\"Favourite\" data-fav=\"SOL/USDT\" class=\"pairs-row__fav\">♥</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is not stable\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:25:57.383Z"
     },
     {
       "browser": "webkit",
@@ -331,12 +405,12 @@
       "selector": "#ho-run-btn",
       "label": "Start Hyperopt",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "MISSING",
+      "reason": "No observable request/navigation/state/modal effect after click.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#ho-run-btn').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"submit\" id=\"ho-run-btn\" class=\"btn btn--primary\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__backdrop\"></div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515512687\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:23.919Z"
+      "error": "",
+      "timestamp": "2026-04-06T23:25:58.356Z"
     },
     {
       "browser": "webkit",
@@ -344,12 +418,12 @@
       "selector": "#ho-dl-form-btn",
       "label": "Download Data",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "MISSING",
+      "reason": "No observable request/navigation/state/modal effect after click.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#ho-dl-form-btn').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" id=\"ho-dl-form-btn\" class=\"btn btn--secondary\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__backdrop\"></div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515512687\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:25.672Z"
+      "error": "",
+      "timestamp": "2026-04-06T23:25:59.373Z"
     },
     {
       "browser": "webkit",
@@ -362,7 +436,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:45:27.422Z"
+      "timestamp": "2026-04-06T23:26:00.437Z"
     },
     {
       "browser": "webkit",
@@ -375,18 +449,18 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:45:27.428Z"
+      "timestamp": "2026-04-06T23:26:00.447Z"
     },
     {
       "browser": "webkit",
       "page": "strategy-lab",
       "selector": "(none)",
       "label": "(no controls found)",
-      "status": "MISSING",
+      "status": "BLOCKED",
       "reason": "No actionable controls were discovered in active view.",
       "observed_requests": [],
       "observed_effects": [],
-      "timestamp": "2026-04-06T22:45:27.492Z"
+      "timestamp": "2026-04-06T23:26:00.502Z"
     },
     {
       "browser": "webkit",
@@ -398,8 +472,8 @@
       "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#jobs-refresh-btn').first()\u001b[22m\n\u001b[2m    - locator resolved to <button id=\"jobs-refresh-btn\" class=\"btn btn--secondary btn--sm\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__backdrop\"></div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515512687\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:27.540Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#jobs-refresh-btn').first()\u001b[22m\n\u001b[2m    - locator resolved to <button id=\"jobs-refresh-btn\" class=\"btn btn--secondary btn--sm\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n",
+      "timestamp": "2026-04-06T23:26:00.543Z"
     },
     {
       "browser": "webkit",
@@ -411,8 +485,8 @@
       "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > table:nth-of-type(1) > tbody:nth-of-type(1) > tr:nth-of-type(1) > td:nth-of-type(4) > button:nth-of-type(1)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button data-detail-btn=\"\" title=\"View Details\" data-run-id=\"bt_run_completed_1\" class=\"results-table__btn results-table__btn--view\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"result-explorer__hero-stat result-explorer__hero-stat--green\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:29.599Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > table:nth-of-type(1) > tbody:nth-of-type(1) > tr:nth-of-type(1) > td:nth-of-type(4) > button:nth-of-type(1)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button data-detail-btn=\"\" title=\"View Details\" data-run-id=\"bt_run_completed_1\" class=\"results-table__btn results-table__btn--view\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:26:02.888Z"
     },
     {
       "browser": "webkit",
@@ -424,8 +498,8 @@
       "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > table:nth-of-type(1) > tbody:nth-of-type(1) > tr:nth-of-type(1) > td:nth-of-type(4) > button:nth-of-type(2)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button data-apply-btn=\"\" title=\"Apply Configuration\" data-run-id=\"bt_run_completed_1\" class=\"results-table__btn results-table__btn--apply\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"result-explorer__hero-stat result-explorer__hero-stat--green\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:32.088Z"
+      "error": "locator.scrollIntoViewIfNeeded: Element is not attached to the DOM\nCall log:\n\u001b[2m  - attempting scroll into view action\u001b[22m\n\u001b[2m    - waiting for element to be stable\u001b[22m\n\u001b[2m    - element is not stable\u001b[22m\n\u001b[2m  - retrying scroll into view action\u001b[22m\n\u001b[2m    - waiting for element to be stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:26:06.455Z"
     },
     {
       "browser": "webkit",
@@ -437,8 +511,8 @@
       "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#s-or-add').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" id=\"s-or-add\" class=\"settings-api-btn\">+ Add key</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"result-explorer__hero\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:34.091Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#s-or-add').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" id=\"s-or-add\" class=\"settings-api-btn\">+ Add key</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:26:09.880Z"
     },
     {
       "browser": "webkit",
@@ -450,8 +524,8 @@
       "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#s-or-clear').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" id=\"s-or-clear\" class=\"settings-api-btn settings-api-btn--danger\">Clear</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"result-explorer__hero\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:36.467Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#s-or-clear').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" id=\"s-or-clear\" class=\"settings-api-btn settings-api-btn--danger\">Clear</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:26:13.446Z"
     },
     {
       "browser": "webkit",
@@ -463,8 +537,8 @@
       "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(1)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" data-action=\"toggle\" title=\"Show/hide key\" class=\"settings-api-btn\">Show</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"section-heading\">Performance</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:38.482Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(1)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" data-action=\"toggle\" title=\"Show/hide key\" class=\"settings-api-btn\">Show</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:26:17.029Z"
     },
     {
       "browser": "webkit",
@@ -476,8 +550,8 @@
       "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(2)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" data-action=\"test\" title=\"Test API key\" class=\"settings-api-btn settings-api-btn--test\">Test</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"section-heading\">Performance</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:40.466Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(2)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" data-action=\"test\" title=\"Test API key\" class=\"settings-api-btn settings-api-btn--test\">Test</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:26:20.644Z"
     },
     {
       "browser": "webkit",
@@ -489,8 +563,8 @@
       "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(3)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" title=\"Remove key\" data-action=\"remove\" class=\"settings-api-btn settings-api-btn--danger\">Remove</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"section-heading\">Performance</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:42.559Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(3)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" title=\"Remove key\" data-action=\"remove\" class=\"settings-api-btn settings-api-btn--danger\">Remove</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:26:24.254Z"
     },
     {
       "browser": "webkit",
@@ -502,8 +576,8 @@
       "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(1)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-pressed=\"true\" data-theme-preset=\"ocean\" class=\"theme-preset-card is-active\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <section data-tab-panel=\"overview\" class=\"tab-panel tab-panel--active\">…</section> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:44.572Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(1)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-pressed=\"true\" data-theme-preset=\"ocean\" class=\"theme-preset-card is-active\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:26:27.908Z"
     },
     {
       "browser": "webkit",
@@ -515,8 +589,8 @@
       "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(2)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-pressed=\"false\" data-theme-preset=\"ember\" class=\"theme-preset-card \">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <section data-tab-panel=\"overview\" class=\"tab-panel tab-panel--active\">…</section> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:46.615Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(2)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-pressed=\"false\" data-theme-preset=\"ember\" class=\"theme-preset-card \">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:26:31.564Z"
     },
     {
       "browser": "webkit",
@@ -528,8 +602,8 @@
       "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(3)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-pressed=\"false\" class=\"theme-preset-card \" data-theme-preset=\"aurora\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <section data-tab-panel=\"overview\" class=\"tab-panel tab-panel--active\">…</section> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:48.749Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(3)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-pressed=\"false\" class=\"theme-preset-card \" data-theme-preset=\"aurora\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:26:35.110Z"
     },
     {
       "browser": "webkit",
@@ -541,8 +615,8 @@
       "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(4)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-pressed=\"false\" class=\"theme-preset-card \" data-theme-preset=\"cobalt\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"detail-item result-explorer__metric-card result-explorer__metric-card--muted\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:50.779Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(4)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-pressed=\"false\" class=\"theme-preset-card \" data-theme-preset=\"cobalt\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:26:38.689Z"
     },
     {
       "browser": "webkit",
@@ -554,8 +628,8 @@
       "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(5)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-pressed=\"false\" data-theme-preset=\"ruby\" class=\"theme-preset-card \">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"detail-item result-explorer__metric-card result-explorer__metric-card--muted\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:52.884Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(5)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-pressed=\"false\" data-theme-preset=\"ruby\" class=\"theme-preset-card \">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:26:42.307Z"
     },
     {
       "browser": "webkit",
@@ -567,8 +641,8 @@
       "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(6)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-pressed=\"false\" class=\"theme-preset-card \" data-theme-preset=\"amethyst\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"detail-item result-explorer__metric-card result-explorer__metric-card--muted\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:54.990Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(6)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-pressed=\"false\" class=\"theme-preset-card \" data-theme-preset=\"amethyst\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:26:45.931Z"
     },
     {
       "browser": "webkit",
@@ -580,8 +654,8 @@
       "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(7)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-pressed=\"false\" class=\"theme-preset-card \" data-theme-preset=\"sunset\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"section-heading\">Wallet & Exposure</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:57.037Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(7)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-pressed=\"false\" class=\"theme-preset-card \" data-theme-preset=\"sunset\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:26:49.476Z"
     },
     {
       "browser": "webkit",
@@ -593,8 +667,8 @@
       "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(8)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-pressed=\"false\" class=\"theme-preset-card \" data-theme-preset=\"forest\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"section-heading\">Wallet & Exposure</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:59.124Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(8)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-pressed=\"false\" class=\"theme-preset-card \" data-theme-preset=\"forest\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:26:53.003Z"
     },
     {
       "browser": "webkit",
@@ -606,8 +680,8 @@
       "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(9)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-pressed=\"false\" class=\"theme-preset-card \" data-theme-preset=\"sakura\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"section-heading\">Wallet & Exposure</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:46:01.125Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(9)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-pressed=\"false\" class=\"theme-preset-card \" data-theme-preset=\"sakura\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:26:56.648Z"
     },
     {
       "browser": "webkit",
@@ -619,8 +693,8 @@
       "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(10)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-pressed=\"false\" class=\"theme-preset-card \" data-theme-preset=\"midnight\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"detail-item result-explorer__metric-card result-explorer__metric-card--muted\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:46:03.169Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(10)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-pressed=\"false\" class=\"theme-preset-card \" data-theme-preset=\"midnight\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:27:00.154Z"
     },
     {
       "browser": "webkit",
@@ -632,8 +706,8 @@
       "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#s-save-preset-btn').first()\u001b[22m\n\u001b[2m    - locator resolved to <button id=\"s-save-preset-btn\" class=\"btn btn--secondary btn--sm\">Save Current as Preset</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <span class=\"detail-label\">SQN</span> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:46:05.090Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#s-save-preset-btn').first()\u001b[22m\n\u001b[2m    - locator resolved to <button id=\"s-save-preset-btn\" class=\"btn btn--secondary btn--sm\">Save Current as Preset</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:27:03.780Z"
     },
     {
       "browser": "webkit",
@@ -645,8 +719,8 @@
       "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#master-save-btn').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" id=\"master-save-btn\" class=\"btn btn--primary btn--lg\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"detail-item result-explorer__metric-card \">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:46:07.130Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#master-save-btn').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" id=\"master-save-btn\" class=\"btn btn--primary btn--lg\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:27:07.380Z"
     },
     {
       "browser": "webkit",
@@ -658,8 +732,8 @@
       "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(1)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" class=\"btn btn--primary\" data-ai-workspace-action=\"focus\">Focus Composer</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"result-explorer__hero-main\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:46:09.211Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(1)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" class=\"btn btn--primary\" data-ai-workspace-action=\"focus\">Focus Composer</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:27:11.059Z"
     },
     {
       "browser": "webkit",
@@ -671,8 +745,8 @@
       "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(2)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"btn\" type=\"button\" data-ai-workspace-action=\"new\">New Conversation</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"result-explorer__hero-main\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:46:11.703Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(2)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"btn\" type=\"button\" data-ai-workspace-action=\"new\">New Conversation</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:27:14.815Z"
     },
     {
       "browser": "webkit",
@@ -684,8 +758,8 @@
       "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(3)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"btn\" type=\"button\" data-ai-workspace-action=\"inject\">Inject Latest Backtest</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"result-explorer__hero\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:46:13.990Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(3)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"btn\" type=\"button\" data-ai-workspace-action=\"inject\">Inject Latest Backtest</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:27:18.485Z"
     },
     {
       "browser": "webkit",
@@ -697,8 +771,8 @@
       "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#ai-conv-toggle').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" id=\"ai-conv-toggle\" aria-expanded=\"false\" class=\"ai-conv-toggle\" title=\"Show conversations\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"result-explorer__hero\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:46:16.218Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#ai-conv-toggle').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" id=\"ai-conv-toggle\" aria-expanded=\"false\" class=\"ai-conv-toggle\" title=\"Show conversations\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:27:22.253Z"
     },
     {
       "browser": "webkit",
@@ -710,8 +784,8 @@
       "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#ai-new-chat').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" id=\"ai-new-chat\" class=\"ai-new-chat-btn\" title=\"New conversation\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"result-explorer__hero\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:46:18.493Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#ai-new-chat').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" id=\"ai-new-chat\" class=\"ai-new-chat-btn\" title=\"New conversation\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:27:26.194Z"
     },
     {
       "browser": "webkit",
@@ -724,7 +798,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:46:20.585Z"
+      "timestamp": "2026-04-06T23:27:30.198Z"
     },
     {
       "browser": "webkit",
@@ -736,8 +810,8 @@
       "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#ai-btn-ollama').first()\u001b[22m\n\u001b[2m    - locator resolved to <button id=\"ai-btn-ollama\" data-provider=\"ollama\" class=\"ai-provider-btn\">Ollama</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"section-heading\">Performance</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:46:20.589Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#ai-btn-ollama').first()\u001b[22m\n\u001b[2m    - locator resolved to <button id=\"ai-btn-ollama\" data-provider=\"ollama\" class=\"ai-provider-btn\">Ollama</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:27:31.286Z"
     },
     {
       "browser": "webkit",
@@ -749,8 +823,8 @@
       "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#ai-btn-openrouter').first()\u001b[22m\n\u001b[2m    - locator resolved to <button id=\"ai-btn-openrouter\" data-provider=\"openrouter\" class=\"ai-provider-btn active\">OpenRouter</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"section-heading\">Performance</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:46:22.828Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#ai-btn-openrouter').first()\u001b[22m\n\u001b[2m    - locator resolved to <button id=\"ai-btn-openrouter\" data-provider=\"openrouter\" class=\"ai-provider-btn active\">OpenRouter</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:27:35.210Z"
     },
     {
       "browser": "webkit",
@@ -763,7 +837,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:46:25.087Z"
+      "timestamp": "2026-04-06T23:27:39.176Z"
     },
     {
       "browser": "webkit",
@@ -776,7 +850,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:46:25.101Z"
+      "timestamp": "2026-04-06T23:27:40.277Z"
     },
     {
       "browser": "webkit",
@@ -789,7 +863,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:46:25.108Z"
+      "timestamp": "2026-04-06T23:27:41.380Z"
     },
     {
       "browser": "webkit",
@@ -802,7 +876,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:46:25.113Z"
+      "timestamp": "2026-04-06T23:27:42.482Z"
     },
     {
       "browser": "webkit",
@@ -815,7 +889,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:46:25.116Z"
+      "timestamp": "2026-04-06T23:27:43.586Z"
     },
     {
       "browser": "webkit",
@@ -828,7 +902,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:46:25.121Z"
+      "timestamp": "2026-04-06T23:27:44.675Z"
     },
     {
       "browser": "webkit",
@@ -840,8 +914,8 @@
       "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#ai-inject-btn3').first()\u001b[22m\n\u001b[2m    - locator resolved to <button id=\"ai-inject-btn3\" class=\"ai-inject-btn\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <span class=\"text-muted\">N/A / N/A</span> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:46:25.126Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#ai-inject-btn3').first()\u001b[22m\n\u001b[2m    - locator resolved to <button id=\"ai-inject-btn3\" class=\"ai-inject-btn\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:27:45.763Z"
     },
     {
       "browser": "webkit",
@@ -854,7 +928,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:46:27.340Z"
+      "timestamp": "2026-04-06T23:27:49.705Z"
     },
     {
       "browser": "webkit",
@@ -867,7 +941,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:46:27.346Z"
+      "timestamp": "2026-04-06T23:27:50.795Z"
     },
     {
       "browser": "webkit",
@@ -879,8 +953,8 @@
       "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#ai-deep-panel-close').first()\u001b[22m\n\u001b[2m    - locator resolved to <button id=\"ai-deep-panel-close\" class=\"ai-deep-panel__close\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - element is outside of the viewport\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:46:27.350Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#ai-deep-panel-close').first()\u001b[22m\n\u001b[2m    - locator resolved to <button id=\"ai-deep-panel-close\" class=\"ai-deep-panel__close\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:27:51.898Z"
     },
     {
       "browser": "webkit",
@@ -892,8 +966,8 @@
       "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#evo-panel-close').first()\u001b[22m\n\u001b[2m    - locator resolved to <button id=\"evo-panel-close\" class=\"evo-panel__close\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - element is outside of the viewport\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:46:29.561Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#evo-panel-close').first()\u001b[22m\n\u001b[2m    - locator resolved to <button id=\"evo-panel-close\" class=\"evo-panel__close\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:27:55.588Z"
     },
     {
       "browser": "webkit",
@@ -905,8 +979,8 @@
       "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#evo-tab-config').first()\u001b[22m\n\u001b[2m    - locator resolved to <button data-tab=\"config\" id=\"evo-tab-config\" class=\"evo-tab active\">Configure</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - element is outside of the viewport\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:46:31.841Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#evo-tab-config').first()\u001b[22m\n\u001b[2m    - locator resolved to <button data-tab=\"config\" id=\"evo-tab-config\" class=\"evo-tab active\">Configure</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:27:59.356Z"
     },
     {
       "browser": "webkit",
@@ -918,8 +992,8 @@
       "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#evo-tab-running').first()\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"evo-tab\" data-tab=\"running\" id=\"evo-tab-running\">Running</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - element is outside of the viewport\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:46:34.007Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#evo-tab-running').first()\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"evo-tab\" data-tab=\"running\" id=\"evo-tab-running\">Running</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:28:03.168Z"
     },
     {
       "browser": "webkit",
@@ -931,8 +1005,8 @@
       "reason": "Unhandled click execution error.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#evo-tab-results').first()\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"evo-tab\" data-tab=\"results\" id=\"evo-tab-results\">Results</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - element is outside of the viewport\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
-      "timestamp": "2026-04-06T22:46:36.245Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#evo-tab-results').first()\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"evo-tab\" data-tab=\"results\" id=\"evo-tab-results\">Results</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+      "timestamp": "2026-04-06T23:28:07.017Z"
     },
     {
       "browser": "webkit",
@@ -945,7 +1019,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:46:38.431Z"
+      "timestamp": "2026-04-06T23:28:10.887Z"
     },
     {
       "browser": "webkit",
@@ -958,7 +1032,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:46:38.439Z"
+      "timestamp": "2026-04-06T23:28:11.982Z"
     },
     {
       "browser": "webkit",
@@ -971,7 +1045,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:46:38.453Z"
+      "timestamp": "2026-04-06T23:28:13.073Z"
     },
     {
       "browser": "webkit",
@@ -984,7 +1058,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:46:38.463Z"
+      "timestamp": "2026-04-06T23:28:14.181Z"
     }
   ]
 }

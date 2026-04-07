@@ -1,5 +1,5 @@
 {
-  "updated_at": 1775490956.686458,
+  "updated_at": 1775517579.3420928,
   "roles": {
     "composer": {
       "openrouter/model:free": {
@@ -54,13 +54,13 @@
         "updated_at": 1775471686.6646438
       },
       "nvidia/nemotron-3-nano-30b-a3b:free": {
-        "requests": 5.0,
-        "successes": 5.0,
+        "requests": 8.0,
+        "successes": 8.0,
         "rate_limits": 0.0,
-        "latency_sum_ms": 111263.0,
-        "latency_samples": 5.0,
+        "latency_sum_ms": 152763.0,
+        "latency_samples": 8.0,
         "cooldown_until": 0.0,
-        "updated_at": 1775482107.2847097
+        "updated_at": 1775517579.3420928
       },
       "meta-llama/llama-3.2-1b-instruct:free": {
         "requests": 22.0,

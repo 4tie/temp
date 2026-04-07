@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-04-06T22:45:58.386Z",
+  "generated_at": "2026-04-06T23:25:47.580Z",
   "browser": "firefox",
   "totals": {
-    "PASS": 5,
-    "FAIL": 45,
-    "BLOCKED": 19,
-    "MISSING": 9
+    "PASS": 43,
+    "FAIL": 0,
+    "BLOCKED": 21,
+    "MISSING": 14
   },
   "rows": [
     {
@@ -13,11 +13,11 @@
       "page": "dashboard",
       "selector": "(none)",
       "label": "(no controls found)",
-      "status": "MISSING",
+      "status": "BLOCKED",
       "reason": "No actionable controls were discovered in active view.",
       "observed_requests": [],
       "observed_effects": [],
-      "timestamp": "2026-04-06T22:44:57.779Z"
+      "timestamp": "2026-04-06T23:25:31.906Z"
     },
     {
       "browser": "firefox",
@@ -25,12 +25,14 @@
       "selector": "#bt-pairs-all",
       "label": "All",
       "trigger_type": "click",
-      "status": "MISSING",
-      "reason": "No observable request/navigation/state/modal effect after click.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
+      "observed_effects": [
+        "page-state-change"
+      ],
       "error": "",
-      "timestamp": "2026-04-06T22:44:57.834Z"
+      "timestamp": "2026-04-06T23:25:31.976Z"
     },
     {
       "browser": "firefox",
@@ -38,12 +40,14 @@
       "selector": "#bt-pairs-none",
       "label": "Clear",
       "trigger_type": "click",
-      "status": "MISSING",
-      "reason": "No observable request/navigation/state/modal effect after click.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
+      "observed_effects": [
+        "page-state-change"
+      ],
       "error": "",
-      "timestamp": "2026-04-06T22:44:58.269Z"
+      "timestamp": "2026-04-06T23:25:32.348Z"
     },
     {
       "browser": "firefox",
@@ -56,7 +60,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:44:58.465Z"
+      "timestamp": "2026-04-06T23:25:32.521Z"
     },
     {
       "browser": "firefox",
@@ -71,7 +75,7 @@
         "state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-06T22:44:58.667Z"
+      "timestamp": "2026-04-06T23:25:32.698Z"
     },
     {
       "browser": "firefox",
@@ -86,7 +90,7 @@
         "state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-06T22:44:58.881Z"
+      "timestamp": "2026-04-06T23:25:32.887Z"
     },
     {
       "browser": "firefox",
@@ -99,7 +103,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:44:59.108Z"
+      "timestamp": "2026-04-06T23:25:33.065Z"
     },
     {
       "browser": "firefox",
@@ -114,7 +118,7 @@
         "state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-06T22:44:59.316Z"
+      "timestamp": "2026-04-06T23:25:33.251Z"
     },
     {
       "browser": "firefox",
@@ -127,7 +131,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:44:59.532Z"
+      "timestamp": "2026-04-06T23:25:33.432Z"
     },
     {
       "browser": "firefox",
@@ -142,7 +146,7 @@
         "state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-06T22:44:59.774Z"
+      "timestamp": "2026-04-06T23:25:33.617Z"
     },
     {
       "browser": "firefox",
@@ -155,7 +159,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:45:00.008Z"
+      "timestamp": "2026-04-06T23:25:33.798Z"
     },
     {
       "browser": "firefox",
@@ -168,7 +172,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:45:00.220Z"
+      "timestamp": "2026-04-06T23:25:33.982Z"
     },
     {
       "browser": "firefox",
@@ -181,7 +185,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:45:00.436Z"
+      "timestamp": "2026-04-06T23:25:34.151Z"
     },
     {
       "browser": "firefox",
@@ -193,10 +197,11 @@
       "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
       "observed_effects": [
+        "page-state-change",
         "modal-open"
       ],
       "error": "",
-      "timestamp": "2026-04-06T22:45:00.441Z"
+      "timestamp": "2026-04-06T23:25:34.160Z"
     },
     {
       "browser": "firefox",
@@ -204,12 +209,20 @@
       "selector": ".page-view.active div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(1)",
       "label": "Improve & Run",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
-      "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(1)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button title=\"\" type=\"button\" data-state=\"idle\" aria-busy=\"false\" class=\"btn btn--primary btn--sm\" data-intelligence-action=\"rerun\">Improve & Run</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__backdrop\"></div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__backdrop\"></div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__backdrop\"></div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:00.652Z"
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
+      "observed_requests": [
+        "GET /pairs",
+        "POST /data-coverage",
+        "POST /run"
+      ],
+      "observed_effects": [
+        "request",
+        "state-change",
+        "page-state-change"
+      ],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:34.577Z"
     },
     {
       "browser": "firefox",
@@ -217,12 +230,12 @@
       "selector": ".page-view.active div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(2)",
       "label": "Open Full Explorer",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "BLOCKED",
+      "reason": "Control exists but is not visible in current state.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(2)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" class=\"btn btn--secondary btn--sm\" data-intelligence-action=\"explore\">Open Full Explorer</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__backdrop\"></div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"modal__body \">…</div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  2 × retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__backdrop\"></div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"modal__backdrop\"></div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:01.945Z"
+      "error": "",
+      "timestamp": "2026-04-06T23:25:34.753Z"
     },
     {
       "browser": "firefox",
@@ -230,12 +243,12 @@
       "selector": ".page-view.active div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(1)",
       "label": "Save and Run",
       "trigger_type": "click",
-      "status": "BLOCKED",
-      "reason": "Control is disabled due to workflow preconditions.",
+      "status": "MISSING",
+      "reason": "Control selector resolved to no element at execution time.",
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:45:03.186Z"
+      "timestamp": "2026-04-06T23:25:34.764Z"
     },
     {
       "browser": "firefox",
@@ -243,12 +256,12 @@
       "selector": ".page-view.active div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(2)",
       "label": "Run Again",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "MISSING",
+      "reason": "Control selector resolved to no element at execution time.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(2)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button title=\"\" type=\"button\" data-quick-action=\"run\" class=\"btn btn--secondary btn--sm\">Run Again</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"modal__footer\">…</div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"modal__backdrop\"></div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__footer\">…</div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"modal__footer\">…</div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"modal__backdrop\"></div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:03.197Z"
+      "error": "",
+      "timestamp": "2026-04-06T23:25:34.771Z"
     },
     {
       "browser": "firefox",
@@ -256,12 +269,12 @@
       "selector": ".page-view.active div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(3)",
       "label": "Save to Strategy",
       "trigger_type": "click",
-      "status": "BLOCKED",
-      "reason": "Control is disabled due to workflow preconditions.",
+      "status": "MISSING",
+      "reason": "Control selector resolved to no element at execution time.",
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:45:04.447Z"
+      "timestamp": "2026-04-06T23:25:34.779Z"
     },
     {
       "browser": "firefox",
@@ -269,12 +282,12 @@
       "selector": ".page-view.active div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(4)",
       "label": "Reset",
       "trigger_type": "click",
-      "status": "BLOCKED",
-      "reason": "Control is disabled due to workflow preconditions.",
+      "status": "MISSING",
+      "reason": "Control selector resolved to no element at execution time.",
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:45:04.458Z"
+      "timestamp": "2026-04-06T23:25:34.785Z"
     },
     {
       "browser": "firefox",
@@ -282,12 +295,14 @@
       "selector": "#ho-pairs-all",
       "label": "All",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#ho-pairs-all').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" id=\"ho-pairs-all\" class=\"pairs-picker__action\">All</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__footer\">…</div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <p class=\"modal__text\">Delete run bt_run_completed_1? This cannot be und…</p> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  2 × retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__backdrop\"></div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"modal__footer\">…</div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:04.509Z"
+      "observed_effects": [
+        "page-state-change"
+      ],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:34.837Z"
     },
     {
       "browser": "firefox",
@@ -295,12 +310,14 @@
       "selector": "#ho-pairs-none",
       "label": "Clear",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#ho-pairs-none').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" id=\"ho-pairs-none\" class=\"pairs-picker__action\">Clear</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__footer\">…</div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <p class=\"modal__text\">Delete run bt_run_completed_1? This cannot be und…</p> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  2 × retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__backdrop\"></div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"modal__footer\">…</div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:05.999Z"
+      "observed_effects": [
+        "page-state-change"
+      ],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:35.239Z"
     },
     {
       "browser": "firefox",
@@ -308,12 +325,14 @@
       "selector": "#ho-pairs-favs",
       "label": "★ Favs",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#ho-pairs-favs').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" id=\"ho-pairs-favs\" class=\"pairs-picker__action\">★ Favs</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__footer\">…</div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <p class=\"modal__text\">Delete run bt_run_completed_1? This cannot be und…</p> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  2 × retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__backdrop\"></div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"modal__footer\">…</div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:07.257Z"
+      "observed_effects": [
+        "page-state-change"
+      ],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:35.406Z"
     },
     {
       "browser": "firefox",
@@ -321,12 +340,14 @@
       "selector": ".page-view.active div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > button:nth-of-type(1)",
       "label": "♥",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > button:nth-of-type(1)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" title=\"Favourite\" data-fav=\"BTC/USDT\" class=\"pairs-row__fav pairs-row__fav--active\">♥</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__backdrop\"></div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__backdrop\"></div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__backdrop\"></div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:08.503Z"
+      "observed_effects": [
+        "state-change"
+      ],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:35.576Z"
     },
     {
       "browser": "firefox",
@@ -334,12 +355,14 @@
       "selector": ".page-view.active div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(3) > button:nth-of-type(1)",
       "label": "♥",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(3) > button:nth-of-type(1)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" title=\"Favourite\" data-fav=\"SOL/USDT\" class=\"pairs-row__fav pairs-row__fav--active\">♥</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__backdrop\"></div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__backdrop\"></div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__backdrop\"></div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:09.746Z"
+      "observed_effects": [
+        "state-change"
+      ],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:35.745Z"
     },
     {
       "browser": "firefox",
@@ -347,12 +370,14 @@
       "selector": ".page-view.active div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(5) > button:nth-of-type(1)",
       "label": "♥",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(5) > button:nth-of-type(1)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" title=\"Favourite\" data-fav=\"ETH/USDT\" class=\"pairs-row__fav\">♥</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__backdrop\"></div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__backdrop\"></div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__backdrop\"></div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:10.991Z"
+      "observed_effects": [
+        "state-change"
+      ],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:35.912Z"
     },
     {
       "browser": "firefox",
@@ -360,12 +385,12 @@
       "selector": ".page-view.active div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(7) > button:nth-of-type(1)",
       "label": "♥",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "MISSING",
+      "reason": "No observable request/navigation/state/modal effect after click.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(7) > button:nth-of-type(1)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" title=\"Favourite\" data-fav=\"ETH/USDT\" class=\"pairs-row__fav\">♥</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__backdrop\"></div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__backdrop\"></div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__backdrop\"></div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:12.237Z"
+      "error": "",
+      "timestamp": "2026-04-06T23:25:36.093Z"
     },
     {
       "browser": "firefox",
@@ -373,12 +398,15 @@
       "selector": "#ho-run-btn",
       "label": "Start Hyperopt",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#ho-run-btn').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"submit\" id=\"ho-run-btn\" class=\"btn btn--primary\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__backdrop\"></div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__backdrop\"></div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__backdrop\"></div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:13.480Z"
+      "observed_effects": [
+        "page-state-change",
+        "modal-open"
+      ],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:36.266Z"
     },
     {
       "browser": "firefox",
@@ -386,12 +414,15 @@
       "selector": "#ho-dl-form-btn",
       "label": "Download Data",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#ho-dl-form-btn').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" id=\"ho-dl-form-btn\" class=\"btn btn--secondary\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__backdrop\"></div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__backdrop\"></div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__backdrop\"></div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:14.729Z"
+      "observed_effects": [
+        "page-state-change",
+        "modal-open"
+      ],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:36.734Z"
     },
     {
       "browser": "firefox",
@@ -404,7 +435,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:45:15.975Z"
+      "timestamp": "2026-04-06T23:25:37.181Z"
     },
     {
       "browser": "firefox",
@@ -417,18 +448,18 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:45:15.982Z"
+      "timestamp": "2026-04-06T23:25:37.190Z"
     },
     {
       "browser": "firefox",
       "page": "strategy-lab",
       "selector": "(none)",
       "label": "(no controls found)",
-      "status": "MISSING",
+      "status": "BLOCKED",
       "reason": "No actionable controls were discovered in active view.",
       "observed_requests": [],
       "observed_effects": [],
-      "timestamp": "2026-04-06T22:45:16.024Z"
+      "timestamp": "2026-04-06T23:25:37.232Z"
     },
     {
       "browser": "firefox",
@@ -436,12 +467,18 @@
       "selector": "#jobs-refresh-btn",
       "label": "Refresh",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
-      "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#jobs-refresh-btn').first()\u001b[22m\n\u001b[2m    - locator resolved to <button id=\"jobs-refresh-btn\" class=\"btn btn--secondary btn--sm\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__backdrop\"></div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__backdrop\"></div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__backdrop\"></div> from <div class=\"modal modal--open\" id=\"modal-confirm-1775515500506\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:16.072Z"
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
+      "observed_requests": [
+        "GET /runs",
+        "GET /hyperopt/runs",
+        "GET /activity"
+      ],
+      "observed_effects": [
+        "request"
+      ],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:37.273Z"
     },
     {
       "browser": "firefox",
@@ -449,12 +486,19 @@
       "selector": ".page-view.active div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > table:nth-of-type(1) > tbody:nth-of-type(1) > tr:nth-of-type(1) > td:nth-of-type(4) > button:nth-of-type(1)",
       "label": "View",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
-      "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > table:nth-of-type(1) > tbody:nth-of-type(1) > tr:nth-of-type(1) > td:nth-of-type(4) > button:nth-of-type(1)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button data-detail-btn=\"\" title=\"View Details\" data-run-id=\"bt_run_completed_1\" class=\"results-table__btn results-table__btn--view\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"result-explorer__hero-stat result-explorer__hero-stat--green\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"result-explorer__hero-stat result-explorer__hero-stat--green\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"result-explorer__hero-stat result-explorer__hero-stat--green\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:17.604Z"
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
+      "observed_requests": [
+        "GET /runs/bt_run_completed_1",
+        "GET /runs/bt_run_completed_1/raw"
+      ],
+      "observed_effects": [
+        "request",
+        "page-state-change",
+        "modal-open"
+      ],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:38.024Z"
     },
     {
       "browser": "firefox",
@@ -462,12 +506,16 @@
       "selector": ".page-view.active div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > table:nth-of-type(1) > tbody:nth-of-type(1) > tr:nth-of-type(1) > td:nth-of-type(4) > button:nth-of-type(2)",
       "label": "Apply",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
-      "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > table:nth-of-type(1) > tbody:nth-of-type(1) > tr:nth-of-type(1) > td:nth-of-type(4) > button:nth-of-type(2)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button data-apply-btn=\"\" title=\"Apply Configuration\" data-run-id=\"bt_run_completed_1\" class=\"results-table__btn results-table__btn--apply\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"result-explorer__hero-stat result-explorer__hero-stat--green\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"result-explorer__hero-stat result-explorer__hero-stat--green\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"result-explorer__hero-stat result-explorer__hero-stat--green\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:19.017Z"
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
+      "observed_requests": [
+        "POST /runs/bt_run_completed_1/apply-config"
+      ],
+      "observed_effects": [
+        "request"
+      ],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:38.519Z"
     },
     {
       "browser": "firefox",
@@ -475,12 +523,14 @@
       "selector": "#s-or-add",
       "label": "+ Add key",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#s-or-add').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" id=\"s-or-add\" class=\"settings-api-btn\">+ Add key</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"result-explorer__hero\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"result-explorer__hero\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  2 × retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__header\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"result-explorer__hero\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:20.307Z"
+      "observed_effects": [
+        "page-state-change"
+      ],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:38.762Z"
     },
     {
       "browser": "firefox",
@@ -488,12 +538,14 @@
       "selector": "#s-or-clear",
       "label": "Clear",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#s-or-clear').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" id=\"s-or-clear\" class=\"settings-api-btn settings-api-btn--danger\">Clear</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"result-explorer__hero\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"result-explorer__hero\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  2 × retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__header\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"result-explorer__hero\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:21.847Z"
+      "observed_effects": [
+        "page-state-change"
+      ],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:39.219Z"
     },
     {
       "browser": "firefox",
@@ -501,12 +553,14 @@
       "selector": ".page-view.active div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(1)",
       "label": "Show",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(1)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" data-action=\"toggle\" title=\"Show/hide key\" class=\"settings-api-btn\">Show</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"section-heading\">Performance</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <section data-tab-panel=\"overview\" class=\"tab-panel tab-panel--active\">…</section> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  2 × retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__header\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"section-heading\">Performance</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:23.090Z"
+      "observed_effects": [
+        "state-change"
+      ],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:39.401Z"
     },
     {
       "browser": "firefox",
@@ -514,12 +568,18 @@
       "selector": ".page-view.active div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(2)",
       "label": "Test",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
-      "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(2)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" data-action=\"test\" title=\"Test API key\" class=\"settings-api-btn settings-api-btn--test\">Test</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"section-heading\">Performance</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <section data-tab-panel=\"overview\" class=\"tab-panel tab-panel--active\">…</section> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  2 × retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__header\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"section-heading\">Performance</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:24.335Z"
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
+      "observed_requests": [
+        "POST /settings/test-openrouter-key"
+      ],
+      "observed_effects": [
+        "request",
+        "state-change",
+        "page-state-change"
+      ],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:39.591Z"
     },
     {
       "browser": "firefox",
@@ -527,12 +587,14 @@
       "selector": ".page-view.active div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(3)",
       "label": "Remove",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > form:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(3)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" title=\"Remove key\" data-action=\"remove\" class=\"settings-api-btn settings-api-btn--danger\">Remove</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"section-heading\">Performance</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <section data-tab-panel=\"overview\" class=\"tab-panel tab-panel--active\">…</section> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  2 × retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__header\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"section-heading\">Performance</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:25.580Z"
+      "observed_effects": [
+        "page-state-change"
+      ],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:39.772Z"
     },
     {
       "browser": "firefox",
@@ -540,12 +602,12 @@
       "selector": ".page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(1)",
       "label": "Ocean Teal and cyan ACTIVE",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "MISSING",
+      "reason": "No observable request/navigation/state/modal effect after click.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(1)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-pressed=\"true\" data-theme-preset=\"ocean\" class=\"theme-preset-card is-active\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <section data-tab-panel=\"overview\" class=\"tab-panel tab-panel--active\">…</section> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"detail-grid\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <section data-tab-panel=\"overview\" class=\"tab-panel tab-panel--active\">…</section> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  2 × retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"result-explorer__hero\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"detail-grid\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:26.840Z"
+      "error": "",
+      "timestamp": "2026-04-06T23:25:39.959Z"
     },
     {
       "browser": "firefox",
@@ -553,12 +615,14 @@
       "selector": ".page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(2)",
       "label": "Ember Amber and coral",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(2)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-pressed=\"false\" data-theme-preset=\"ember\" class=\"theme-preset-card \">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"detail-grid\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <section data-tab-panel=\"overview\" class=\"tab-panel tab-panel--active\">…</section> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  2 × retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"result-explorer__hero\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"detail-grid\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:28.082Z"
+      "observed_effects": [
+        "state-change"
+      ],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:40.140Z"
     },
     {
       "browser": "firefox",
@@ -566,12 +630,14 @@
       "selector": ".page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(3)",
       "label": "Aurora Green and mint",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(3)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-pressed=\"false\" class=\"theme-preset-card \" data-theme-preset=\"aurora\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"detail-grid\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <section data-tab-panel=\"overview\" class=\"tab-panel tab-panel--active\">…</section> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  2 × retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"result-explorer__hero\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"detail-grid\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:29.330Z"
+      "observed_effects": [
+        "state-change"
+      ],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:40.326Z"
     },
     {
       "browser": "firefox",
@@ -579,12 +645,14 @@
       "selector": ".page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(4)",
       "label": "Cobalt Blue and ice",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(4)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-pressed=\"false\" class=\"theme-preset-card \" data-theme-preset=\"cobalt\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <section data-tab-panel=\"overview\" class=\"tab-panel tab-panel--active\">…</section> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"detail-grid\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <section data-tab-panel=\"overview\" class=\"tab-panel tab-panel--active\">…</section> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  2 × retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"result-explorer__hero-main\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"detail-grid\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:30.579Z"
+      "observed_effects": [
+        "state-change"
+      ],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:40.515Z"
     },
     {
       "browser": "firefox",
@@ -592,12 +660,14 @@
       "selector": ".page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(5)",
       "label": "Ruby Rose and magenta",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(5)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-pressed=\"false\" data-theme-preset=\"ruby\" class=\"theme-preset-card \">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"detail-grid\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <section data-tab-panel=\"overview\" class=\"tab-panel tab-panel--active\">…</section> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  2 × retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"result-explorer__hero-main\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"detail-grid\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:31.828Z"
+      "observed_effects": [
+        "state-change"
+      ],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:40.698Z"
     },
     {
       "browser": "firefox",
@@ -605,12 +675,14 @@
       "selector": ".page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(6)",
       "label": "Amethyst Purple and lavender",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(6)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-pressed=\"false\" class=\"theme-preset-card \" data-theme-preset=\"amethyst\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"detail-grid\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <section data-tab-panel=\"overview\" class=\"tab-panel tab-panel--active\">…</section> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  2 × retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"result-explorer__hero-main\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"detail-grid\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:33.071Z"
+      "observed_effects": [
+        "state-change"
+      ],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:40.912Z"
     },
     {
       "browser": "firefox",
@@ -618,12 +690,14 @@
       "selector": ".page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(7)",
       "label": "Sunset Orange and peach",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(7)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-pressed=\"false\" class=\"theme-preset-card \" data-theme-preset=\"sunset\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <section data-tab-panel=\"overview\" class=\"tab-panel tab-panel--active\">…</section> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"detail-grid\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <section data-tab-panel=\"overview\" class=\"tab-panel tab-panel--active\">…</section> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  2 × retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <span class=\"result-explorer__hero-value text-green\">+1.00%</span> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"detail-grid\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:34.318Z"
+      "observed_effects": [
+        "state-change"
+      ],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:41.097Z"
     },
     {
       "browser": "firefox",
@@ -631,12 +705,14 @@
       "selector": ".page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(8)",
       "label": "Forest Deep green and moss",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(8)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-pressed=\"false\" class=\"theme-preset-card \" data-theme-preset=\"forest\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"detail-grid\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <section data-tab-panel=\"overview\" class=\"tab-panel tab-panel--active\">…</section> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  2 × retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"result-explorer__hero-stats\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"detail-grid\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:35.564Z"
+      "observed_effects": [
+        "state-change"
+      ],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:41.295Z"
     },
     {
       "browser": "firefox",
@@ -644,12 +720,14 @@
       "selector": ".page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(9)",
       "label": "Sakura Pink and cherry blossom",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(9)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-pressed=\"false\" class=\"theme-preset-card \" data-theme-preset=\"sakura\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"detail-grid\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <section data-tab-panel=\"overview\" class=\"tab-panel tab-panel--active\">…</section> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  2 × retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <span class=\"result-explorer__hero-value text-green\">55.0%</span> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"detail-grid\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:36.822Z"
+      "observed_effects": [
+        "state-change"
+      ],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:41.475Z"
     },
     {
       "browser": "firefox",
@@ -657,12 +735,14 @@
       "selector": ".page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(10)",
       "label": "Midnight Dark blue and slate",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(10)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-pressed=\"false\" class=\"theme-preset-card \" data-theme-preset=\"midnight\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"section-heading\">Performance</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"detail-grid\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"section-heading\">Performance</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"section-heading\">Performance</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"detail-grid\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:38.067Z"
+      "observed_effects": [
+        "state-change"
+      ],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:41.658Z"
     },
     {
       "browser": "firefox",
@@ -670,12 +750,14 @@
       "selector": "#s-save-preset-btn",
       "label": "Save Current as Preset",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#s-save-preset-btn').first()\u001b[22m\n\u001b[2m    - locator resolved to <button id=\"s-save-preset-btn\" class=\"btn btn--secondary btn--sm\">Save Current as Preset</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <span class=\"detail-label\">SQN</span> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"modal__backdrop\"></div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <span class=\"detail-label\">SQN</span> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <span class=\"detail-label\">SQN</span> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"modal__backdrop\"></div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:39.313Z"
+      "observed_effects": [
+        "page-state-change"
+      ],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:41.858Z"
     },
     {
       "browser": "firefox",
@@ -683,12 +765,17 @@
       "selector": "#master-save-btn",
       "label": "Save All Settings",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
-      "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#master-save-btn').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" id=\"master-save-btn\" class=\"btn btn--primary btn--lg\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"detail-item result-explorer__metric-card \">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"modal__backdrop\"></div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"detail-item result-explorer__metric-card \">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"detail-item result-explorer__metric-card \">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"modal__backdrop\"></div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:40.557Z"
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
+      "observed_requests": [
+        "POST /settings"
+      ],
+      "observed_effects": [
+        "request",
+        "page-state-change"
+      ],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:42.334Z"
     },
     {
       "browser": "firefox",
@@ -696,12 +783,12 @@
       "selector": ".page-view.active div:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(1)",
       "label": "Focus Composer",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "MISSING",
+      "reason": "No observable request/navigation/state/modal effect after click.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(1)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" class=\"btn btn--primary\" data-ai-workspace-action=\"focus\">Focus Composer</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"result-explorer__hero-main\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"result-explorer__hero-main\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  2 × retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__header\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"result-explorer__hero-main\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:41.850Z"
+      "error": "",
+      "timestamp": "2026-04-06T23:25:42.573Z"
     },
     {
       "browser": "firefox",
@@ -709,12 +796,14 @@
       "selector": ".page-view.active div:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(2)",
       "label": "New Conversation",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(2)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"btn\" type=\"button\" data-ai-workspace-action=\"new\">New Conversation</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"result-explorer__hero-main\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"result-explorer__hero-main\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  2 × retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__header\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"result-explorer__hero-main\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:43.326Z"
+      "observed_effects": [
+        "page-state-change"
+      ],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:43.022Z"
     },
     {
       "browser": "firefox",
@@ -722,12 +811,18 @@
       "selector": ".page-view.active div:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(3)",
       "label": "Inject Latest Backtest",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
-      "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.page-view.active div:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(3)').first()\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"btn\" type=\"button\" data-ai-workspace-action=\"inject\">Inject Latest Backtest</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"result-explorer__hero\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"result-explorer__hero\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  2 × retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__header\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"result-explorer__hero\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:44.572Z"
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
+      "observed_requests": [
+        "GET /runs",
+        "GET /strategies/MomentumPulse/source"
+      ],
+      "observed_effects": [
+        "request",
+        "page-state-change"
+      ],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:43.228Z"
     },
     {
       "browser": "firefox",
@@ -735,12 +830,14 @@
       "selector": "#ai-conv-toggle",
       "label": "Show conversations",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#ai-conv-toggle').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" id=\"ai-conv-toggle\" aria-expanded=\"false\" class=\"ai-conv-toggle\" title=\"Show conversations\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"result-explorer__hero\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"result-explorer__hero\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  2 × retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <h2 class=\"modal__title\" id=\"result-explorer-modal-title\">MomentumPulse · bt_run_completed_1</h2> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"result-explorer__hero\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:45.829Z"
+      "observed_effects": [
+        "state-change"
+      ],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:43.410Z"
     },
     {
       "browser": "firefox",
@@ -748,12 +845,14 @@
       "selector": "#ai-new-chat",
       "label": "New conversation",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#ai-new-chat').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" id=\"ai-new-chat\" class=\"ai-new-chat-btn\" title=\"New conversation\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"result-explorer__hero\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"result-explorer__hero\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  2 × retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <h2 class=\"modal__title\" id=\"result-explorer-modal-title\">MomentumPulse · bt_run_completed_1</h2> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"result-explorer__hero\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:47.074Z"
+      "observed_effects": [
+        "state-change"
+      ],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:43.601Z"
     },
     {
       "browser": "firefox",
@@ -766,7 +865,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:45:48.318Z"
+      "timestamp": "2026-04-06T23:25:43.800Z"
     },
     {
       "browser": "firefox",
@@ -774,12 +873,15 @@
       "selector": "#ai-btn-ollama",
       "label": "Ollama",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#ai-btn-ollama').first()\u001b[22m\n\u001b[2m    - locator resolved to <button id=\"ai-btn-ollama\" data-provider=\"ollama\" class=\"ai-provider-btn\">Ollama</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"section-heading\">Performance</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <section data-tab-panel=\"overview\" class=\"tab-panel tab-panel--active\">…</section> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  2 × retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__header\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"section-heading\">Performance</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:48.326Z"
+      "observed_effects": [
+        "state-change",
+        "page-state-change"
+      ],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:43.813Z"
     },
     {
       "browser": "firefox",
@@ -787,12 +889,15 @@
       "selector": "#ai-btn-openrouter",
       "label": "OpenRouter",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#ai-btn-openrouter').first()\u001b[22m\n\u001b[2m    - locator resolved to <button id=\"ai-btn-openrouter\" data-provider=\"openrouter\" class=\"ai-provider-btn active\">OpenRouter</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"section-heading\">Performance</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <section data-tab-panel=\"overview\" class=\"tab-panel tab-panel--active\">…</section> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  2 × retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__header\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"section-heading\">Performance</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:49.564Z"
+      "observed_effects": [
+        "state-change",
+        "page-state-change"
+      ],
+      "error": "",
+      "timestamp": "2026-04-06T23:25:44.008Z"
     },
     {
       "browser": "firefox",
@@ -800,12 +905,18 @@
       "selector": "#ai-deep-analyse-btn",
       "label": "Deep Analyse",
       "trigger_type": "click",
-      "status": "BLOCKED",
-      "reason": "Control is disabled due to workflow preconditions.",
-      "observed_requests": [],
-      "observed_effects": [],
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
+      "observed_requests": [
+        "POST /ai/analyze/bt_run_completed_1"
+      ],
+      "observed_effects": [
+        "request",
+        "page-state-change",
+        "modal-open"
+      ],
       "error": "",
-      "timestamp": "2026-04-06T22:45:50.810Z"
+      "timestamp": "2026-04-06T23:25:44.178Z"
     },
     {
       "browser": "firefox",
@@ -814,11 +925,11 @@
       "label": "Evolve Strategy",
       "trigger_type": "click",
       "status": "BLOCKED",
-      "reason": "Control is disabled due to workflow preconditions.",
+      "reason": "Control interaction was blocked by overlay/viewport constraints.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "",
-      "timestamp": "2026-04-06T22:45:50.819Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#ai-evolve-btn').first()\u001b[22m\n\u001b[2m    - locator resolved to <button id=\"ai-evolve-btn\" class=\"ai-evolve-btn\" title=\"Inject a backtest first\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div id=\"ai-deep-panel-body\" class=\"ai-deep-panel__body\">…</div> from <div id=\"ai-deep-panel\" class=\"ai-deep-panel open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div id=\"ai-deep-panel-body\" class=\"ai-deep-panel__body\">…</div> from <div id=\"ai-deep-panel\" class=\"ai-deep-panel open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div id=\"ai-deep-panel-body\" class=\"ai-deep-panel__body\">…</div> from <div id=\"ai-deep-panel\" class=\"ai-deep-panel open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n",
+      "timestamp": "2026-04-06T23:25:44.348Z"
     },
     {
       "browser": "firefox",
@@ -826,12 +937,15 @@
       "selector": "#ai-context-clear",
       "label": "clear",
       "trigger_type": "click",
-      "status": "BLOCKED",
-      "reason": "Control exists but is not visible in current state.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
+      "observed_effects": [
+        "page-state-change",
+        "modal-open"
+      ],
       "error": "",
-      "timestamp": "2026-04-06T22:45:50.829Z"
+      "timestamp": "2026-04-06T23:25:44.917Z"
     },
     {
       "browser": "firefox",
@@ -844,7 +958,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:45:50.837Z"
+      "timestamp": "2026-04-06T23:25:45.071Z"
     },
     {
       "browser": "firefox",
@@ -857,7 +971,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:45:50.844Z"
+      "timestamp": "2026-04-06T23:25:45.083Z"
     },
     {
       "browser": "firefox",
@@ -870,7 +984,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:45:50.851Z"
+      "timestamp": "2026-04-06T23:25:45.093Z"
     },
     {
       "browser": "firefox",
@@ -878,12 +992,12 @@
       "selector": "#ai-inject-btn3",
       "label": "Inject latest backtest",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "MISSING",
+      "reason": "Control selector resolved to no element at execution time.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#ai-inject-btn3').first()\u001b[22m\n\u001b[2m    - locator resolved to <button id=\"ai-inject-btn3\" class=\"ai-inject-btn\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <span class=\"detail-label\">Long Profit</span> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <section data-tab-panel=\"overview\" class=\"tab-panel tab-panel--active\">…</section> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  2 × retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"modal__header\">…</div> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <span class=\"detail-label\">Long Profit</span> from <div id=\"result-explorer-modal\" class=\"modal modal--result-explorer modal--open\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:50.857Z"
+      "error": "",
+      "timestamp": "2026-04-06T23:25:45.103Z"
     },
     {
       "browser": "firefox",
@@ -896,7 +1010,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:45:52.100Z"
+      "timestamp": "2026-04-06T23:25:45.110Z"
     },
     {
       "browser": "firefox",
@@ -909,7 +1023,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:45:52.111Z"
+      "timestamp": "2026-04-06T23:25:45.124Z"
     },
     {
       "browser": "firefox",
@@ -917,12 +1031,12 @@
       "selector": "#ai-deep-panel-close",
       "label": "(unlabeled control)",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "MISSING",
+      "reason": "No observable request/navigation/state/modal effect after click.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#ai-deep-panel-close').first()\u001b[22m\n\u001b[2m    - locator resolved to <button id=\"ai-deep-panel-close\" class=\"ai-deep-panel__close\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - element is outside of the viewport\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - element is outside of the viewport\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - element is outside of the viewport\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:52.119Z"
+      "error": "",
+      "timestamp": "2026-04-06T23:25:45.132Z"
     },
     {
       "browser": "firefox",
@@ -930,12 +1044,12 @@
       "selector": "#evo-panel-close",
       "label": "(unlabeled control)",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "BLOCKED",
+      "reason": "Control interaction was blocked by overlay/viewport constraints.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#evo-panel-close').first()\u001b[22m\n\u001b[2m    - locator resolved to <button id=\"evo-panel-close\" class=\"evo-panel__close\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - element is outside of the viewport\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - element is outside of the viewport\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - element is outside of the viewport\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:53.362Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#evo-panel-close').first()\u001b[22m\n\u001b[2m    - locator resolved to <button id=\"evo-panel-close\" class=\"evo-panel__close\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - element is outside of the viewport\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - element is outside of the viewport\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - element is outside of the viewport\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n",
+      "timestamp": "2026-04-06T23:25:45.304Z"
     },
     {
       "browser": "firefox",
@@ -943,12 +1057,12 @@
       "selector": "#evo-tab-config",
       "label": "CONFIGURE",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "BLOCKED",
+      "reason": "Control interaction was blocked by overlay/viewport constraints.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#evo-tab-config').first()\u001b[22m\n\u001b[2m    - locator resolved to <button data-tab=\"config\" id=\"evo-tab-config\" class=\"evo-tab active\">Configure</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - element is outside of the viewport\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - element is outside of the viewport\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - element is outside of the viewport\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:54.606Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#evo-tab-config').first()\u001b[22m\n\u001b[2m    - locator resolved to <button data-tab=\"config\" id=\"evo-tab-config\" class=\"evo-tab active\">Configure</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - element is outside of the viewport\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - element is outside of the viewport\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - element is outside of the viewport\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n",
+      "timestamp": "2026-04-06T23:25:45.865Z"
     },
     {
       "browser": "firefox",
@@ -956,12 +1070,12 @@
       "selector": "#evo-tab-running",
       "label": "RUNNING",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "BLOCKED",
+      "reason": "Control interaction was blocked by overlay/viewport constraints.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#evo-tab-running').first()\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"evo-tab\" data-tab=\"running\" id=\"evo-tab-running\">Running</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - element is outside of the viewport\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - element is outside of the viewport\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - element is outside of the viewport\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:55.855Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#evo-tab-running').first()\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"evo-tab\" data-tab=\"running\" id=\"evo-tab-running\">Running</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - element is outside of the viewport\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - element is outside of the viewport\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - element is outside of the viewport\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n",
+      "timestamp": "2026-04-06T23:25:46.418Z"
     },
     {
       "browser": "firefox",
@@ -969,12 +1083,12 @@
       "selector": "#evo-tab-results",
       "label": "RESULTS",
       "trigger_type": "click",
-      "status": "FAIL",
-      "reason": "Unhandled click execution error.",
+      "status": "BLOCKED",
+      "reason": "Control interaction was blocked by overlay/viewport constraints.",
       "observed_requests": [],
       "observed_effects": [],
-      "error": "locator.click: Timeout 1200ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#evo-tab-results').first()\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"evo-tab\" data-tab=\"results\" id=\"evo-tab-results\">Results</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - element is outside of the viewport\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - element is outside of the viewport\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - element is outside of the viewport\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 500ms\u001b[22m\n",
-      "timestamp": "2026-04-06T22:45:57.099Z"
+      "error": "locator.click: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#evo-tab-results').first()\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"evo-tab\" data-tab=\"results\" id=\"evo-tab-results\">Results</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - element is outside of the viewport\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - element is outside of the viewport\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - element is outside of the viewport\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n",
+      "timestamp": "2026-04-06T23:25:46.973Z"
     },
     {
       "browser": "firefox",
@@ -987,7 +1101,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:45:58.343Z"
+      "timestamp": "2026-04-06T23:25:47.525Z"
     },
     {
       "browser": "firefox",
@@ -1000,7 +1114,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:45:58.349Z"
+      "timestamp": "2026-04-06T23:25:47.535Z"
     },
     {
       "browser": "firefox",
@@ -1013,7 +1127,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:45:58.361Z"
+      "timestamp": "2026-04-06T23:25:47.552Z"
     },
     {
       "browser": "firefox",
@@ -1026,7 +1140,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-06T22:45:58.374Z"
+      "timestamp": "2026-04-06T23:25:47.568Z"
     }
   ]
 }
