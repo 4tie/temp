@@ -243,3 +243,25 @@
     flex: none;
   }
 }
+
+/* Compact-pro refresh overrides */
+.ai-diagnosis-stage__header,
+.ai-diagnosis-card {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent 78%),
+    color-mix(in srgb, var(--surface-1) 94%, transparent);
+  box-shadow: var(--shadow-glow);
+}
+
+.ai-diagnosis-rail {
+  align-content: start;
+}
+
+.ai-diagnosis-metric {
+  background:
+    radial-gradient(circle at top right, rgba(255,255,255,0.03), transparent 30%),
+    linear-gradient(180deg, color-mix(in srgb, var(--text-primary) 1.5%, transparent), transparent 100%),
+    color-mix(in srgb, var(--surface-2) 92%, transparent);
+}

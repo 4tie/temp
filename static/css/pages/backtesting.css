@@ -660,3 +660,53 @@
     align-items: flex-start;
   }
 }
+
+/* Compact-pro refresh overrides */
+.backtesting-page {
+  min-height: 0;
+}
+
+.bt-config-card,
+#bt-status-card,
+#bt-results-card,
+#bt-quick-params-card {
+  border-radius: var(--radius-lg);
+}
+
+.page-view[data-view="backtesting"] .split-layout {
+  grid-template-columns: minmax(320px, 0.9fr) minmax(380px, 1.24fr);
+}
+
+.split-layout__output {
+  gap: var(--space-4);
+}
+
+.bt-results-summary {
+  gap: var(--space-3);
+}
+
+.bt-summary-card {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.022);
+}
+
+.bt-summary-card--wallet,
+.bt-summary-card--net {
+  padding: var(--space-4);
+}
+
+.bt-intelligence {
+  padding: var(--space-3);
+  border: 1px solid color-mix(in srgb, var(--accent-ring) 28%, var(--border-subtle));
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 6%, transparent), transparent 26%),
+    rgba(255, 255, 255, 0.015);
+}
+
+@media (max-width: 1200px) {
+  .page-view[data-view="backtesting"] .split-layout {
+    grid-template-columns: 1fr;
+  }
+}

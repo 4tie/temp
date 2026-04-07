@@ -159,6 +159,9 @@ async def run_backtest(req: BacktestRequest):
             "parent_run_id": req.parent_run_id,
             "improvement_source": req.improvement_source,
             "improvement_items": req.improvement_items,
+            "improvement_applied": req.improvement_applied,
+            "improvement_skipped": req.improvement_skipped,
+            "improvement_brief": req.improvement_brief,
         },
     )
     return {"run_id": run_id, "status": "running"}

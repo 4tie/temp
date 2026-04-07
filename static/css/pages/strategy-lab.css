@@ -365,3 +365,25 @@
   }
 }
 
+
+/* Compact-pro refresh overrides */
+.sl-sidebar-card,
+#sl-detail {
+  border-radius: var(--radius-lg);
+}
+
+.sl-sidebar-card .card__header,
+#sl-detail .card__header {
+  min-height: 50px;
+}
+
+.sl-source-card {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: rgba(255,255,255,0.016);
+  box-shadow: var(--shadow-glow);
+}
+
+.sl-source-toolbar {
+  padding: var(--space-3) var(--space-4);
+}

@@ -15,29 +15,39 @@ window.DashboardPage = (() => {
 
   function _render() {
     DOM.setHTML(_el, `
-      <div class="page-header">
-        <h1 class="page-header__title">Dashboard</h1>
-        <p class="page-header__subtitle">Overview of your trading strategies and recent activity.</p>
-      </div>
-      <div class="stat-grid" id="dash-stats">
-        ${_statCard('Total Backtests', '—', 'green',  'dash-total-bt')}
-        ${_statCard('Active Jobs',     '—', 'amber',  'dash-active-jobs')}
-        ${_statCard('Hyperopt Runs',   '—', 'violet', 'dash-total-ho')}
-        ${_statCard('Strategies',      '—', 'muted',  'dash-strategies')}
-      </div>
-      <div class="dashboard-grid">
-        <section class="card card--fill dashboard-panel">
-          <div class="card__header">
-            <span class="card__title">Recent Backtest Runs</span>
-          </div>
-          <div class="card__body card__body--flush" id="dash-recent-runs"><div class="empty-state">Loading…</div></div>
-        </section>
-        <section class="card card--fill dashboard-panel">
-          <div class="card__header">
-            <span class="card__title">Recent Hyperopt Runs</span>
-          </div>
-          <div class="card__body card__body--flush" id="dash-recent-hyperopt"><div class="empty-state">Loading…</div></div>
-        </section>
+      <div class="page-frame page-frame--compact dashboard-page">
+        <div class="page-header">
+          <h1 class="page-header__title">Dashboard</h1>
+          <p class="page-header__subtitle">Overview of your trading strategies, active jobs, and the latest optimization activity.</p>
+        </div>
+        <div class="stat-grid dashboard-hero" id="dash-stats">
+          ${_statCard('Total Backtests', '—', 'green',  'dash-total-bt')}
+          ${_statCard('Active Jobs',     '—', 'amber',  'dash-active-jobs')}
+          ${_statCard('Hyperopt Runs',   '—', 'violet', 'dash-total-ho')}
+          ${_statCard('Strategies',      '—', 'muted',  'dash-strategies')}
+        </div>
+        <div class="dashboard-grid">
+          <section class="card card--table card--fill dashboard-panel">
+            <div class="card__meta">
+              <span>Activity</span>
+              <span>Latest completed and running backtests</span>
+            </div>
+            <div class="card__header">
+              <span class="card__title">Recent Backtest Runs</span>
+            </div>
+            <div class="card__body card__body--flush" id="dash-recent-runs"><div class="empty-state">Loading…</div></div>
+          </section>
+          <section class="card card--table card--fill dashboard-panel">
+            <div class="card__meta">
+              <span>Optimization</span>
+              <span>Recent hyperopt runs and search history</span>
+            </div>
+            <div class="card__header">
+              <span class="card__title">Recent Hyperopt Runs</span>
+            </div>
+            <div class="card__body card__body--flush" id="dash-recent-hyperopt"><div class="empty-state">Loading…</div></div>
+          </section>
+        </div>
       </div>
     `);
   }

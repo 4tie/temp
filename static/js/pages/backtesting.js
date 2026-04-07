@@ -13,6 +13,7 @@ window.BacktestPage = (() => {
   let _strategyRerunStarting = false;
   let _strategyRerunPhase = 'idle';
   let _quickParamsState = _createQuickParamsState();
+  let _strategyRerunReview = _createStrategyRerunReviewState();
   let _intelligenceEventBound = false;
   let _pendingStrategyRerunConsuming = false;
 
@@ -39,6 +40,24 @@ window.BacktestPage = (() => {
       error: '',
       empty: '',
       notice: '',
+    };
+  }
+
+  function _createStrategyRerunReviewState() {
+    return {
+      active: false,
+      sourceRunId: null,
+      strategyName: null,
+      strategyLabel: null,
+      baselineParams: {},
+      autoChanges: [],
+      manualItems: [],
+      unsupportedItems: [],
+      improvementItems: [],
+      improvementBrief: '',
+      diagnosisTitle: '',
+      contextOnly: false,
+      validationMessage: '',
     };
   }
 
@@ -366,14 +385,15 @@ window.BacktestPage = (() => {
 
   function _render() {
     DOM.setHTML(_el, `
-      <div class="page-header">
-        <h1 class="page-header__title">Backtesting</h1>
-        <p class="page-header__subtitle">Configure and run a backtest against historical market data.</p>
-      </div>
+      <div class="page-frame page-frame--compact backtesting-page">
+        <div class="page-header">
+          <h1 class="page-header__title">Backtesting</h1>
+          <p class="page-header__subtitle">Configure, run, review, and refine a backtest from one compact workspace.</p>
+        </div>
       <div class="split-layout">
         <!-- Form panel -->
         <div class="split-layout__form">
-          <div class="card">
+          <div class="card card--panel bt-config-card">
             <div class="card__header"><span class="card__title">Configuration</span></div>
             <div class="card__body">
               <form id="bt-form" class="form">
@@ -465,7 +485,7 @@ window.BacktestPage = (() => {
         </div>
         <!-- Output panel -->
         <div class="split-layout__output">
-          <div class="card" id="bt-status-card" style="display:none">
+          <div class="card card--utility" id="bt-status-card" style="display:none">
             <div class="card__header">
               <span class="card__title">Status</span>
               <span class="badge" id="bt-status-badge">—</span>
@@ -474,20 +494,21 @@ window.BacktestPage = (() => {
               <div class="log-panel" id="bt-logs"></div>
             </div>
           </div>
-          <div class="card" id="bt-results-card" style="display:none">
+          <div class="card card--hero" id="bt-results-card" style="display:none">
             <div class="card__header">
               <span class="card__title">Results</span>
               <button class="btn btn--danger btn--sm" id="bt-delete-btn">Delete Run</button>
             </div>
             <div class="card__body" id="bt-results-body"></div>
           </div>
-          <div class="card" id="bt-quick-params-card" style="display:none">
+          <div class="card card--panel" id="bt-quick-params-card" style="display:none">
             <div class="card__header">
               <span class="card__title">Quick Parameter Changes</span>
             </div>
             <div class="card__body" id="bt-quick-params-body"></div>
           </div>
         </div>
+      </div>
       </div>
     `);
 
@@ -505,6 +526,23 @@ window.BacktestPage = (() => {
     DOM.on(resultCard, 'click', (e) => {
       if (!_resultRunId) return;
       if (e.target.closest('#bt-delete-btn')) return;
+      const reviewPanel = e.target.closest('.bt-intelligence__panel--comparison');
+      if (reviewPanel) {
+        const reviewAction = e.target.closest('[data-intelligence-review-action]');
+        if (reviewAction) {
+          e.preventDefault();
+          e.stopPropagation();
+          _onStrategyIntelligenceReviewAction(reviewAction.dataset.intelligenceReviewAction || '');
+        }
+        return;
+      }
+      const reviewAction = e.target.closest('[data-intelligence-review-action]');
+      if (reviewAction) {
+        e.preventDefault();
+        e.stopPropagation();
+        _onStrategyIntelligenceReviewAction(reviewAction.dataset.intelligenceReviewAction || '');
+        return;
+      }
       const intelligenceAction = e.target.closest('[data-intelligence-action]');
       if (intelligenceAction) {
         e.preventDefault();
@@ -513,6 +551,12 @@ window.BacktestPage = (() => {
         return;
       }
       ResultExplorer.open(_resultRunId);
+    });
+    DOM.on(resultCard, 'change', (e) => {
+      const toggle = e.target.closest('[data-review-toggle]');
+      if (!toggle) return;
+      e.stopPropagation();
+      _toggleStrategyRerunReviewChange(toggle.dataset.reviewToggle || '', Boolean(toggle.checked));
     });
     DOM.on(resultCard, 'keydown', (e) => {
       if (!_resultRunId) return;
@@ -686,6 +730,7 @@ window.BacktestPage = (() => {
     _loadedResult = null;
     _strategyRerunStarting = false;
     _strategyRerunPhase = 'idle';
+    _strategyRerunReview = _createStrategyRerunReviewState();
     DOM.hide(DOM.$('#bt-results-card', _el));
     _resetQuickParamsState();
     _syncIntelligenceRerunUiState();
@@ -723,6 +768,94 @@ window.BacktestPage = (() => {
       return 'Strategy parameters are unavailable for this run.';
     }
     return 'Seeded from the loaded run first, then saved strategy values, then defaults.';
+  }
+
+  function _cloneJson(value) {
+    return JSON.parse(JSON.stringify(value ?? {}));
+  }
+
+  function _stableStringify(value) {
+    if (Array.isArray(value)) {
+      return `[${value.map((item) => _stableStringify(item)).join(',')}]`;
+    }
+    if (value && typeof value === 'object') {
+      return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${_stableStringify(value[key])}`).join(',')}}`;
+    }
+    return JSON.stringify(value);
+  }
+
+  function _strategyParamSetsEqual(a, b) {
+    return _stableStringify(a || {}) === _stableStringify(b || {});
+  }
+
+  function _strategyRerunSelectedChanges() {
+    return (_strategyRerunReview.autoChanges || []).filter((item) => item && item.selected);
+  }
+
+  function _strategyRerunItemLabel(item) {
+    return item?.title || item?.label || item?.name || 'change';
+  }
+
+  function _strategyRerunAppliedChanges() {
+    return _strategyRerunSelectedChanges().filter((item) => {
+      return !_quickValuesEqual(
+        _quickParamsState.currentValues?.[item.name],
+        _strategyRerunReview.baselineParams?.[item.name],
+      );
+    }).map(_strategyRerunItemLabel);
+  }
+
+  function _strategyRerunSkippedChanges() {
+    return (_strategyRerunReview.autoChanges || []).filter((item) => {
+      if (!item) return false;
+      if (!item.available) return true;
+      if (!item.selected) return true;
+      return _quickValuesEqual(
+        _quickParamsState.currentValues?.[item.name],
+        _strategyRerunReview.baselineParams?.[item.name],
+      );
+    }).map(_strategyRerunItemLabel);
+  }
+
+  function _strategyRerunFinalParams() {
+    if (_quickHasParams()) return _cloneJson(_quickParamsState.currentValues);
+    return _cloneJson(_loadedResult?.meta?.strategy_params || {});
+  }
+
+  function _strategyRerunContextOnly() {
+    return _strategyRerunAppliedChanges().length === 0;
+  }
+
+  function _strategyRerunValidation() {
+    const meta = _loadedResult?.meta || {};
+    const strategyName = _quickParamsState.strategyName || _resolveRunStrategyName(meta);
+    if (!_strategyRerunReview.active) {
+      return { ok: false, message: 'No rerun review is active.', identical: false, contextOnly: false };
+    }
+    if (_activeRunId) {
+      return { ok: false, message: 'A backtest is already running.', identical: false, contextOnly: false };
+    }
+    if (_quickParamsState.loading) {
+      return { ok: false, message: 'Strategy parameters are still loading.', identical: false, contextOnly: false };
+    }
+    if (!strategyName) {
+      return { ok: false, message: 'Target strategy is unavailable for rerun.', identical: false, contextOnly: false };
+    }
+    const finalParams = _strategyRerunFinalParams();
+    const baselineParams = _strategyRerunReview.baselineParams || {};
+    const contextOnly = _strategyRerunContextOnly();
+    const identical = _strategyParamSetsEqual(finalParams, baselineParams);
+    if (identical && !contextOnly) {
+      return { ok: false, message: 'The reviewed rerun would be identical to the parent run.', identical: true, contextOnly };
+    }
+    return {
+      ok: true,
+      message: contextOnly
+        ? 'Context-only rerun. No parameter changes will be applied automatically.'
+        : 'Review is valid. Run Improved Backtest will use the selected changes.',
+      identical,
+      contextOnly,
+    };
   }
 
   function _quickHasParams() {
@@ -1298,12 +1431,14 @@ window.BacktestPage = (() => {
     if (event.type === 'change') {
       _normalizeQuickParamTarget(target);
       _syncQuickParamsUiState();
+      _updateStrategyRerunReview();
       return;
     }
 
     const rawValue = target.type === 'checkbox' ? target.checked : target.value;
     _quickParamsState.currentValues[name] = _coerceQuickParamValue(param, rawValue);
     _syncQuickParamsUiState();
+    _updateStrategyRerunReview();
   }
 
   function _onQuickParamsCommit(event) {
@@ -1311,6 +1446,7 @@ window.BacktestPage = (() => {
     if (!target || !_quickHasParams()) return;
     _normalizeQuickParamTarget(target);
     _syncQuickParamsUiState();
+    _updateStrategyRerunReview();
   }
 
   async function _onQuickParamsAction(event) {
@@ -1428,10 +1564,21 @@ window.BacktestPage = (() => {
         parent_run_id: _resultRunId || null,
         improvement_source: options.improvementSource || null,
         improvement_items: Array.isArray(options.improvementItems) ? options.improvementItems : [],
+        improvement_applied: Array.isArray(options.improvementApplied) ? options.improvementApplied : [],
+        improvement_skipped: Array.isArray(options.improvementSkipped) ? options.improvementSkipped : [],
+        improvement_brief: options.improvementBrief || null,
         strategy_params: _quickHasParams()
           ? { ..._quickParamsState.currentValues }
           : { ...(meta.strategy_params || {}) },
       };
+
+      if (options.improvementSource === 'strategy_intelligence' && !options.contextOnly) {
+        const baselineParams = _strategyRerunReview.baselineParams || (meta.strategy_params || {});
+        if (_strategyParamSetsEqual(body.strategy_params, baselineParams)) {
+          Toast.warning('The reviewed rerun would be identical to the parent run.');
+          return;
+        }
+      }
 
       try {
         const hasCoverage = await _ensureCoverageWithAutoDownload(body);
@@ -1955,9 +2102,167 @@ window.BacktestPage = (() => {
     return parts.join(' · ');
   }
 
+  function _reviewPayloadSummaryHtml() {
+    const meta = _loadedResult?.meta || {};
+    const payload = {
+      strategy: _quickParamsState.strategyName || _resolveRunStrategyName(meta) || null,
+      pairs: Array.isArray(meta.pairs) ? [...meta.pairs] : [],
+      timeframe: meta.timeframe || '5m',
+      timerange: meta.timerange || null,
+      strategy_params: _strategyRerunFinalParams(),
+    };
+    return `<pre class="result-explorer__json">${_esc(JSON.stringify(payload, null, 2))}</pre>`;
+  }
+
+  function _renderStrategyRerunReview() {
+    if (!_strategyRerunReview.active) return '';
+    const validation = _strategyRerunValidation();
+    const applied = _strategyRerunAppliedChanges();
+    const skipped = _strategyRerunSkippedChanges();
+    return `
+      <article class="bt-intelligence__panel bt-intelligence__panel--comparison">
+        <div class="bt-intelligence__panel-title">Improve & Re-run Review</div>
+        <div class="bt-intelligence__list">
+          <div class="bt-intelligence__item">
+            <div class="bt-intelligence__item-title">${_esc(_strategyRerunReview.diagnosisTitle || 'Rerun Review')}</div>
+            <div class="bt-intelligence__item-body">${_esc(_strategyRerunReview.improvementBrief || 'Review the proposed changes before rerunning.')}</div>
+            <div class="bt-intelligence__item-evidence">${_esc(`Source run: ${_strategyRerunReview.sourceRunId || 'unknown'}`)}</div>
+          </div>
+          ${_strategyRerunReview.autoChanges.length ? `
+            <div class="bt-intelligence__item-title bt-intelligence__item-title--subsection">Proposed Quick Changes</div>
+            ${_strategyRerunReview.autoChanges.map((item) => `
+              <label class="checkbox-label quick-params__checkbox" style="align-items:flex-start">
+                <input type="checkbox" data-review-toggle="${_esc(item.name)}" ${item.selected ? 'checked' : ''} ${item.available ? '' : 'disabled'}>
+                <span>
+                  <strong>${_esc(item.label || item.name)}</strong>
+                  <span style="display:block;color:var(--text-muted)">${_esc(item.available ? `${item.name} -> ${item.proposedValue}` : (item.unavailableReason || 'Unavailable in Quick Params'))}</span>
+                  ${item.reason ? `<span style="display:block;color:var(--text-dim)">${_esc(item.reason)}</span>` : ''}
+                </span>
+              </label>
+            `).join('')}
+          ` : '<div class="bt-intelligence__item"><div class="bt-intelligence__item-body">No direct quick-parameter changes are available for this rerun.</div></div>'}
+          ${_strategyRerunReview.manualItems.length ? `
+            <div class="bt-intelligence__item-title bt-intelligence__item-title--subsection">Manual Guidance</div>
+            ${_strategyRerunReview.manualItems.map((item) => `
+              <div class="bt-intelligence__item">
+                <div class="bt-intelligence__item-body">${_esc(item)}</div>
+              </div>
+            `).join('')}
+          ` : ''}
+          ${_strategyRerunReview.unsupportedItems.length ? `
+            <div class="bt-intelligence__item-title bt-intelligence__item-title--subsection">Unsupported / Unavailable</div>
+            ${_strategyRerunReview.unsupportedItems.map((item) => `
+              <div class="bt-intelligence__item">
+                <div class="bt-intelligence__item-title">${_esc(item.title || item.parameter || 'Suggestion')}</div>
+                <div class="bt-intelligence__item-body">${_esc(item.reason || item.unavailableReason || 'This suggestion cannot be auto-applied in Quick Params.')}</div>
+              </div>
+            `).join('')}
+          ` : ''}
+          <div class="bt-intelligence__item-title bt-intelligence__item-title--subsection">Reviewed Payload</div>
+          ${_reviewPayloadSummaryHtml()}
+          <div class="bt-intelligence__item-evidence">${_esc(validation.message)}</div>
+          <div class="bt-intelligence__item-evidence">${_esc(`Applied: ${applied.length} · Skipped: ${skipped.length} · ${validation.contextOnly ? 'Context-only rerun' : 'Parameter rerun'}`)}</div>
+          <div class="bt-intelligence__actions" style="justify-content:flex-start">
+            <button type="button" class="btn btn--primary btn--sm" data-intelligence-review-action="run" ${validation.ok ? '' : 'disabled'}>Run Improved Backtest</button>
+            <button type="button" class="btn btn--secondary btn--sm" data-intelligence-review-action="cancel">Cancel Review</button>
+          </div>
+        </div>
+      </article>
+    `;
+  }
+
+  function _updateStrategyRerunReview() {
+    if (!_strategyRerunReview.active || !_loadedResult?.results) return;
+    _strategyRerunReview.contextOnly = _strategyRerunContextOnly();
+    _renderResults(DOM.$('#bt-results-body', _el), _loadedResult.results);
+  }
+
+  async function _prepareStrategyIntelligenceRerunReview(intelligence, pending = null) {
+    if (!_loadedResult?.meta || !intelligence) {
+      Toast.warning('No strategy intelligence is available for this run yet.');
+      return;
+    }
+    _setStrategyRerunPhase('preparing');
+    try {
+      const runId = _loadedResult.run_id || _resultRunId || null;
+      await _ensureQuickParamsForRun(_loadedResult);
+      if (runId && _quickParamsState.runId === runId && _quickParamsState.loading) {
+        await _waitForQuickParamsReady(runId);
+      }
+      if (_quickHasParams()) {
+        _quickParamsState.currentValues = { ..._quickParamsState.seedValues };
+      }
+      const rerunPlan = intelligence.rerun_plan || {};
+      const autoChangesRaw = Array.isArray(rerunPlan.auto_param_changes) ? rerunPlan.auto_param_changes : [];
+      const unsupportedRaw = Array.isArray(rerunPlan.unsupported_items) ? rerunPlan.unsupported_items : [];
+      const manualItems = Array.isArray(rerunPlan.manual_actions) ? rerunPlan.manual_actions : [];
+      const suggestions = Array.isArray(intelligence.suggestions) ? intelligence.suggestions : [];
+      const quickSuggestionByParam = new Map(
+        suggestions
+          .filter((item) => item && item.action_type === 'quick_param' && item.parameter)
+          .map((item) => [item.parameter, item])
+      );
+      const baselineParams = _quickHasParams()
+        ? { ..._quickParamsState.seedValues }
+        : { ...(_loadedResult.meta.strategy_params || pending?.baselineParams || {}) };
+      const autoChanges = autoChangesRaw.map((change) => {
+        const suggestion = quickSuggestionByParam.get(change.name) || null;
+        const param = _findQuickParam(change.name);
+        const available = Boolean(param);
+        const proposedValue = param ? _coerceQuickParamValue(param, change.value) : change.value;
+        const baselineValue = available ? baselineParams[change.name] : undefined;
+        const different = available ? !_quickValuesEqual(baselineValue, proposedValue) : false;
+        if (available && different && _quickHasParams()) {
+          _quickParamsState.currentValues[change.name] = proposedValue;
+        }
+        return {
+          ...change,
+          title: change.title || suggestion?.title || change.label || change.name,
+          label: change.label || suggestion?.title || change.name,
+          proposedValue,
+          available,
+          selected: available && different,
+          unavailableReason: available ? '' : 'Parameter is not available in Quick Params for this strategy.',
+        };
+      });
+      const missingUnsupported = autoChanges
+        .filter((item) => !item.available)
+        .map((item) => ({
+          title: item.label || item.name,
+          parameter: item.name,
+          reason: item.unavailableReason,
+          unavailableReason: item.unavailableReason,
+        }));
+      const improvementItems = suggestions.slice(0, 6).map((item) => item.title).filter(Boolean);
+      const primary = intelligence.diagnosis?.primary || {};
+      _strategyRerunReview = {
+        active: true,
+        sourceRunId: runId,
+        strategyName: _quickParamsState.strategyName || _resolveRunStrategyName(_loadedResult.meta),
+        strategyLabel: _quickParamsState.strategyLabel || _resolveRunStrategyLabel(_loadedResult.meta),
+        baselineParams,
+        autoChanges,
+        manualItems,
+        unsupportedItems: [...unsupportedRaw, ...missingUnsupported],
+        improvementItems,
+        improvementBrief: primary.explanation || pending?.brief || '',
+        diagnosisTitle: primary.title || pending?.diagnosisTitle || '',
+        contextOnly: autoChanges.filter((item) => item.selected).length === 0,
+        validationMessage: '',
+      };
+      _renderQuickParams();
+      _updateStrategyRerunReview();
+      _setStrategyRerunPhase('review');
+      Toast.info('Review the proposed changes, then run the improved backtest explicitly.');
+    } finally {
+      if (_strategyRerunPhase !== 'review' && !_strategyRerunStarting) _setStrategyRerunPhase('idle');
+    }
+  }
+
   function _strategyRerunStatusLabel(phase) {
     if (phase === 'preparing') return 'Preparing...';
     if (phase === 'applying') return 'Applying Changes...';
+    if (phase === 'review') return 'Review Ready';
     if (phase === 'starting') return 'Starting Rerun...';
     return 'Improve & Run';
   }
@@ -1974,6 +2279,7 @@ window.BacktestPage = (() => {
     const issues = _intelligenceVisibleIssues(diagnosis);
     const { quickParams, manualGuidance } = _intelligenceSuggestionGroups(intelligence);
     const comparison = intelligence.comparison_to_parent || null;
+    const iterationMemory = intelligence.iteration_memory || {};
     if (!issues.length && !quickParams.length && !manualGuidance.length && !primary.title) return '';
 
     const comparisonRows = _intelligenceComparisonRows(comparison);
@@ -2060,6 +2366,17 @@ window.BacktestPage = (() => {
               </div>
             </article>
           ` : ''}
+          ${(iterationMemory.improvement_applied?.length || iterationMemory.improvement_skipped?.length || iterationMemory.improvement_brief) ? `
+            <article class="bt-intelligence__panel bt-intelligence__panel--comparison">
+              <div class="bt-intelligence__panel-title">Last Rerun Intent</div>
+              <div class="bt-intelligence__list">
+                ${iterationMemory.improvement_brief ? `<div class="bt-intelligence__item"><div class="bt-intelligence__item-body">${_esc(iterationMemory.improvement_brief)}</div></div>` : ''}
+                ${iterationMemory.improvement_applied?.length ? `<div class="bt-intelligence__item-evidence">${_esc(`Applied: ${iterationMemory.improvement_applied.join(', ')}`)}</div>` : ''}
+                ${iterationMemory.improvement_skipped?.length ? `<div class="bt-intelligence__item-evidence">${_esc(`Skipped: ${iterationMemory.improvement_skipped.join(', ')}`)}</div>` : ''}
+              </div>
+            </article>
+          ` : ''}
+          ${_renderStrategyRerunReview()}
         </div>
       </section>
     `;
@@ -2070,7 +2387,10 @@ window.BacktestPage = (() => {
     if (detail.runId && detail.runId !== _resultRunId) {
       await _loadLatestResult(detail.runId);
     }
-    await _runStrategyIntelligenceRerun(detail.intelligence || _loadedResult?.results?.strategy_intelligence || null);
+    await _prepareStrategyIntelligenceRerunReview(
+      detail.intelligence || _loadedResult?.results?.strategy_intelligence || null,
+      detail,
+    );
   }
 
   function _onStrategyIntelligenceAction(action) {
@@ -2079,8 +2399,56 @@ window.BacktestPage = (() => {
       return;
     }
     if (action === 'rerun') {
-      void _runStrategyIntelligenceRerun(_loadedResult?.results?.strategy_intelligence || null);
+      void _prepareStrategyIntelligenceRerunReview(_loadedResult?.results?.strategy_intelligence || null);
     }
+  }
+
+  function _toggleStrategyRerunReviewChange(name, selected) {
+    const item = (_strategyRerunReview.autoChanges || []).find((change) => change.name === name);
+    if (!item) return;
+    item.selected = Boolean(selected) && item.available;
+    if (_quickHasParams() && item.available) {
+      _quickParamsState.currentValues[name] = item.selected
+        ? item.proposedValue
+        : _strategyRerunReview.baselineParams[name];
+      _renderQuickParams();
+    }
+    _updateStrategyRerunReview();
+  }
+
+  async function _onStrategyIntelligenceReviewAction(action) {
+    if (action === 'cancel') {
+      _strategyRerunReview = _createStrategyRerunReviewState();
+      if (_quickHasParams()) {
+        _quickParamsState.currentValues = { ..._quickParamsState.seedValues };
+        _renderQuickParams();
+      }
+      _setStrategyRerunPhase('idle');
+      if (_loadedResult?.results) _renderResults(DOM.$('#bt-results-body', _el), _loadedResult.results);
+      return;
+    }
+    if (action !== 'run') return;
+
+    const validation = _strategyRerunValidation();
+    if (!validation.ok) {
+      Toast.warning(validation.message);
+      return;
+    }
+
+    const appliedChanges = _strategyRerunAppliedChanges();
+    const skippedChanges = _strategyRerunSkippedChanges();
+    await _runQuickParamsBacktest({
+      improvementSource: 'strategy_intelligence',
+      improvementItems: _strategyRerunReview.improvementItems,
+      improvementApplied: appliedChanges,
+      improvementSkipped: skippedChanges,
+      improvementBrief: _strategyRerunReview.improvementBrief || null,
+      contextOnly: validation.contextOnly,
+      toastMessage: validation.contextOnly
+        ? 'Started a context-only rerun from the reviewed strategy intelligence.'
+        : 'Started a reviewed rerun with the selected strategy intelligence changes.',
+    });
+    _strategyRerunReview = _createStrategyRerunReviewState();
   }
 
   async function _waitForQuickParamsReady(runId, timeoutMs = 6000) {
@@ -2091,55 +2459,6 @@ window.BacktestPage = (() => {
       (Date.now() - started) < timeoutMs
     ) {
       await _sleep(50);
-    }
-  }
-
-  async function _runStrategyIntelligenceRerun(intelligence) {
-    if (!_loadedResult?.meta || !intelligence) {
-      Toast.warning('No strategy intelligence is available for this run yet.');
-      return;
-    }
-    _setStrategyRerunPhase('preparing');
-    try {
-      const runId = _loadedResult.run_id || _resultRunId || null;
-      await _ensureQuickParamsForRun(_loadedResult);
-      if (runId && _quickParamsState.runId === runId && _quickParamsState.loading) {
-        await _waitForQuickParamsReady(runId);
-      }
-
-      _setStrategyRerunPhase('applying');
-      const rerunPlan = intelligence.rerun_plan || {};
-      const autoChanges = Array.isArray(rerunPlan.auto_param_changes) ? rerunPlan.auto_param_changes : [];
-      let appliedChanges = 0;
-      autoChanges.forEach((change) => {
-        const param = _findQuickParam(change.name);
-        if (!param) return;
-        _quickParamsState.currentValues[change.name] = _coerceQuickParamValue(param, change.value);
-        appliedChanges += 1;
-      });
-      if (appliedChanges > 0) _renderQuickParams();
-
-      const improvementItems = (Array.isArray(intelligence.suggestions) ? intelligence.suggestions : [])
-        .slice(0, 4)
-        .map((item) => item.title)
-        .filter(Boolean);
-
-      const manualCount = Math.max(0, improvementItems.length - appliedChanges);
-      const summaryParts = [];
-      if (appliedChanges > 0) summaryParts.push(`applied ${appliedChanges} quick change${appliedChanges === 1 ? '' : 's'}`);
-      if (manualCount > 0) summaryParts.push(`recorded ${manualCount} manual item${manualCount === 1 ? '' : 's'}`);
-      if (summaryParts.length) Toast.info(`Strategy intelligence ${summaryParts.join(' and ')}.`);
-
-      _setStrategyRerunPhase('starting');
-      await _runQuickParamsBacktest({
-        improvementSource: 'strategy_intelligence',
-        improvementItems,
-        toastMessage: appliedChanges > 0
-          ? `Applied ${appliedChanges} suggested change${appliedChanges === 1 ? '' : 's'} and started a rerun.`
-          : 'Started a rerun from the diagnosed run context. Manual guidance was recorded, and no strategy code was changed.',
-      });
-    } finally {
-      if (!_strategyRerunStarting) _setStrategyRerunPhase('idle');
     }
   }
 
@@ -2260,6 +2579,8 @@ window.BacktestPage = (() => {
     rerunBtn.textContent = _strategyRerunStatusLabel(phase);
     if (blockedByActiveRun) {
       rerunBtn.title = 'A backtest is already running. Wait for it to finish before using Improve & Run.';
+    } else if (phase === 'review') {
+      rerunBtn.title = 'A rerun review is open below. Confirm it explicitly or cancel it.';
     } else {
       rerunBtn.title = phase === 'idle' ? '' : 'Preparing strategy-intelligence rerun from this result.';
     }

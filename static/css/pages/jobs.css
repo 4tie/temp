@@ -137,3 +137,18 @@
     min-width: 620px;
   }
 }
+
+/* Compact-pro refresh overrides */
+.jobs-activity-card,
+.jobs-table-card {
+  border-radius: var(--radius-lg);
+}
+
+.jobs-activity-card .card__header,
+.jobs-table-card .card__header {
+  min-height: 50px;
+}
+
+.jobs-activity-item__message {
+  color: var(--text-primary);
+}

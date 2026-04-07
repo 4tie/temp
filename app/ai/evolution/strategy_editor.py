@@ -87,6 +87,28 @@ def _extract_candidate_vector(strategy_name: str, source_code: str) -> dict[str,
         return {}
 
     vector: dict[str, Any] = {}
+    scalar_hint_tokens = (
+        "rsi",
+        "adx",
+        "atr",
+        "threshold",
+        "entry",
+        "exit",
+        "cooldown",
+        "protection",
+        "guard",
+        "limit",
+        "take_profit",
+        "profit_target",
+        "stop_buffer",
+    )
+
+    def _capture_scalar(name: str, node: ast.AST) -> None:
+        literal = _safe_literal_eval(node)
+        if literal is None:
+            return
+        if isinstance(literal, (int, float, bool, str)):
+            vector[name] = _normalize_value(literal)
     for stmt in class_node.body:
         if not isinstance(stmt, ast.Assign) or len(stmt.targets) != 1:
             continue
@@ -118,6 +140,26 @@ def _extract_candidate_vector(strategy_name: str, source_code: str) -> dict[str,
                     literal = _safe_literal_eval(default_node)
                     if literal is not None:
                         vector[name] = _normalize_value(literal)
+                continue
+
+        lowered = name.lower()
+        if (
+            lowered.startswith(("buy_", "sell_", "entry_", "exit_", "protection_", "cooldown_"))
+            or any(token in lowered for token in scalar_hint_tokens)
+        ):
+            _capture_scalar(name, value)
+
+    # Handle annotated constants: `rsi_entry: int = 30`.
+    for stmt in class_node.body:
+        if not isinstance(stmt, ast.AnnAssign) or not isinstance(stmt.target, ast.Name):
+            continue
+        name = stmt.target.id
+        lowered = name.lower()
+        if (
+            lowered.startswith(("buy_", "sell_", "entry_", "exit_", "protection_", "cooldown_"))
+            or any(token in lowered for token in scalar_hint_tokens)
+        ) and stmt.value is not None:
+            _capture_scalar(name, stmt.value)
 
     return dict(sorted(vector.items(), key=lambda item: item[0]))
 
@@ -137,6 +179,8 @@ def _build_mutation_prompt(
     generation: int,
     regime_context: dict | None,
     tried_candidates: list[dict[str, Any]] | None,
+    exploration_level: str | None,
+    recent_fail_reasons: list[str] | None,
 ) -> str:
     root_causes = analysis.get("root_cause_diagnosis") or {}
     param_recs = analysis.get("parameter_recommendations") or []
@@ -177,6 +221,7 @@ def _build_mutation_prompt(
         vector = entry.get("candidate_vector") or {}
         compact = ", ".join(f"{k}={vector[k]}" for k in list(sorted(vector.keys()))[:8])
         tried_lines.append(f"- {fingerprint} [{version_id}] :: {compact}")
+    fail_lines = [f"- {reason}" for reason in (recent_fail_reasons or [])[-5:] if str(reason or "").strip()]
 
     return (
         "STRATEGY SOURCE:\n"
@@ -197,6 +242,8 @@ def _build_mutation_prompt(
         + ("\n".join(feedback_lines) if feedback_lines else "- None\n")
         + "\n\nTRIED CANDIDATE VECTORS (DO NOT REUSE):\n"
         + ("\n".join(tried_lines) if tried_lines else "- None\n")
+        + "\n\nRECENT FAILURE PATTERNS TO AVOID:\n"
+        + ("\n".join(fail_lines) if fail_lines else "- None\n")
         + "\n\nTASK: Mutate the strategy Python code to address the primary weakness.\n"
         + "Rules:\n"
         + "1. Output ONLY valid Python code inside ```python ... ``` fences\n"
@@ -205,6 +252,7 @@ def _build_mutation_prompt(
         + "4. Do NOT change: imports, class name, method signatures, timeframe, startup_candle_count\n"
         + "5. After the code block, write a 2-sentence \"# CHANGES:\" comment explaining what you changed\n"
         + "6. DO NOT output a candidate that matches any tried candidate vector listed above\n"
+        + f"7. exploration_level={exploration_level or 'medium'} (low=small shifts, medium=broader tuning, high=aggressive diversification)\n"
         + f"Generation: {generation}\n"
     )
 
@@ -222,6 +270,8 @@ async def mutate_strategy(
     regime_context: dict | None = None,
     version_id: str | None = None,
     tried_candidates: list[dict[str, Any]] | None = None,
+    exploration_level: str | None = None,
+    recent_fail_reasons: list[str] | None = None,
 ) -> MutationResult:
     role_overrides = {"code_gen": model, "reasoner": model, "explainer": model} if model else None
     models = await fetch_free_models(provider)
@@ -235,6 +285,8 @@ async def mutate_strategy(
         generation=generation,
         regime_context=regime_context,
         tried_candidates=tried_candidates,
+        exploration_level=exploration_level,
+        recent_fail_reasons=recent_fail_reasons,
     )
     messages = [
         {"role": "system", "content": _MUTATION_SYSTEM_PROMPT},
@@ -299,3 +351,7 @@ async def mutate_strategy(
         changes_summary=changes_summary,
         validation_errors=[],
     )
+
+
+def extract_candidate_vector(strategy_name: str, source_code: str) -> dict[str, Any]:
+    return _extract_candidate_vector(strategy_name, source_code)

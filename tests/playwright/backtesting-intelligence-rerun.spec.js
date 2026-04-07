@@ -262,7 +262,7 @@ test.describe('Backtesting Strategy Intelligence rerun', () => {
     }
   });
 
-  test('Improve & Run submits rerun payload with intelligence metadata and auto-applied params', async ({ page }) => {
+  test('Improve & Run opens review first and submits reviewed rerun payload with metadata', async ({ page }) => {
     const mocks = await installBacktestingMocks(page);
 
     await page.goto('/#backtesting');
@@ -270,6 +270,10 @@ test.describe('Backtesting Strategy Intelligence rerun', () => {
     await page.waitForSelector('[data-quick-param="stoploss"]');
 
     await page.click('[data-intelligence-action="rerun"]');
+    await expect.poll(() => mocks.getStartBacktestBodies().length).toBe(0);
+    await page.waitForSelector('[data-intelligence-review-action="run"]');
+    await page.uncheck('[data-review-toggle="trailing_stop"]');
+    await page.click('[data-intelligence-review-action="run"]');
 
     await expect.poll(() => mocks.getStartBacktestBodies().length).toBe(1);
     const body = mocks.getStartBacktestBodies()[0];
@@ -281,8 +285,11 @@ test.describe('Backtesting Strategy Intelligence rerun', () => {
       'Enable trailing stop',
       'Manual follow-up',
     ]);
+    expect(body.improvement_applied).toEqual(['Tighten stoploss']);
+    expect(body.improvement_skipped).toContain('Enable trailing stop');
+    expect(body.improvement_brief).toBe('Entries are poorly timed.');
     expect(body.strategy_params.stoploss).toBe(-0.08);
-    expect(body.strategy_params.trailing_stop).toBe(true);
+    expect(body.strategy_params.trailing_stop).toBe(false);
   });
 
   test('Strategy Intelligence panel shows diagnosis and next-move summary counts', async ({ page }) => {
@@ -301,17 +308,18 @@ test.describe('Backtesting Strategy Intelligence rerun', () => {
     await expect(chips.nth(1)).toHaveText('1 manual item');
   });
 
-  test('Improve & Run still applies auto-changes when quick params are still loading', async ({ page }) => {
+  test('Improve & Run still prepares review when quick params are still loading', async ({ page }) => {
     const mocks = await installBacktestingMocks(page, { strategyParamsDelayMs: 1250 });
 
     await page.goto('/#backtesting');
     const rerunBtn = page.locator('[data-intelligence-action="rerun"]');
     await rerunBtn.waitFor();
 
-    // Click before strategy params finish loading to validate race-safety.
     await rerunBtn.click();
     await expect(rerunBtn).toHaveAttribute('data-state', 'preparing');
     await expect(rerunBtn).toHaveText('Preparing...');
+    await page.waitForSelector('[data-intelligence-review-action="run"]');
+    await page.click('[data-intelligence-review-action="run"]');
 
     await expect.poll(() => mocks.getStartBacktestBodies().length).toBe(1);
     const body = mocks.getStartBacktestBodies()[0];
@@ -333,7 +341,7 @@ test.describe('Backtesting Strategy Intelligence rerun', () => {
     expect(mocks.getStartBacktestBodies().length).toBe(0);
   });
 
-  test('Improve & Run ignores rapid repeat clicks while preparing rerun', async ({ page }) => {
+  test('Improve & Run ignores rapid repeat clicks while preparing review', async ({ page }) => {
     const mocks = await installBacktestingMocks(page, { dataCoverageDelayMs: 1200 });
 
     await page.goto('/#backtesting');
@@ -342,7 +350,8 @@ test.describe('Backtesting Strategy Intelligence rerun', () => {
 
     await rerunBtn.dblclick();
 
-    await expect.poll(() => mocks.getStartBacktestBodies().length).toBe(1);
+    await expect.poll(() => mocks.getStartBacktestBodies().length).toBe(0);
+    await page.waitForSelector('[data-intelligence-review-action="run"]');
   });
 });
 

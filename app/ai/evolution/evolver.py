@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import difflib
+import importlib
 import logging
 import threading
 from datetime import datetime, timezone
@@ -20,6 +21,7 @@ from app.ai.market.regime_detector import detect_regime
 from app.ai.tools.deep_analysis import analyze
 from app.core.config import AI_EVOLUTION_DIR, STRATEGIES_DIR
 from app.core.json_io import read_json, write_json
+from app.services.execution_context_service import read_config_json
 from app.services.results.result_service import normalize_backtest_result
 from app.services.runner import start_backtest, wait_for_run
 from app.services.storage import append_app_event, load_run_meta, load_run_results
@@ -340,6 +342,124 @@ def _evaluate_regime_robustness(base_analysis: dict[str, Any], candidate_analysi
     }
 
 
+def _exploration_level_for_attempt(generation: int, attempt: int, recent_deltas: list[float]) -> str:
+    if generation <= 1:
+        base_level = "low"
+    elif generation == 2:
+        base_level = "medium"
+    else:
+        last_two = recent_deltas[-2:]
+        base_level = "high" if len(last_two) >= 2 and all(delta <= 0 for delta in last_two) else "medium"
+    levels = ["low", "medium", "high"]
+    idx = levels.index(base_level)
+    idx = min(idx + max(0, attempt - 1), len(levels) - 1)
+    return levels[idx]
+
+
+def _vector_changed_keys(before: dict[str, Any], after: dict[str, Any]) -> list[str]:
+    keys = sorted(set((before or {}).keys()) | set((after or {}).keys()))
+    changed = [key for key in keys if (before or {}).get(key) != (after or {}).get(key)]
+    return changed
+
+
+def _find_near_duplicate_failed(
+    candidate_vector: dict[str, Any],
+    history: list[dict[str, Any]],
+    *,
+    max_changed_keys: int = 1,
+    max_vector_diff_ratio: float = 0.15,
+    history_limit: int = 100,
+) -> dict[str, Any] | None:
+    if not candidate_vector:
+        return None
+    failure_statuses = {"rejected", "backtest_failed", "duplicate_rejected", "duplicate_blocked"}
+    recent = [entry for entry in history if str(entry.get("status") or "") in failure_statuses][-max(history_limit, 1):]
+    for entry in reversed(recent):
+        other = dict(entry.get("candidate_vector") or {})
+        if not other:
+            continue
+        changed = _vector_changed_keys(candidate_vector, other)
+        union = sorted(set(candidate_vector.keys()) | set(other.keys()))
+        if not union:
+            continue
+        ratio = len(changed) / float(len(union))
+        if len(changed) <= max_changed_keys or ratio <= max_vector_diff_ratio:
+            return entry
+    return None
+
+
+def _load_repetition_policy() -> dict[str, int | float]:
+    cfg = read_config_json()
+    ai_cfg = cfg.get("ai") if isinstance(cfg.get("ai"), dict) else {}
+    evo_cfg = ai_cfg.get("evolution") if isinstance(ai_cfg, dict) and isinstance(ai_cfg.get("evolution"), dict) else {}
+
+    def _as_int(name: str, default: int) -> int:
+        raw = evo_cfg.get(name, default)
+        try:
+            value = int(raw)
+        except Exception:
+            return default
+        return value if value >= 0 else default
+
+    def _as_float(name: str, default: float) -> float:
+        raw = evo_cfg.get(name, default)
+        try:
+            value = float(raw)
+        except Exception:
+            return default
+        return value if value >= 0 else default
+
+    return {
+        "repetition_max_changed_keys": _as_int("repetition_max_changed_keys", 1),
+        "repetition_max_vector_diff_ratio": _as_float("repetition_max_vector_diff_ratio", 0.15),
+        "repetition_history_limit": _as_int("repetition_history_limit", 100),
+    }
+
+
+def _resolve_rejection_category(accepted: bool, robustness_passed: bool, status: str) -> str | None:
+    if accepted:
+        return None
+    if status == "backtest_failed":
+        return "backtest_failed"
+    if status in {"duplicate_blocked", "duplicate_rejected"}:
+        return "duplicate"
+    if not robustness_passed:
+        return "robustness"
+    return "fitness"
+
+
+def _accept_with_tiebreaker(
+    fitness_before: FitnessScore,
+    fitness_after: FitnessScore,
+    robustness_passed: bool,
+) -> tuple[bool, str | None]:
+    if not robustness_passed:
+        return False, None
+
+    if fitness_after.value > fitness_before.value:
+        return True, None
+
+    delta = fitness_after.value - fitness_before.value
+    # Near-zero deltas can still be meaningful if risk metrics improve.
+    if abs(delta) > 0.25:
+        return False, None
+
+    before_dd = float(fitness_before.breakdown.get("max_drawdown_pct") or 0.0)
+    after_dd = float(fitness_after.breakdown.get("max_drawdown_pct") or 0.0)
+    before_pf = float(fitness_before.breakdown.get("profit_factor") or 0.0)
+    after_pf = float(fitness_after.breakdown.get("profit_factor") or 0.0)
+    before_trades = int(fitness_before.breakdown.get("n_trades") or 0)
+    after_trades = int(fitness_after.breakdown.get("n_trades") or 0)
+
+    if after_dd < before_dd - 0.5:
+        return True, "tie_breaker_drawdown"
+    if abs(after_dd - before_dd) <= 0.5 and after_pf > before_pf + 0.03:
+        return True, "tie_breaker_profit_factor"
+    if abs(after_dd - before_dd) <= 0.5 and abs(after_pf - before_pf) <= 0.03 and after_trades > before_trades + 5:
+        return True, "tie_breaker_trade_count"
+    return False, None
+
+
 def _evolution_worker(
     run_id: str,
     goal_id: str | None,
@@ -348,14 +468,18 @@ def _evolution_worker(
     model: str | None,
     loop_id: str,
 ) -> None:
-    from app.ai.evolution.strategy_editor import mutate_strategy
+    strategy_editor_mod = importlib.import_module("app.ai.evolution.strategy_editor")
     from app.ai.evolution.version_manager import create_backtest_workspace, create_version
+    mutate_strategy = strategy_editor_mod.mutate_strategy
+    extract_candidate_vector = getattr(strategy_editor_mod, "extract_candidate_vector", None)
 
     generations: list[dict[str, Any]] = []
     best_fitness = 0.0
     best_version: str | None = None
     current_run_id = run_id
     duplicate_retry_limit = 3
+    recent_deltas: list[float] = []
+    repetition_policy = _load_repetition_policy()
 
     try:
         initial_meta = load_run_meta(current_run_id)
@@ -402,6 +526,10 @@ def _evolution_worker(
                 "candidate_vector": {},
                 "candidate_fingerprint": "",
                 "duplicate_of": None,
+                "exploration_level": "low",
+                "vector_field_count": 0,
+                "vector_changed_keys": [],
+                "rejection_category": None,
                 "retry_attempt": 0,
                 "retry_limit": duplicate_retry_limit,
                 "mutation_summary": {
@@ -533,11 +661,26 @@ def _evolution_worker(
             )
 
             feedback_history = feedback_store.get_history(base_strategy)
+            base_vector = (
+                dict(extract_candidate_vector(base_strategy, source_code))
+                if callable(extract_candidate_vector)
+                else {}
+            )
             mutation = None
             duplicate_match: dict[str, Any] | None = None
             for attempt in range(1, duplicate_retry_limit + 1):
                 gen_record["retry_attempt"] = attempt
+                gen_record["duplicate_of"] = None
+                gen_record["rejection_reason"] = None
+                gen_record["rejection_category"] = None
+                exploration_level = _exploration_level_for_attempt(generation, attempt, recent_deltas)
+                gen_record["exploration_level"] = exploration_level
                 tried_candidates = feedback_store.list_candidate_attempts(base_strategy, limit=500)
+                recent_fail_reasons = [
+                    str(entry.get("rejection_reason") or "")
+                    for entry in tried_candidates
+                    if str(entry.get("status") or "") in {"rejected", "backtest_failed", "duplicate_rejected"}
+                ][-5:]
                 mutation = _run_async(
                     mutate_strategy(
                         strategy_name=base_strategy,
@@ -552,13 +695,31 @@ def _evolution_worker(
                         regime_context=regime_info,
                         version_id=generation_version_id,
                         tried_candidates=tried_candidates,
+                        exploration_level=exploration_level,
+                        recent_fail_reasons=recent_fail_reasons,
                     )
                 )
                 if not mutation.success:
                     break
                 duplicate_match = feedback_store.find_candidate(base_strategy, mutation.candidate_fingerprint)
                 if not duplicate_match:
-                    break
+                    near_duplicate = _find_near_duplicate_failed(
+                        dict(mutation.candidate_vector or {}),
+                        tried_candidates,
+                        max_changed_keys=int(repetition_policy["repetition_max_changed_keys"]),
+                        max_vector_diff_ratio=float(repetition_policy["repetition_max_vector_diff_ratio"]),
+                        history_limit=int(repetition_policy["repetition_history_limit"]),
+                    )
+                    if not near_duplicate:
+                        break
+                    duplicate_match = near_duplicate
+                    gen_record["rejection_category"] = "repetition"
+                    gen_record["rejection_reason"] = (
+                        f"candidate too similar to recent failed vector "
+                        f"({near_duplicate.get('version_id') or near_duplicate.get('candidate_fingerprint')})"
+                    )
+                else:
+                    gen_record["rejection_category"] = "duplicate"
                 gen_record["candidate_vector"] = dict(mutation.candidate_vector or {})
                 gen_record["candidate_fingerprint"] = mutation.candidate_fingerprint or ""
                 gen_record["status"] = "duplicate_blocked"
@@ -566,15 +727,18 @@ def _evolution_worker(
                     "candidate_fingerprint": duplicate_match.get("candidate_fingerprint"),
                     "version_id": duplicate_match.get("version_id"),
                 }
-                gen_record["rejection_reason"] = (
-                    f"duplicate candidate fingerprint {mutation.candidate_fingerprint} "
-                    f"(matches {duplicate_match.get('version_id')})"
-                )
+                if not gen_record.get("rejection_reason"):
+                    gen_record["rejection_reason"] = (
+                        f"duplicate candidate fingerprint {mutation.candidate_fingerprint} "
+                        f"(matches {duplicate_match.get('version_id')})"
+                    )
                 gen_record["mutation_summary"] = {
                     "success": False,
                     "changes_summary": mutation.changes_summary,
                     "validation_errors": [],
                 }
+                gen_record["vector_field_count"] = len(gen_record["candidate_vector"])
+                gen_record["vector_changed_keys"] = _vector_changed_keys(base_vector, gen_record["candidate_vector"])
                 feedback_store.record_candidate_attempt(
                     strategy=base_strategy,
                     loop_id=loop_id,
@@ -598,6 +762,10 @@ def _evolution_worker(
                     generation_index=generation,
                     candidate_vector=gen_record["candidate_vector"],
                     candidate_fingerprint=gen_record["candidate_fingerprint"],
+                    exploration_level=gen_record["exploration_level"],
+                    vector_field_count=gen_record["vector_field_count"],
+                    vector_changed_keys=gen_record["vector_changed_keys"],
+                    rejection_category=gen_record.get("rejection_category"),
                     duplicate_of=gen_record["duplicate_of"],
                     retry_attempt=attempt,
                     retry_limit=duplicate_retry_limit,
@@ -609,6 +777,19 @@ def _evolution_worker(
                     continue
                 gen_record["status"] = "duplicate_rejected"
                 gen_record["mutation_success"] = False
+                gen_record["rejection_category"] = gen_record.get("rejection_category") or "duplicate"
+                feedback_store.record_candidate_attempt(
+                    strategy=base_strategy,
+                    loop_id=loop_id,
+                    generation_index=generation,
+                    version_id=generation_version_id,
+                    candidate_vector=gen_record["candidate_vector"],
+                    candidate_fingerprint=gen_record["candidate_fingerprint"],
+                    status="duplicate_rejected",
+                    accepted=False,
+                    fitness_after=None,
+                    rejection_reason=gen_record["rejection_reason"],
+                )
                 _emit(
                     loop_id,
                     LoopEventType.COMPARISON_DONE,
@@ -620,6 +801,10 @@ def _evolution_worker(
                     generation_index=generation,
                     candidate_vector=gen_record["candidate_vector"],
                     candidate_fingerprint=gen_record["candidate_fingerprint"],
+                    exploration_level=gen_record["exploration_level"],
+                    vector_field_count=gen_record["vector_field_count"],
+                    vector_changed_keys=gen_record["vector_changed_keys"],
+                    rejection_category=gen_record.get("rejection_category"),
                     duplicate_of=gen_record["duplicate_of"],
                     retry_attempt=attempt,
                     retry_limit=duplicate_retry_limit,
@@ -645,6 +830,8 @@ def _evolution_worker(
             gen_record["version_name"] = mutation.version_name or gen_record["version_id"]
             gen_record["candidate_vector"] = dict(mutation.candidate_vector or {})
             gen_record["candidate_fingerprint"] = mutation.candidate_fingerprint or ""
+            gen_record["vector_field_count"] = len(gen_record["candidate_vector"])
+            gen_record["vector_changed_keys"] = _vector_changed_keys(base_vector, gen_record["candidate_vector"])
             gen_record["changes_summary"] = mutation.changes_summary
             gen_record["mutation_success"] = mutation.success
             gen_record["mutation_summary"] = {
@@ -663,6 +850,7 @@ def _evolution_worker(
                 )
                 gen_record["validation_errors"] = list(mutation.validation_errors)
                 gen_record["status"] = "mutation_failed"
+                gen_record["rejection_category"] = "fitness"
                 if gen_record["candidate_fingerprint"]:
                     feedback_store.record_candidate_attempt(
                         strategy=base_strategy,
@@ -762,6 +950,7 @@ def _evolution_worker(
                 gen_record["accepted"] = False
                 gen_record["status"] = "backtest_failed"
                 gen_record["rejection_reason"] = f"backtest ended with status '{final_meta.get('status', 'unknown')}'"
+                gen_record["rejection_category"] = "backtest_failed"
                 feedback_store.record_candidate_attempt(
                     strategy=base_strategy,
                     loop_id=loop_id,
@@ -814,7 +1003,18 @@ def _evolution_worker(
                 base_analysis,
                 candidate_analysis,
             )
-            accepted = fitness_after.value > fitness_before.value and robustness_passed
+            accepted, tie_breaker = _accept_with_tiebreaker(
+                fitness_before=fitness_before,
+                fitness_after=fitness_after,
+                robustness_passed=robustness_passed,
+            )
+            rejection_category = _resolve_rejection_category(
+                accepted=accepted,
+                robustness_passed=robustness_passed,
+                status="accepted" if accepted else "rejected",
+            )
+            if tie_breaker and accepted:
+                rejection_reason = None
 
             gen_record.update(
                 {
@@ -825,7 +1025,9 @@ def _evolution_worker(
                     "status": "accepted" if accepted else "rejected",
                     "robustness_passed": robustness_passed,
                     "rejection_reason": rejection_reason,
+                    "rejection_category": rejection_category,
                     "robustness_details": robustness_details,
+                    "acceptance_mode": tie_breaker or "fitness_delta",
                 }
             )
             gen_record["fitness_summary"] = {
@@ -881,6 +1083,10 @@ def _evolution_worker(
                 code_patch_ref=gen_record.get("code_patch_ref"),
                 candidate_vector=gen_record["candidate_vector"],
                 candidate_fingerprint=gen_record["candidate_fingerprint"],
+                exploration_level=gen_record.get("exploration_level"),
+                vector_field_count=gen_record.get("vector_field_count"),
+                vector_changed_keys=gen_record.get("vector_changed_keys"),
+                rejection_category=gen_record.get("rejection_category"),
                 duplicate_of=gen_record.get("duplicate_of"),
                 retry_attempt=gen_record.get("retry_attempt"),
                 retry_limit=gen_record.get("retry_limit"),
@@ -896,6 +1102,7 @@ def _evolution_worker(
                     best_version = gen_record["version_id"]
 
             generations.append(gen_record)
+            recent_deltas.append(delta)
             _update_session(
                 loop_id,
                 generations_completed=generation,

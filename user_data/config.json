@@ -88,6 +88,13 @@
   "bot_name": "4tiee",
   "initial_state": "running",
   "force_entry_enable": true,
+  "ai": {
+    "evolution": {
+      "repetition_max_changed_keys": 1,
+      "repetition_max_vector_diff_ratio": 0.15,
+      "repetition_history_limit": 100
+    }
+  },
   "internals": {
     "process_throttle_secs": 5
   },

@@ -1,36 +1,43 @@
+.dashboard-page {
+  min-height: 0;
+}
+
+.dashboard-hero {
+  margin-bottom: 0;
+}
+
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.92fr);
   gap: var(--space-3);
+  min-height: 0;
 }
 
 .dashboard-panel {
-  min-height: 320px;
-  border: 0;
-  border-top: 1px solid var(--border-subtle);
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
+  min-height: 360px;
+}
+
+.dashboard-panel .card__meta {
+  border-bottom: 0;
+  padding-bottom: 0;
 }
 
 .dashboard-panel .card__header {
-  padding-inline: 0;
-  background: transparent;
+  padding-top: var(--space-2);
 }
 
 .dashboard-panel .card__body {
-  padding-inline: 0;
-  background: transparent;
+  padding-top: 0;
 }
 
 .dashboard-panel .data-table th,
 .dashboard-panel .data-table td {
-  padding-top: 9px;
-  padding-bottom: 9px;
+  padding-top: 10px;
+  padding-bottom: 10px;
 }
 
 .dashboard-panel .empty-state {
-  min-height: 220px;
+  min-height: 240px;
 }
 
 @media (max-width: 1380px) {
@@ -40,11 +47,7 @@
 }
 
 @media (max-width: 960px) {
-  .dashboard-grid {
-    grid-template-columns: 1fr;
-  }
-
   .dashboard-panel {
-    min-height: 260px;
+    min-height: 280px;
   }
 }

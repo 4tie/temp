@@ -248,10 +248,22 @@ window.ResultExplorer = (() => {
     if (improveRerun) {
       DOM.on(improveRerun, 'click', () => {
         if (!_state.runId) return;
+        const intelligence = _state.detail?.results?.strategy_intelligence || null;
+        const rerunPlan = intelligence?.rerun_plan || {};
+        const autoChanges = Array.isArray(rerunPlan.auto_param_changes) ? rerunPlan.auto_param_changes : [];
+        const manualItems = Array.isArray(rerunPlan.manual_actions) ? rerunPlan.manual_actions : [];
+        const primary = intelligence?.diagnosis?.primary || {};
         try {
           sessionStorage.setItem(_PENDING_STRATEGY_RERUN_KEY, JSON.stringify({
             runId: _state.runId,
-            intelligence: _state.detail?.results?.strategy_intelligence || null,
+            intelligence,
+            meta: _state.detail?.meta || {},
+            baselineParams: { ...(_state.detail?.meta?.strategy_params || {}) },
+            proposedParams: Object.fromEntries(autoChanges.map((item) => [item.name, item.value])),
+            selectedChanges: autoChanges.map((item) => item.name).filter(Boolean),
+            manualItems,
+            brief: primary.explanation || '',
+            diagnosisTitle: primary.title || '',
           }));
         } catch {}
         if (AppState.get('activePage') === 'backtesting') {
@@ -632,6 +644,7 @@ window.ResultExplorer = (() => {
     const issues = _visibleIntelligenceIssues(diagnosis);
     const { quickParams, manualGuidance } = _intelligenceSuggestionGroups(intelligence);
     const comparison = intelligence.comparison_to_parent || {};
+    const iterationMemory = intelligence.iteration_memory || {};
     const comparisonRows = _intelligenceComparisonRows(comparison);
     const primaryEvidence = primary.evidence || 'No metric-backed evidence was captured.';
     const primaryMetrics = _metricSnapshotText(primary.metric_snapshot);
@@ -723,6 +736,30 @@ window.ResultExplorer = (() => {
                       : FMT.pct(row.diff, 1, true)),
               row.diff == null ? '' : (row.higher_is_better === false ? _toneFromNumber(-row.diff) : _toneFromNumber(row.diff))
             )).join('')}
+          </div>
+        </div>
+      ` : ''}
+      ${(iterationMemory.improvement_applied?.length || iterationMemory.improvement_skipped?.length || iterationMemory.improvement_brief) ? `
+        <div class="result-explorer__section">
+          <div class="section-heading">Last Rerun Intent</div>
+          <div class="result-explorer__stack">
+            ${iterationMemory.improvement_brief ? `
+              <article class="result-explorer__insight-card">
+                <div class="result-explorer__insight-body">${_esc(iterationMemory.improvement_brief)}</div>
+              </article>
+            ` : ''}
+            ${iterationMemory.improvement_applied?.length ? `
+              <article class="result-explorer__insight-card">
+                <div class="result-explorer__insight-title">Applied</div>
+                <div class="result-explorer__insight-body">${_esc(iterationMemory.improvement_applied.join(', '))}</div>
+              </article>
+            ` : ''}
+            ${iterationMemory.improvement_skipped?.length ? `
+              <article class="result-explorer__insight-card">
+                <div class="result-explorer__insight-title">Skipped</div>
+                <div class="result-explorer__insight-body">${_esc(iterationMemory.improvement_skipped.join(', '))}</div>
+              </article>
+            ` : ''}
           </div>
         </div>
       ` : ''}

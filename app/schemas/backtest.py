@@ -15,6 +15,9 @@ class BacktestRequest(BaseModel):
     parent_run_id: Optional[str] = None
     improvement_source: Optional[str] = None
     improvement_items: list[str] = Field(default_factory=list)
+    improvement_applied: list[str] = Field(default_factory=list)
+    improvement_skipped: list[str] = Field(default_factory=list)
+    improvement_brief: Optional[str] = None
 
 
 class ConfigPatchRequest(BaseModel):

@@ -362,3 +362,27 @@
     width: 100%;
   }
 }
+
+/* Compact-pro refresh overrides */
+.settings-layout .card {
+  border-radius: var(--radius-lg);
+}
+
+.settings-layout .card__header {
+  min-height: 50px;
+}
+
+.settings-layout .card__body {
+  padding: var(--space-3) var(--space-4) var(--space-4);
+}
+
+.theme-preset-card {
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: rgba(255,255,255,0.018);
+}
+
+.settings-master-save {
+  box-shadow: var(--shadow-glow);
+}

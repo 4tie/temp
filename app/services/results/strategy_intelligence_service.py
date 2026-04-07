@@ -85,6 +85,9 @@ def build_strategy_intelligence(
             "parent_run_id": (meta or {}).get("parent_run_id"),
             "improvement_source": (meta or {}).get("improvement_source"),
             "improvement_items": list((meta or {}).get("improvement_items") or []),
+            "improvement_applied": list((meta or {}).get("improvement_applied") or []),
+            "improvement_skipped": list((meta or {}).get("improvement_skipped") or []),
+            "improvement_brief": (meta or {}).get("improvement_brief"),
         },
     }
 
@@ -202,6 +205,7 @@ def _build_suggestions(
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     suggestions: list[dict[str, Any]] = []
     auto_param_changes: list[dict[str, Any]] = []
+    unsupported_items: list[dict[str, Any]] = []
 
     for idx, item in enumerate(parameter_recommendations[:4], start=1):
         parameter = str(item.get("parameter") or "").strip()
@@ -229,6 +233,16 @@ def _build_suggestions(
                 {
                     **auto_param,
                     "label": title,
+                    "reason": str(item.get("reason") or ""),
+                    "evidence": evidence,
+                }
+            )
+        else:
+            unsupported_items.append(
+                {
+                    "title": title,
+                    "parameter": parameter or None,
+                    "suggested_value": suggestion_value,
                     "reason": str(item.get("reason") or ""),
                     "evidence": evidence,
                 }
@@ -261,6 +275,7 @@ def _build_suggestions(
 
     return deduped[:6], {
         "auto_param_changes": auto_param_changes,
+        "unsupported_items": unsupported_items[:4],
         "manual_actions": [
             suggestion["title"]
             for suggestion in deduped

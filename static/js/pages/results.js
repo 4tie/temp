@@ -26,11 +26,11 @@ window.ResultsPage = (() => {
 
   function _render() {
     DOM.setHTML(_el, `
-      <div class="results-page">
+      <div class="results-page page-frame page-frame--compact">
         <div class="results-header">
           <div class="results-header__main">
             <h1 class="results-header__title">Backtest Results</h1>
-            <p class="results-header__subtitle">Compare and analyze completed backtest runs</p>
+            <p class="results-header__subtitle">Compare completed runs, inspect versioned strategies, and move directly into detailed analysis.</p>
           </div>
           <div class="results-header__meta">
             <div class="results-header__status" id="results-last-updated">

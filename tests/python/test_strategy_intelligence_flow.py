@@ -119,8 +119,11 @@ class StrategyIntelligenceFlowTest(unittest.TestCase):
         self.assertIn("Win rate = 42.5% with PF 0.84.", intelligence["suggestions"][2]["evidence"])
         self.assertEqual(len(intelligence["rerun_plan"]["auto_param_changes"]), 2)
         self.assertIn("Entry signal threshold", intelligence["rerun_plan"]["manual_actions"])
+        self.assertEqual(len(intelligence["rerun_plan"]["unsupported_items"]), 1)
         self.assertEqual(intelligence["comparison_to_parent"]["parent_run_id"], "run-0")
         self.assertEqual(intelligence["comparison_to_parent"]["metrics"]["profit_percent"]["diff"], -6.0)
+        self.assertEqual(intelligence["iteration_memory"]["improvement_source"], "strategy_intelligence")
+        self.assertEqual(intelligence["iteration_memory"]["improvement_applied"], [])
 
     def test_attach_and_detect_strategy_intelligence(self) -> None:
         enriched = attach_strategy_intelligence({"summary": {}}, {"version": INTELLIGENCE_VERSION})

@@ -166,3 +166,12 @@
     gap: var(--space-4);
   }
 }
+
+/* Compact-pro refresh overrides */
+.hyperopt-card {
+  border-radius: var(--radius-lg);
+}
+
+.hyperopt-card .card__header {
+  min-height: 50px;
+}

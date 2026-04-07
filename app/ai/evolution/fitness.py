@@ -46,13 +46,14 @@ def compute_fitness(backtest_result: dict[str, Any]) -> FitnessScore:
     if sharpe_ratio is None:
         sharpe_ratio = summary.get("sharpeRatio")
     sharpe_ratio = float(sharpe_ratio or 0.0)
-    sharpe_score = min(max(sharpe_ratio, 0.0), 2.0) / 2.0 * 15.0
+    sharpe_score = min(max(sharpe_ratio, 0.0), 2.0) / 2.0 * 12.0
 
     max_drawdown = float(summary.get("maxDrawdown") or 0.0)
-    drawdown_score = max(0.0, 25.0 - (max_drawdown / 2.0))
+    drawdown_ratio = min(max(max_drawdown, 0.0), 50.0) / 50.0
+    drawdown_score = max(0.0, (1.0 - (drawdown_ratio ** 1.4)) * 33.0)
 
     win_rate = float(summary.get("winRate") or 0.0)
-    win_rate_score = min(win_rate * 0.2, 20.0)
+    win_rate_score = min(win_rate * 0.15, 15.0)
 
     trade_bonus_score = math.log10(max(n_trades, 1)) * 5.0
 

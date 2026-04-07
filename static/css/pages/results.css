@@ -918,3 +918,74 @@
 .results-content {
   min-height: 220px;
 }
+
+/* Compact-pro refresh overrides */
+.results-table-card {
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 6%, transparent), transparent 24%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.016), transparent 76%),
+    var(--surface-1);
+  border: 1px solid color-mix(in srgb, var(--accent-ring) 32%, var(--border-subtle));
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-glow);
+}
+
+.results-table-header {
+  padding: var(--space-3) var(--space-4);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+}
+
+.results-table th,
+.results-table td {
+  padding-top: 11px;
+  padding-bottom: 11px;
+}
+
+.results-table__id-text,
+.results-table__strategy-class {
+  font-family: var(--font-mono);
+}
+
+.results-table__strategy-name {
+  color: var(--text-primary);
+  font-weight: var(--font-semibold);
+}
+
+.results-table__strategy-class {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  margin-top: 4px;
+}
+
+.results-table__btn {
+  min-height: 30px;
+}
+
+.result-explorer__hero {
+  border: 1px solid color-mix(in srgb, var(--accent-ring) 34%, var(--border-subtle));
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 9%, transparent), transparent 24%),
+    linear-gradient(180deg, rgba(255,255,255,.026), rgba(255,255,255,.01));
+  box-shadow: var(--shadow-glow);
+}
+
+.result-explorer__hero-stat {
+  background: rgba(255, 255, 255, 0.024);
+}
+
+.result-explorer__chart-card,
+.result-explorer__insight-card {
+  box-shadow: var(--shadow-xs);
+}
+
+@media (max-width: 900px) {
+  .results-table-header {
+    padding-inline: var(--space-3);
+  }
+
+  .results-table th,
+  .results-table td {
+    padding-inline: var(--space-3);
+  }
+}

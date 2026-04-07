@@ -129,6 +129,11 @@ async def evolution_run_detail(loop_id: str):
         item.setdefault("duplicate_of", None)
         item.setdefault("retry_attempt", 0)
         item.setdefault("retry_limit", 0)
+        item.setdefault("exploration_level", "low")
+        item.setdefault("vector_field_count", 0)
+        item.setdefault("vector_changed_keys", [])
+        item.setdefault("rejection_category", None)
+        item.setdefault("acceptance_mode", None)
         item.setdefault(
             "mutation_summary",
             {

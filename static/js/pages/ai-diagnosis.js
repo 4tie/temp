@@ -422,10 +422,11 @@ window.AIDiagPage = (() => {
       : (snapshot.loopEnabled ? 'Armed and waiting for apply' : 'Inactive');
 
     return `
-      <div class="page-header">
-        <h1 class="page-header__title">AI Diagnosis</h1>
-        <p class="page-header__subtitle">AI Diagnosis is the main workspace for strategy chat, code proposals, deep analysis, and evolve strategy workflows.</p>
-      </div>
+      <div class="page-frame page-frame--compact ai-diagnosis-page">
+        <div class="page-header">
+          <h1 class="page-header__title">AI Diagnosis</h1>
+          <p class="page-header__subtitle">Use a single command surface for strategy discussion, backtest context review, deep analysis, and controlled evolution.</p>
+        </div>
 
       <div class="ai-diagnosis-workbench">
         <section class="ai-diagnosis-stage">
@@ -490,6 +491,7 @@ window.AIDiagPage = (() => {
 
           <div id="ai-staged-change-slot"></div>
         </aside>
+      </div>
       </div>
     `;
   }
@@ -2076,6 +2078,10 @@ window.AIDiagPage = (() => {
     const changes    = evt.changes_summary || '';
     const newRunId   = evt.new_run_id || '';
     const versionName = evt.version_id || evt.version_name || '';
+    const retryMeta = (evt.retry_attempt && evt.retry_limit) ? `${evt.retry_attempt}/${evt.retry_limit}` : '';
+    const fingerprint = evt.candidate_fingerprint || '';
+    const rejectionCategory = evt.rejection_category || '';
+    const explorationLevel = evt.exploration_level || '';
 
     // Replace live card if it exists, otherwise append
     let card = container.querySelector(`[data-gen="${gen}"]`);
@@ -2113,6 +2119,9 @@ window.AIDiagPage = (() => {
         </div>
 
         ${changes ? `<div class="evo-changes">&ldquo;${_escHtml(changes)}&rdquo;</div>` : ''}
+        <div class="evo-changes" style="opacity:.8">
+          ${retryMeta ? `retry ${_escHtml(retryMeta)} · ` : ''}${fingerprint ? `fp ${_escHtml(String(fingerprint).slice(0, 16))} · ` : ''}${explorationLevel ? `explore ${_escHtml(explorationLevel)} · ` : ''}${rejectionCategory ? `reason ${_escHtml(rejectionCategory)}` : ' '}
+        </div>
 
         <div class="evo-card-actions">
           ${versionName ? `<button class="evo-link" onclick="window.AIDiagPage._openDiff('${_escHtml(versionName)}')">View Code Diff</button>` : ''}
@@ -2169,12 +2178,18 @@ window.AIDiagPage = (() => {
         const dNum = parseFloat(d);
         const dc = dNum > 0 ? 'pos' : dNum < 0 ? 'neg' : 'zero';
         const fitAfter = g.fitness_after === null || g.fitness_after === undefined ? '—' : Number(g.fitness_after).toFixed(1);
+        const retryMeta = (g.retry_attempt && g.retry_limit) ? `${g.retry_attempt}/${g.retry_limit}` : '-';
+        const fingerprint = g.candidate_fingerprint ? String(g.candidate_fingerprint).slice(0, 10) : '-';
+        const category = g.rejection_category || '-';
         return `
           <tr>
             <td>${g.generation}</td>
             <td style="font-family:var(--font-mono);font-size:10px">${_escHtml(g.version_id || g.version_name || "-")}</td>
             <td>${fitAfter}</td>
             <td class="evo-fitness-delta evo-fitness-delta--${dc}">${d === '—' ? '—' : `${dNum > 0 ? '+' : ''}${d}`}</td>
+            <td>${_escHtml(retryMeta)}</td>
+            <td style="font-family:var(--font-mono);font-size:10px">${_escHtml(fingerprint)}</td>
+            <td>${_escHtml(category)}</td>
             <td><span class="evo-badge evo-badge--${badge}">${label}</span></td>
           </tr>
         `;
@@ -2196,7 +2211,7 @@ window.AIDiagPage = (() => {
         <table class="evo-results-table">
           <thead>
             <tr>
-              <th>Gen</th><th>Version</th><th>Fitness</th><th>Delta</th><th>Status</th>
+              <th>Gen</th><th>Version</th><th>Fitness</th><th>Delta</th><th>Retry</th><th>Fingerprint</th><th>Category</th><th>Status</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>

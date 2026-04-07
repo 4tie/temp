@@ -239,47 +239,71 @@ class EvolutionGenerationContractTest(unittest.TestCase):
                 start_backtest_calls.append(kwargs)
                 return "bt_child"
 
-            with patch.dict(
-                "sys.modules",
-                {"app.ai.evolution.strategy_editor": self._strategy_editor_stub(mutate_result=mutation_result)},
-            ), patch("app.ai.evolution.evolver.STRATEGIES_DIR", strategies), patch(
-                "app.ai.evolution.evolver.AI_EVOLUTION_DIR", evo_dir
-            ), patch("app.ai.evolution.version_manager.STRATEGIES_DIR", strategies), patch(
-                "app.ai.evolution.version_manager.AI_EVOLUTION_DIR", evo_dir
-            ), patch("app.ai.evolution.evolver.load_run_meta", side_effect=[initial_meta, {"status": "completed"}]), patch(
-                "app.ai.evolution.evolver.load_run_results",
-                side_effect=[{"base": True}, {"candidate": True}],
-            ), patch(
-                "app.ai.evolution.evolver.normalize_backtest_result",
-                side_effect=lambda payload: payload,
-            ), patch(
-                "app.ai.evolution.evolver.analyze", return_value={}
-            ), patch(
-                "app.ai.evolution.evolver.compute_fitness",
-                side_effect=[_Fitness(50.0, {"profitability": 10}), _Fitness(55.0, {"profitability": 12})],
-            ), patch(
-                "app.ai.evolution.version_manager.create_backtest_workspace",
-                return_value=strategies,
-            ), patch(
-                "app.ai.evolution.evolver.start_backtest", side_effect=_fake_start_backtest
-            ), patch(
-                "app.ai.evolution.evolver.wait_for_run",
-                return_value={"status": "completed", "version_id": expected_version_id},
-            ), patch(
-                "app.ai.evolution.evolver._evaluate_regime_robustness",
-                return_value=(True, None, {}),
-            ), patch(
-                "app.ai.evolution.evolver.append_app_event", return_value={}
-            ), patch(
-                "app.ai.evolution.evolver.feedback_store.get_history", return_value=[]
-            ), patch(
-                "app.ai.evolution.evolver.feedback_store.record_pending", return_value=None
-            ), patch(
-                "app.ai.evolution.evolver.feedback_store.record", return_value=None
-            ), patch(
-                "app.ai.evolution.evolver.detect_regime",
-                new=AsyncMock(side_effect=RuntimeError("skip regime")),
-            ):
+            with ExitStack() as stack:
+                stack.enter_context(
+                    patch.dict(
+                        "sys.modules",
+                        {"app.ai.evolution.strategy_editor": self._strategy_editor_stub(mutate_result=mutation_result)},
+                    )
+                )
+                stack.enter_context(patch("app.ai.evolution.evolver.STRATEGIES_DIR", strategies))
+                stack.enter_context(patch("app.ai.evolution.evolver.AI_EVOLUTION_DIR", evo_dir))
+                stack.enter_context(patch("app.ai.evolution.version_manager.STRATEGIES_DIR", strategies))
+                stack.enter_context(patch("app.ai.evolution.version_manager.AI_EVOLUTION_DIR", evo_dir))
+                stack.enter_context(patch("app.ai.evolution.evolver.load_run_meta", side_effect=[initial_meta, {"status": "completed"}]))
+                stack.enter_context(
+                    patch(
+                        "app.ai.evolution.evolver.load_run_results",
+                        side_effect=[{"base": True}, {"candidate": True}],
+                    )
+                )
+                stack.enter_context(
+                    patch(
+                        "app.ai.evolution.evolver.normalize_backtest_result",
+                        side_effect=lambda payload: payload,
+                    )
+                )
+                stack.enter_context(patch("app.ai.evolution.evolver.analyze", return_value={}))
+                stack.enter_context(
+                    patch(
+                        "app.ai.evolution.evolver.compute_fitness",
+                        side_effect=[_Fitness(50.0, {"profitability": 10}), _Fitness(55.0, {"profitability": 12})],
+                    )
+                )
+                stack.enter_context(
+                    patch(
+                        "app.ai.evolution.version_manager.create_backtest_workspace",
+                        return_value=strategies,
+                    )
+                )
+                stack.enter_context(patch("app.ai.evolution.evolver.start_backtest", side_effect=_fake_start_backtest))
+                stack.enter_context(
+                    patch(
+                        "app.ai.evolution.evolver.wait_for_run",
+                        return_value={"status": "completed", "version_id": expected_version_id},
+                    )
+                )
+                stack.enter_context(
+                    patch(
+                        "app.ai.evolution.evolver._evaluate_regime_robustness",
+                        return_value=(True, None, {}),
+                    )
+                )
+                stack.enter_context(patch("app.ai.evolution.evolver.append_app_event", return_value={}))
+                stack.enter_context(patch("app.ai.evolution.evolver.feedback_store.get_history", return_value=[]))
+                stack.enter_context(patch("app.ai.evolution.evolver.feedback_store.list_candidate_attempts", return_value=[]))
+                stack.enter_context(patch("app.ai.evolution.evolver.feedback_store.find_candidate", return_value=None))
+                stack.enter_context(
+                    patch("app.ai.evolution.evolver.feedback_store.record_candidate_attempt", return_value=None)
+                )
+                stack.enter_context(patch("app.ai.evolution.evolver.feedback_store.record_pending", return_value=None))
+                stack.enter_context(patch("app.ai.evolution.evolver.feedback_store.record", return_value=None))
+                stack.enter_context(
+                    patch(
+                        "app.ai.evolution.evolver.detect_regime",
+                        new=AsyncMock(side_effect=RuntimeError("skip regime")),
+                    )
+                )
                 evolver._evolution_worker(
                     run_id="bt_base",
                     goal_id=None,
@@ -400,6 +424,8 @@ class EvolutionGenerationContractTest(unittest.TestCase):
             generation = run_log["generations"][0]
             self.assertEqual(generation["retry_attempt"], 2)
             self.assertEqual(generation["candidate_fingerprint"], "novelnovelnovel1")
+            self.assertEqual(generation["exploration_level"], "medium")
+            self.assertIn("stoploss", generation["vector_changed_keys"])
 
     def test_duplicate_exhaustion_marks_generation_duplicate_rejected_without_backtest(self) -> None:
         from app.ai.evolution import evolver
@@ -479,6 +505,152 @@ class EvolutionGenerationContractTest(unittest.TestCase):
             generation = run_log["generations"][0]
             self.assertEqual(generation["status"], "duplicate_rejected")
             self.assertEqual(generation["retry_attempt"], 3)
+            self.assertEqual(generation["rejection_category"], "duplicate")
+
+    def test_repetition_policy_uses_configured_strict_thresholds(self) -> None:
+        from app.ai.evolution import evolver
+
+        history = [
+            {
+                "status": "rejected",
+                "version_id": "old_v1",
+                "candidate_fingerprint": "oldfp1",
+                "candidate_vector": {"stoploss": -0.1, "buy_rsi": 30},
+            }
+        ]
+        candidate = {"stoploss": -0.1, "buy_rsi": 31}
+
+        with patch("app.ai.evolution.evolver.read_config_json", return_value={"ai": {"evolution": {"repetition_max_changed_keys": 0}}}):
+            policy = evolver._load_repetition_policy()
+
+        self.assertEqual(policy["repetition_max_changed_keys"], 0)
+        match = evolver._find_near_duplicate_failed(
+            candidate,
+            history,
+            max_changed_keys=int(policy["repetition_max_changed_keys"]),
+            max_vector_diff_ratio=float(policy["repetition_max_vector_diff_ratio"]),
+            history_limit=int(policy["repetition_history_limit"]),
+        )
+        self.assertIsNone(match)
+
+    def test_repetition_policy_uses_default_thresholds_when_config_missing(self) -> None:
+        from app.ai.evolution import evolver
+
+        history = [
+            {
+                "status": "rejected",
+                "version_id": "old_v1",
+                "candidate_fingerprint": "oldfp1",
+                "candidate_vector": {"stoploss": -0.1, "buy_rsi": 30},
+            }
+        ]
+        candidate = {"stoploss": -0.1, "buy_rsi": 31}
+
+        with patch("app.ai.evolution.evolver.read_config_json", return_value={}):
+            policy = evolver._load_repetition_policy()
+
+        self.assertEqual(policy["repetition_max_changed_keys"], 1)
+        self.assertEqual(policy["repetition_max_vector_diff_ratio"], 0.15)
+        match = evolver._find_near_duplicate_failed(
+            candidate,
+            history,
+            max_changed_keys=int(policy["repetition_max_changed_keys"]),
+            max_vector_diff_ratio=float(policy["repetition_max_vector_diff_ratio"]),
+            history_limit=int(policy["repetition_history_limit"]),
+        )
+        self.assertIsNotNone(match)
+
+    def test_near_zero_delta_accepts_on_drawdown_tiebreaker(self) -> None:
+        from app.ai.evolution import evolver
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            strategies = root / "strategies"
+            evo_dir = root / "ai_evolution"
+            strategies.mkdir(parents=True, exist_ok=True)
+            evo_dir.mkdir(parents=True, exist_ok=True)
+            (strategies / "DemoStrategy.py").write_text("class DemoStrategy(object):\n    pass\n", encoding="utf-8")
+
+            initial_meta = {
+                "base_strategy": "DemoStrategy",
+                "strategy_source_name": "DemoStrategy",
+                "pairs": ["BTC/USDT"],
+                "timeframe": "5m",
+                "exchange": "binance",
+                "timerange": "20240101-20240201",
+            }
+            mutation_result = SimpleNamespace(
+                success=True,
+                new_code="class DemoStrategy(object):\n    pass\n",
+                version_id="DemoStrategy_evo_g1_looptie1",
+                version_name="DemoStrategy_evo_g1_looptie1",
+                candidate_vector={"stoploss": -0.08},
+                candidate_fingerprint="tiecase0011223344",
+                changes_summary="lower dd with similar return",
+                validation_errors=[],
+            )
+
+            with ExitStack() as stack:
+                stack.enter_context(
+                    patch.dict(
+                        "sys.modules",
+                        {"app.ai.evolution.strategy_editor": self._strategy_editor_stub(mutate_result=mutation_result)},
+                    )
+                )
+                stack.enter_context(patch("app.ai.evolution.evolver.STRATEGIES_DIR", strategies))
+                stack.enter_context(patch("app.ai.evolution.evolver.AI_EVOLUTION_DIR", evo_dir))
+                stack.enter_context(patch("app.ai.evolution.version_manager.STRATEGIES_DIR", strategies))
+                stack.enter_context(patch("app.ai.evolution.version_manager.AI_EVOLUTION_DIR", evo_dir))
+                stack.enter_context(patch("app.ai.evolution.evolver.load_run_meta", side_effect=[initial_meta, {"status": "completed"}]))
+                stack.enter_context(patch("app.ai.evolution.evolver.load_run_results", side_effect=[{"base": True}, {"candidate": True}]))
+                stack.enter_context(patch("app.ai.evolution.evolver.normalize_backtest_result", side_effect=lambda payload: payload))
+                stack.enter_context(patch("app.ai.evolution.evolver.analyze", return_value={}))
+                stack.enter_context(
+                    patch(
+                        "app.ai.evolution.evolver.compute_fitness",
+                        side_effect=[
+                            _Fitness(50.0, {"max_drawdown_pct": 20.0, "profit_factor": 1.2, "n_trades": 80}),
+                            _Fitness(50.0, {"max_drawdown_pct": 10.0, "profit_factor": 1.21, "n_trades": 82}),
+                        ],
+                    )
+                )
+                stack.enter_context(patch("app.ai.evolution.evolver.start_backtest", return_value="bt_child"))
+                stack.enter_context(
+                    patch(
+                        "app.ai.evolution.evolver.wait_for_run",
+                        return_value={"status": "completed", "version_id": "DemoStrategy_evo_g1_looptie1"},
+                    )
+                )
+                stack.enter_context(patch("app.ai.evolution.evolver._evaluate_regime_robustness", return_value=(True, None, {})))
+                stack.enter_context(patch("app.ai.evolution.evolver.append_app_event", return_value={}))
+                stack.enter_context(patch("app.ai.evolution.evolver.feedback_store.get_history", return_value=[]))
+                stack.enter_context(patch("app.ai.evolution.evolver.feedback_store.list_candidate_attempts", return_value=[]))
+                stack.enter_context(patch("app.ai.evolution.evolver.feedback_store.find_candidate", return_value=None))
+                stack.enter_context(patch("app.ai.evolution.evolver.feedback_store.record_candidate_attempt", return_value=None))
+                stack.enter_context(patch("app.ai.evolution.evolver.feedback_store.record_pending", return_value=None))
+                stack.enter_context(patch("app.ai.evolution.evolver.feedback_store.record", return_value=None))
+                stack.enter_context(
+                    patch(
+                        "app.ai.evolution.evolver.detect_regime",
+                        new=AsyncMock(side_effect=RuntimeError("skip regime")),
+                    )
+                )
+                stack.enter_context(
+                    patch("app.ai.evolution.version_manager.create_backtest_workspace", return_value=strategies)
+                )
+                evolver._evolution_worker(
+                    run_id="bt_base",
+                    goal_id=None,
+                    max_generations=1,
+                    provider="openrouter",
+                    model=None,
+                    loop_id="looptie1",
+                )
+
+            run_log = json.loads((evo_dir / "looptie1.json").read_text(encoding="utf-8"))
+            generation = run_log["generations"][0]
+            self.assertTrue(generation["accepted"])
+            self.assertEqual(generation["acceptance_mode"], "tie_breaker_drawdown")
 
 
 @unittest.skipIf(_FASTAPI_IMPORT_ERROR is not None, f"FastAPI unavailable: {_FASTAPI_IMPORT_ERROR}")
