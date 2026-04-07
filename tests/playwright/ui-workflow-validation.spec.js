@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { test } = require('@playwright/test');
+const { test, expect } = require('@playwright/test');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const EVIDENCE_DIR = path.join(ROOT, 'docs', 'qa', 'evidence', 'raw');
@@ -141,6 +141,8 @@ async function installComprehensiveMocks(page, appOrigin, requestLog) {
       });
     }
     if (method === 'POST' && pathname.startsWith('/strategies/') && pathname.endsWith('/source')) return fulfillJson(route, { ok: true });
+    if (method === 'POST' && /^\/strategies\/[^/]+\/versions\/[^/]+\/accept$/.test(pathname)) return fulfillJson(route, { ok: true, accepted_version: pathname.split('/')[4] });
+    if (method === 'POST' && /^\/strategies\/[^/]+\/versions\/accept$/.test(pathname)) return fulfillJson(route, { ok: true, accepted_version: 'MomentumPulse_evo_g1' });
 
     if (method === 'GET' && pathname === '/settings') return fulfillJson(route, { openrouter_api_keys: [] });
     if (method === 'POST' && pathname === '/settings') return fulfillJson(route, { ok: true });
@@ -256,9 +258,7 @@ async function prepareAiDiagnosisPreconditions(page) {
     await textarea.fill('Review current strategy context and suggest safe next step.').catch(() => {});
   }
 
-  await clickFirstVisible(page, ['#ai-inject-btn3', '#ai-inject-btn2', '#ai-inject-btn', '[data-ai-workspace-action="inject"]']);
-  await clickFirstVisible(page, ['#ai-evolve-btn', '[data-ai-workspace-action="evolve"]']);
-  await clickFirstVisible(page, ['#ai-deep-analyse-btn', '[data-ai-workspace-action="analyse"]']);
+  await ensureAiContextInjected(page);
 }
 
 async function preparePagePreconditions(page, viewName) {
@@ -544,7 +544,7 @@ function isLateExecutionControl(control) {
 }
 
 test.describe('UI workflow validation matrix', () => {
-  test.setTimeout(600000);
+  test.setTimeout(420000);
   test('all actionable controls trigger an observable workflow outcome', async ({ page, baseURL, browserName }) => {
     const appOrigin = new URL(baseURL || 'http://127.0.0.1:5000').origin;
     const requestLog = [];
@@ -733,5 +733,176 @@ test.describe('UI workflow validation matrix', () => {
     const latest = path.join(EVIDENCE_DIR, `ui-workflow-evidence-${browserName}-latest.json`);
     fs.writeFileSync(dated, JSON.stringify(payload, null, 2));
     fs.writeFileSync(latest, JSON.stringify(payload, null, 2));
+  });
+
+  test('ai-diagnosis staged apply can be manually accepted via promotion_endpoint', async ({ page, baseURL }) => {
+    const appOrigin = new URL(baseURL || 'http://127.0.0.1:5000').origin;
+    const requestLog = [];
+    const observed = [];
+    page.on('request', (req) => {
+      try {
+        const url = new URL(req.url());
+        if (url.origin !== appOrigin) return;
+        observed.push(`${req.method()} ${url.pathname}`);
+      } catch {}
+    });
+
+    await installComprehensiveMocks(page, appOrigin, requestLog);
+
+    await page.route('**/ai/threads', async (route) => {
+      const req = route.request();
+      if (req.method() !== 'GET') return route.continue();
+      return fulfillJson(route, [
+        {
+          thread_id: 't-stage-1',
+          conversation_id: 't-stage-1',
+          title: 'Stage Candidate',
+          preview: 'Has code block',
+        },
+      ]);
+    });
+    await page.route('**/ai/threads/t-stage-1', async (route) => {
+      const req = route.request();
+      if (req.method() !== 'GET') return route.continue();
+      return fulfillJson(route, {
+        id: 't-stage-1',
+        thread_id: 't-stage-1',
+        goal_id: 'balanced',
+        provider: 'openrouter',
+        model: 'openrouter/sonic-mini',
+        context_run_id: 'bt_run_completed_1',
+        messages: [
+          {
+            id: 'assistant-msg-1',
+            role: 'assistant',
+            content: 'Update `MomentumPulse.py`.\n```python\nclass MomentumPulse:\n    timeframe = "15m"\n```',
+            meta: {},
+          },
+        ],
+      });
+    });
+    await page.route('**/ai/chat/apply-code', async (route) => {
+      const req = route.request();
+      if (req.method() !== 'POST') return route.continue();
+      return fulfillJson(route, {
+        ok: true,
+        strategy: 'MomentumPulse',
+        staged: true,
+        version_name: 'MomentumPulse_evo_g3',
+        requires_manual_promotion: true,
+        promotion_endpoint: '/strategies/MomentumPulse/versions/MomentumPulse_evo_g3/accept',
+      });
+    });
+    await page.route('**/strategies/MomentumPulse/versions/MomentumPulse_evo_g3/accept', async (route) => {
+      const req = route.request();
+      if (req.method() !== 'POST') return route.continue();
+      return fulfillJson(route, {
+        ok: true,
+        strategy: 'MomentumPulse',
+        accepted_version: 'MomentumPulse_evo_g3',
+      });
+    });
+
+    await gotoPage(page, 'ai-diagnosis');
+    await page.locator('#ai-conv-toggle').first().click({ timeout: 5000 });
+    await page.locator('.ai-conv-item[data-conv-id="t-stage-1"]').first().click({ timeout: 5000 });
+    await page.waitForSelector('.cmd-block__action[data-action="apply"]', { timeout: 5000 });
+    await page.locator('.cmd-block__action[data-action="apply"]').first().click({ timeout: 5000 });
+
+    const promoteBtn = page.locator('#ai-promote-btn');
+    await expect(promoteBtn).toBeVisible({ timeout: 5000 });
+    await expect(promoteBtn).toBeEnabled({ timeout: 5000 });
+    await promoteBtn.click({ timeout: 5000 });
+    await expect(promoteBtn).toHaveText('Accepted', { timeout: 5000 });
+
+    expect(observed).toContain('POST /ai/chat/apply-code');
+    expect(observed).toContain('POST /strategies/MomentumPulse/versions/MomentumPulse_evo_g3/accept');
+  });
+
+  test('evolution lifecycle stream renders running/results and accepts best version', async ({ page, baseURL }) => {
+    const appOrigin = new URL(baseURL || 'http://127.0.0.1:5000').origin;
+    const requestLog = [];
+    const observed = [];
+    page.on('request', (req) => {
+      try {
+        const url = new URL(req.url());
+        if (url.origin !== appOrigin) return;
+        observed.push(`${req.method()} ${url.pathname}`);
+      } catch {}
+    });
+
+    await installComprehensiveMocks(page, appOrigin, requestLog);
+
+    await page.route('**/evolution/start', async (route) => {
+      const req = route.request();
+      if (req.method() !== 'POST') return route.continue();
+      return fulfillJson(route, { loop_id: 'evo_test_1' });
+    });
+    await page.route('**/evolution/stream/evo_test_1', async (route) => {
+      const req = route.request();
+      if (req.method() !== 'GET') return route.continue();
+      const lines = [
+        'data: {"event_type":"analysis_started","generation":1,"message":"Analyzing backtest..."}',
+        'data: {"event_type":"mutation_started","generation":1,"message":"Mutating strategy code..."}',
+        'data: {"event_type":"backtest_started","generation":1,"message":"Running backtest..."}',
+        'data: {"event_type":"comparison_done","generation":1,"fitness_before":55.1,"fitness_after":61.9,"delta":"+6.80","accepted":true,"version_name":"MomentumPulse_evo_g1","changes_summary":"Tightened exits","new_run_id":"bt_evo_1"}',
+        'data: {"event_type":"loop_completed","done":true,"message":"Evolution complete."}',
+        '',
+      ].join('\n');
+      return route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream',
+        body: lines,
+      });
+    });
+    await page.route('**/evolution/run/evo_test_1', async (route) => {
+      const req = route.request();
+      if (req.method() !== 'GET') return route.continue();
+      return fulfillJson(route, {
+        loop_id: 'evo_test_1',
+        session: {
+          best_fitness: 61.9,
+          best_version: 'MomentumPulse_evo_g1',
+        },
+        generations: [
+          {
+            generation: 1,
+            version_name: 'MomentumPulse_evo_g1',
+            fitness_before: 55.1,
+            fitness_after: 61.9,
+            delta: 6.8,
+            accepted: true,
+          },
+        ],
+      });
+    });
+    await page.route('**/strategies/MomentumPulse/versions/MomentumPulse_evo_g1/accept', async (route) => {
+      const req = route.request();
+      if (req.method() !== 'POST') return route.continue();
+      return fulfillJson(route, { ok: true, accepted_version: 'MomentumPulse_evo_g1' });
+    });
+
+    await gotoPage(page, 'ai-diagnosis');
+    await ensureAiContextInjected(page);
+
+    await page.locator('#ai-evolve-btn').first().click({ timeout: 5000 });
+    await page.waitForSelector('#evo-start-btn', { timeout: 5000 });
+    await page.locator('#evo-start-btn').first().click({ timeout: 5000 });
+
+    await expect(page.locator('#evo-progress-text')).toContainText('Generation 1 /', { timeout: 6000 });
+    await expect(page.locator('#evo-gen-cards')).toContainText('Generation 1 of', { timeout: 6000 });
+    await expect(page.locator('#evo-gen-cards')).toContainText('MomentumPulse_evo_g1', { timeout: 6000 });
+
+    await page.waitForTimeout(1500);
+    await expect(page.locator('#evo-tab-results.active')).toBeVisible({ timeout: 5000 });
+    const acceptBtn = page.locator('#evo-accept-best-btn');
+    await expect(acceptBtn).toBeVisible({ timeout: 5000 });
+    await expect(acceptBtn).toContainText('MomentumPulse_evo_g1', { timeout: 5000 });
+    await acceptBtn.click({ timeout: 5000 });
+
+    expect(observed).toContain('POST /evolution/start');
+    expect(observed).toContain('GET /evolution/stream/evo_test_1');
+    expect(observed).toContain('GET /evolution/run/evo_test_1');
+    expect(observed).toContain('POST /strategies/MomentumPulse/versions/MomentumPulse_evo_g1/accept');
   });
 });

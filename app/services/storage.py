@@ -215,8 +215,11 @@ def list_runs() -> list[dict[str, Any]]:
 
         meta = dict(meta)
         meta["run_id"] = run_dir.name
+        meta.setdefault("version_id", meta.get("strategy_version") or meta.get("strategy_source_name"))
+        if meta.get("version_id"):
+            meta.setdefault("strategy_version", meta.get("version_id"))
         meta.setdefault("display_strategy", meta.get("strategy"))
-        meta.setdefault("display_version", meta.get("strategy_version"))
+        meta.setdefault("display_version", meta.get("version_id") or meta.get("strategy_version"))
 
         has_results_file = run_results_path(run_dir).exists()
         has_local_artifact = _run_dir_has_local_artifact(run_dir)

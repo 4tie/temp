@@ -1,7 +1,9 @@
 """
 Version manager — creates, lists, and manages evolved strategy versions.
 
-Naming convention: {base_strategy}_evo_g{generation}.py
+Naming convention:
+- Legacy: {base_strategy}_evo_g{generation}.py
+- Primary: {base_strategy}_evo_g{generation}_{suffix}.py
 """
 from __future__ import annotations
 
@@ -18,7 +20,7 @@ from app.core.config import AI_EVOLUTION_DIR, STRATEGIES_DIR
 from app.core.json_io import read_json
 from app.services.strategies import read_strategy_sidecar_payload
 
-_EVO_RE = re.compile(r"^(.+)_evo_g(\d+)$")
+_EVO_RE = re.compile(r"^(.+)_evo_g(\d+)(?:_[A-Za-z0-9\-]+)?$")
 _SAFE_RE = re.compile(r"^[A-Za-z0-9_\-]+$")
 
 
@@ -36,8 +38,11 @@ def _safe(name: str) -> bool:
     return bool(_SAFE_RE.match(name))
 
 
-def version_name_for(strategy_name: str, generation: int) -> str:
-    return f"{strategy_name}_evo_g{generation}"
+def version_name_for(strategy_name: str, generation: int, suffix: str | None = None) -> str:
+    base = f"{strategy_name}_evo_g{generation}"
+    if suffix:
+        return f"{base}_{suffix}"
+    return base
 
 
 def _atomic_copy(src: Path, dst: Path) -> None:
@@ -59,9 +64,15 @@ def _effective_params_payload(strategy_name: str) -> dict:
     return payload
 
 
-def create_version(strategy_name: str, source: str, generation: int) -> str:
+def create_version(
+    strategy_name: str,
+    source: str,
+    generation: int,
+    *,
+    version_name: str | None = None,
+) -> str:
     """Write source to a new versioned .py file and a neutral JSON sidecar."""
-    vname = version_name_for(strategy_name, generation)
+    vname = version_name or version_name_for(strategy_name, generation)
     dest_py = STRATEGIES_DIR / f"{vname}.py"
     dest_py.write_text(source, encoding="utf-8")
 

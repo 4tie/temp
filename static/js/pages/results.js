@@ -136,7 +136,7 @@ window.ResultsPage = (() => {
 
   function _displayStrategy(run) {
     const base = run.display_strategy || run.strategy || '—';
-    const version = run.display_version || run.strategy_version || null;
+    const version = run.display_version || run.version_id || run.strategy_version || null;
     return version ? `${base} · ${version}` : base;
   }
 

@@ -50,6 +50,15 @@ def build_backtest_meta(
     }
     if extra_meta:
         meta.update(extra_meta)
+    resolved_version_id = (
+        meta.get("version_id")
+        or meta.get("strategy_version")
+        or meta.get("strategy_source_name")
+    )
+    if resolved_version_id:
+        meta["version_id"] = resolved_version_id
+        meta.setdefault("strategy_version", resolved_version_id)
+        meta.setdefault("display_version", resolved_version_id)
     return meta
 
 

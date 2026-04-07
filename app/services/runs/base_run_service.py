@@ -23,6 +23,11 @@ def normalize_command(default_cmd: list[str], command_override: Optional[list[st
     if not cmd:
         return default_cmd
 
+    # Normalize raw freqtrade invocations to use the configured Python interpreter.
+    # Example: ["freqtrade", "backtesting", ...] -> [python, "-m", "freqtrade", "backtesting", ...]
+    if cmd[0].lower() == "freqtrade" and default_cmd:
+        return [default_cmd[0], "-m", "freqtrade", *cmd[1:]]
+
     if (
         cmd[0].lower() in {"python", "python3"}
         and "-m" in cmd

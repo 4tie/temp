@@ -1,5 +1,5 @@
 {
-  "updated_at": 1775517579.3420928,
+  "updated_at": 1775530181.7291315,
   "roles": {
     "composer": {
       "openrouter/model:free": {
@@ -70,6 +70,15 @@
         "latency_samples": 22.0,
         "cooldown_until": 0.0,
         "updated_at": 1775490956.686458
+      },
+      "gemma4:latest": {
+        "requests": 3.0,
+        "successes": 3.0,
+        "rate_limits": 0.0,
+        "latency_sum_ms": 461124.0,
+        "latency_samples": 3.0,
+        "cooldown_until": 0.0,
+        "updated_at": 1775530181.7291315
       }
     },
     "tool_caller": {

@@ -7,6 +7,7 @@ module-level queue (dict keyed by loop_id) so the SSE endpoint can drain them.
 from __future__ import annotations
 
 import asyncio
+import difflib
 import logging
 import threading
 from datetime import datetime, timezone
@@ -52,6 +53,7 @@ def start_evolution(
             "generations_completed": 0,
             "best_fitness": 0.0,
             "best_version": None,
+            "best_version_id": None,
         }
 
     thread = threading.Thread(
@@ -188,12 +190,97 @@ def _run_async(coro):
 
 def _resolve_strategy_names(meta: dict[str, Any]) -> tuple[str, str]:
     base_strategy = meta.get("base_strategy") or meta.get("strategy_class") or meta.get("strategy") or ""
-    source_strategy = meta.get("strategy_source_name") or meta.get("strategy") or base_strategy
+    source_strategy = (
+        meta.get("version_id")
+        or meta.get("strategy_source_name")
+        or meta.get("strategy_version")
+        or meta.get("strategy")
+        or base_strategy
+    )
     return base_strategy, source_strategy
 
 
 def _load_strategy_source(strategy_name: str) -> str:
     return (STRATEGIES_DIR / f"{strategy_name}.py").read_text(encoding="utf-8")
+
+
+def _version_id_for_generation(base_strategy: str, loop_id: str, generation: int) -> str:
+    loop_suffix = (loop_id or "")[:8] or "loop"
+    return f"{base_strategy}_evo_g{generation}_{loop_suffix}"
+
+
+def _write_generation_patch(
+    *,
+    loop_id: str,
+    generation: int,
+    parent_version_id: str,
+    version_id: str,
+    before_source: str,
+    after_source: str,
+) -> str:
+    patch_dir = AI_EVOLUTION_DIR / loop_id / f"generation_{generation}"
+    patch_dir.mkdir(parents=True, exist_ok=True)
+    patch_path = patch_dir / "mutation.patch"
+    patch_text = "".join(
+        difflib.unified_diff(
+            before_source.splitlines(keepends=True),
+            after_source.splitlines(keepends=True),
+            fromfile=f"{parent_version_id}.py",
+            tofile=f"{version_id}.py",
+        )
+    )
+    patch_path.write_text(patch_text, encoding="utf-8")
+    return str(patch_path)
+
+
+def _fallback_placeholder_source(base_strategy: str, missing_source_name: str) -> str:
+    return (
+        f"# Evolution placeholder artifact\n"
+        f"# aborted_pre_mutation: source '{missing_source_name}' was unavailable\n"
+        f"class {base_strategy}(object):\n"
+        f"    pass\n"
+    )
+
+
+def _prepare_pre_mutation_abort_record(
+    *,
+    loop_id: str,
+    generation: int,
+    base_strategy: str,
+    current_version_id: str,
+    generation_version_id: str,
+    reason: str,
+    parent_source: str,
+) -> dict[str, Any]:
+    from app.ai.evolution.version_manager import create_version
+
+    create_version(
+        base_strategy,
+        parent_source,
+        generation,
+        version_name=generation_version_id,
+    )
+    patch_ref = _write_generation_patch(
+        loop_id=loop_id,
+        generation=generation,
+        parent_version_id=current_version_id,
+        version_id=generation_version_id,
+        before_source=parent_source,
+        after_source=parent_source,
+    )
+    return {
+        "status": "aborted_pre_mutation",
+        "accepted": False,
+        "mutation_success": False,
+        "changes_summary": "",
+        "rejection_reason": reason,
+        "mutation_summary": {
+            "success": False,
+            "changes_summary": "",
+            "validation_errors": [],
+        },
+        "code_patch_ref": patch_ref,
+    }
 
 
 def _weakest_populated_regime(analysis: dict[str, Any]) -> tuple[str | None, dict[str, Any] | None]:
@@ -262,12 +349,13 @@ def _evolution_worker(
     loop_id: str,
 ) -> None:
     from app.ai.evolution.strategy_editor import mutate_strategy
-    from app.ai.evolution.version_manager import create_backtest_workspace
+    from app.ai.evolution.version_manager import create_backtest_workspace, create_version
 
     generations: list[dict[str, Any]] = []
     best_fitness = 0.0
     best_version: str | None = None
     current_run_id = run_id
+    duplicate_retry_limit = 3
 
     try:
         initial_meta = load_run_meta(current_run_id)
@@ -277,6 +365,13 @@ def _evolution_worker(
             return
 
         base_strategy, current_source_name = _resolve_strategy_names(initial_meta)
+        current_version_id = (
+            initial_meta.get("version_id")
+            or initial_meta.get("strategy_version")
+            or initial_meta.get("strategy_source_name")
+            or current_source_name
+            or base_strategy
+        )
         pairs: list[str] = initial_meta.get("pairs", [])
         timeframe: str = initial_meta.get("timeframe", "5m")
         exchange: str = initial_meta.get("exchange") or "binance"
@@ -292,10 +387,33 @@ def _evolution_worker(
         for generation in range(1, max_generations + 1):
             gen_record: dict[str, Any] = {
                 "generation": generation,
+                "generation_index": generation,
                 "base_run_id": current_run_id,
                 "base_strategy": base_strategy,
                 "source_strategy": current_source_name,
+                "parent_version_id": current_version_id,
+                "status": "running",
+                "accepted": False,
+                "fitness_summary": {
+                    "before": None,
+                    "after": None,
+                    "delta": None,
+                },
+                "candidate_vector": {},
+                "candidate_fingerprint": "",
+                "duplicate_of": None,
+                "retry_attempt": 0,
+                "retry_limit": duplicate_retry_limit,
+                "mutation_summary": {
+                    "success": False,
+                    "changes_summary": "",
+                    "validation_errors": [],
+                },
+                "code_patch_ref": None,
             }
+            generation_version_id = _version_id_for_generation(base_strategy, loop_id, generation)
+            gen_record["version_id"] = generation_version_id
+            gen_record["version_name"] = generation_version_id
 
             _emit(
                 loop_id,
@@ -306,9 +424,35 @@ def _evolution_worker(
 
             base_results = load_run_results(current_run_id)
             if not base_results:
-                gen_record["error"] = "Base run results not found."
+                reason = "Base run results not found."
+                try:
+                    parent_source = _load_strategy_source(current_source_name)
+                except FileNotFoundError:
+                    parent_source = _fallback_placeholder_source(base_strategy, current_source_name)
+                gen_record["error"] = reason
+                gen_record.update(
+                    _prepare_pre_mutation_abort_record(
+                        loop_id=loop_id,
+                        generation=generation,
+                        base_strategy=base_strategy,
+                        current_version_id=current_version_id,
+                        generation_version_id=generation_version_id,
+                        reason=reason,
+                        parent_source=parent_source,
+                    )
+                )
                 generations.append(gen_record)
-                _emit(loop_id, LoopEventType.LOOP_FAILED, generation=generation, message=gen_record["error"], done=True)
+                _emit(
+                    loop_id,
+                    LoopEventType.LOOP_FAILED,
+                    generation=generation,
+                    message=reason,
+                    done=True,
+                    version_id=generation_version_id,
+                    parent_version_id=current_version_id,
+                    generation_index=generation,
+                    status="failed",
+                )
                 _update_session(loop_id, status="failed")
                 break
 
@@ -317,6 +461,14 @@ def _evolution_worker(
             fitness_before: FitnessScore = compute_fitness(base_run_data)
             gen_record["fitness_before"] = fitness_before.value
             gen_record["fitness_breakdown_before"] = fitness_before.breakdown
+            gen_record["fitness_summary"] = {
+                "before": {
+                    "score": fitness_before.value,
+                    "breakdown": fitness_before.breakdown,
+                },
+                "after": None,
+                "delta": None,
+            }
 
             if generation == 1:
                 best_fitness = fitness_before.value
@@ -341,9 +493,35 @@ def _evolution_worker(
             try:
                 source_code = _load_strategy_source(current_source_name)
             except FileNotFoundError:
-                gen_record["error"] = f"Strategy file {current_source_name}.py not found."
+                reason = f"Strategy file {current_source_name}.py not found."
+                try:
+                    parent_source = _load_strategy_source(base_strategy)
+                except FileNotFoundError:
+                    parent_source = _fallback_placeholder_source(base_strategy, current_source_name)
+                gen_record["error"] = reason
+                gen_record.update(
+                    _prepare_pre_mutation_abort_record(
+                        loop_id=loop_id,
+                        generation=generation,
+                        base_strategy=base_strategy,
+                        current_version_id=current_version_id,
+                        generation_version_id=generation_version_id,
+                        reason=reason,
+                        parent_source=parent_source,
+                    )
+                )
                 generations.append(gen_record)
-                _emit(loop_id, LoopEventType.LOOP_FAILED, generation=generation, message=gen_record["error"], done=True)
+                _emit(
+                    loop_id,
+                    LoopEventType.LOOP_FAILED,
+                    generation=generation,
+                    message=reason,
+                    done=True,
+                    version_id=generation_version_id,
+                    parent_version_id=current_version_id,
+                    generation_index=generation,
+                    status="failed",
+                )
                 _update_session(loop_id, status="failed")
                 break
 
@@ -355,26 +533,157 @@ def _evolution_worker(
             )
 
             feedback_history = feedback_store.get_history(base_strategy)
-            mutation = _run_async(
-                mutate_strategy(
-                    strategy_name=base_strategy,
-                    source_code=source_code,
-                    analysis=base_analysis,
-                    fitness=fitness_before,
-                    goal_id=goal_id,
-                    provider=provider,
-                    model=model,
-                    generation=generation,
-                    feedback_history=feedback_history,
-                    regime_context=regime_info,
+            mutation = None
+            duplicate_match: dict[str, Any] | None = None
+            for attempt in range(1, duplicate_retry_limit + 1):
+                gen_record["retry_attempt"] = attempt
+                tried_candidates = feedback_store.list_candidate_attempts(base_strategy, limit=500)
+                mutation = _run_async(
+                    mutate_strategy(
+                        strategy_name=base_strategy,
+                        source_code=source_code,
+                        analysis=base_analysis,
+                        fitness=fitness_before,
+                        goal_id=goal_id,
+                        provider=provider,
+                        model=model,
+                        generation=generation,
+                        feedback_history=feedback_history,
+                        regime_context=regime_info,
+                        version_id=generation_version_id,
+                        tried_candidates=tried_candidates,
+                    )
                 )
-            )
-            gen_record["version_name"] = mutation.version_name
+                if not mutation.success:
+                    break
+                duplicate_match = feedback_store.find_candidate(base_strategy, mutation.candidate_fingerprint)
+                if not duplicate_match:
+                    break
+                gen_record["candidate_vector"] = dict(mutation.candidate_vector or {})
+                gen_record["candidate_fingerprint"] = mutation.candidate_fingerprint or ""
+                gen_record["status"] = "duplicate_blocked"
+                gen_record["duplicate_of"] = {
+                    "candidate_fingerprint": duplicate_match.get("candidate_fingerprint"),
+                    "version_id": duplicate_match.get("version_id"),
+                }
+                gen_record["rejection_reason"] = (
+                    f"duplicate candidate fingerprint {mutation.candidate_fingerprint} "
+                    f"(matches {duplicate_match.get('version_id')})"
+                )
+                gen_record["mutation_summary"] = {
+                    "success": False,
+                    "changes_summary": mutation.changes_summary,
+                    "validation_errors": [],
+                }
+                feedback_store.record_candidate_attempt(
+                    strategy=base_strategy,
+                    loop_id=loop_id,
+                    generation_index=generation,
+                    version_id=generation_version_id,
+                    candidate_vector=gen_record["candidate_vector"],
+                    candidate_fingerprint=gen_record["candidate_fingerprint"],
+                    status="duplicate_blocked",
+                    accepted=None,
+                    fitness_after=None,
+                    rejection_reason=gen_record["rejection_reason"],
+                )
+                _emit(
+                    loop_id,
+                    LoopEventType.COMPARISON_DONE,
+                    generation=generation,
+                    accepted=False,
+                    version_id=generation_version_id,
+                    version_name=generation_version_id,
+                    parent_version_id=current_version_id,
+                    generation_index=generation,
+                    candidate_vector=gen_record["candidate_vector"],
+                    candidate_fingerprint=gen_record["candidate_fingerprint"],
+                    duplicate_of=gen_record["duplicate_of"],
+                    retry_attempt=attempt,
+                    retry_limit=duplicate_retry_limit,
+                    rejection_reason=gen_record["rejection_reason"],
+                    message=f"Duplicate candidate blocked (attempt {attempt}/{duplicate_retry_limit}), regenerating...",
+                    status="duplicate_blocked",
+                )
+                if attempt < duplicate_retry_limit:
+                    continue
+                gen_record["status"] = "duplicate_rejected"
+                gen_record["mutation_success"] = False
+                _emit(
+                    loop_id,
+                    LoopEventType.COMPARISON_DONE,
+                    generation=generation,
+                    accepted=False,
+                    version_id=generation_version_id,
+                    version_name=generation_version_id,
+                    parent_version_id=current_version_id,
+                    generation_index=generation,
+                    candidate_vector=gen_record["candidate_vector"],
+                    candidate_fingerprint=gen_record["candidate_fingerprint"],
+                    duplicate_of=gen_record["duplicate_of"],
+                    retry_attempt=attempt,
+                    retry_limit=duplicate_retry_limit,
+                    rejection_reason=gen_record["rejection_reason"],
+                    message=f"Duplicate candidate rejected after {duplicate_retry_limit} attempts.",
+                    status="duplicate_rejected",
+                )
+                generations.append(gen_record)
+                _update_session(
+                    loop_id,
+                    generations_completed=generation,
+                    best_fitness=best_fitness,
+                    best_version=best_version,
+                    best_version_id=best_version,
+                )
+                _save_run_log(loop_id, get_evolution_status(loop_id) or {}, generations)
+                mutation = None
+                break
+
+            if mutation is None:
+                continue
+            gen_record["version_id"] = mutation.version_id or generation_version_id
+            gen_record["version_name"] = mutation.version_name or gen_record["version_id"]
+            gen_record["candidate_vector"] = dict(mutation.candidate_vector or {})
+            gen_record["candidate_fingerprint"] = mutation.candidate_fingerprint or ""
             gen_record["changes_summary"] = mutation.changes_summary
             gen_record["mutation_success"] = mutation.success
+            gen_record["mutation_summary"] = {
+                "success": mutation.success,
+                "changes_summary": mutation.changes_summary,
+                "validation_errors": list(mutation.validation_errors),
+            }
 
             if not mutation.success:
+                fallback_version_id = gen_record["version_id"]
+                create_version(
+                    base_strategy,
+                    source_code,
+                    generation,
+                    version_name=fallback_version_id,
+                )
                 gen_record["validation_errors"] = list(mutation.validation_errors)
+                gen_record["status"] = "mutation_failed"
+                if gen_record["candidate_fingerprint"]:
+                    feedback_store.record_candidate_attempt(
+                        strategy=base_strategy,
+                        loop_id=loop_id,
+                        generation_index=generation,
+                        version_id=fallback_version_id,
+                        candidate_vector=gen_record["candidate_vector"],
+                        candidate_fingerprint=gen_record["candidate_fingerprint"],
+                        status="mutation_failed",
+                        accepted=False,
+                        fitness_after=None,
+                        rejection_reason="mutation validation failed",
+                    )
+                gen_record["code_patch_ref"] = _write_generation_patch(
+                    loop_id=loop_id,
+                    generation=generation,
+                    parent_version_id=current_version_id,
+                    version_id=fallback_version_id,
+                    before_source=source_code,
+                    after_source=source_code,
+                )
                 generations.append(gen_record)
                 _emit(
                     loop_id,
@@ -383,7 +692,13 @@ def _evolution_worker(
                     message=f"Mutation invalid: {'; '.join(mutation.validation_errors)}",
                     done=False,
                 )
-                _update_session(loop_id, generations_completed=generation - 1, best_fitness=best_fitness, best_version=best_version)
+                _update_session(
+                    loop_id,
+                    generations_completed=generation - 1,
+                    best_fitness=best_fitness,
+                    best_version=best_version,
+                    best_version_id=best_version,
+                )
                 _save_run_log(loop_id, get_evolution_status(loop_id) or {}, generations)
                 continue
 
@@ -392,12 +707,21 @@ def _evolution_worker(
                 generation=generation,
                 changes_summary=mutation.changes_summary,
                 fitness_before=fitness_before.value,
-                version_name=mutation.version_name,
+                version_name=gen_record["version_id"],
+            )
+
+            gen_record["code_patch_ref"] = _write_generation_patch(
+                loop_id=loop_id,
+                generation=generation,
+                parent_version_id=current_version_id,
+                version_id=gen_record["version_id"],
+                before_source=source_code,
+                after_source=mutation.new_code,
             )
 
             workspace = create_backtest_workspace(
                 base_strategy_name=base_strategy,
-                version_name=mutation.version_name,
+                version_name=gen_record["version_id"],
                 source=mutation.new_code,
                 loop_id=loop_id,
                 generation=generation,
@@ -408,12 +732,12 @@ def _evolution_worker(
                 loop_id,
                 LoopEventType.BACKTEST_STARTED,
                 generation=generation,
-                message=f"Running backtest on {mutation.version_name}...",
+                message=f"Running backtest on {gen_record['version_id']}...",
             )
 
             new_run_id = start_backtest(
                 strategy=base_strategy,
-                strategy_label=mutation.version_name,
+                strategy_label=gen_record["version_id"],
                 strategy_path=str(workspace),
                 pairs=pairs,
                 timeframe=timeframe,
@@ -422,10 +746,13 @@ def _evolution_worker(
                 strategy_params={},
                 extra_meta={
                     "base_strategy": base_strategy,
-                    "strategy_source_name": mutation.version_name,
-                    "strategy_version": mutation.version_name,
+                    "strategy_source_name": gen_record["version_id"],
+                    "strategy_version": gen_record["version_id"],
+                    "version_id": gen_record["version_id"],
+                    "parent_version_id": current_version_id,
                     "evolution_loop_id": loop_id,
                     "evolution_generation": generation,
+                    "generation_index": generation,
                 },
             )
             gen_record["new_run_id"] = new_run_id
@@ -433,7 +760,20 @@ def _evolution_worker(
             final_meta = wait_for_run(new_run_id, timeout_s=600)
             if final_meta.get("status") != "completed":
                 gen_record["accepted"] = False
+                gen_record["status"] = "backtest_failed"
                 gen_record["rejection_reason"] = f"backtest ended with status '{final_meta.get('status', 'unknown')}'"
+                feedback_store.record_candidate_attempt(
+                    strategy=base_strategy,
+                    loop_id=loop_id,
+                    generation_index=generation,
+                    version_id=gen_record["version_id"],
+                    candidate_vector=gen_record["candidate_vector"],
+                    candidate_fingerprint=gen_record["candidate_fingerprint"],
+                    status="backtest_failed",
+                    accepted=False,
+                    fitness_after=None,
+                    rejection_reason=gen_record["rejection_reason"],
+                )
                 generations.append(gen_record)
                 feedback_store.record(
                     strategy=base_strategy,
@@ -442,7 +782,7 @@ def _evolution_worker(
                     fitness_before=fitness_before.value,
                     fitness_after=0.0,
                     accepted=False,
-                    version_name=mutation.version_name,
+                    version_name=gen_record["version_id"],
                 )
                 _emit(
                     loop_id,
@@ -450,11 +790,21 @@ def _evolution_worker(
                     generation=generation,
                     message=f"Backtest {new_run_id} ended with status '{final_meta.get('status', 'unknown')}'.",
                 )
-                _update_session(loop_id, generations_completed=generation, best_fitness=best_fitness, best_version=best_version)
+                _update_session(
+                    loop_id,
+                    generations_completed=generation,
+                    best_fitness=best_fitness,
+                    best_version=best_version,
+                    best_version_id=best_version,
+                )
                 _save_run_log(loop_id, get_evolution_status(loop_id) or {}, generations)
                 continue
 
-            candidate_source_name = final_meta.get("strategy_source_name") or mutation.version_name
+            candidate_source_name = (
+                final_meta.get("version_id")
+                or final_meta.get("strategy_source_name")
+                or gen_record["version_id"]
+            )
             candidate_results = load_run_results(new_run_id) or {}
             candidate_run_data = normalize_backtest_result({**candidate_results, "strategy": candidate_source_name})
             candidate_analysis = analyze(candidate_run_data, run_id=new_run_id)
@@ -472,11 +822,23 @@ def _evolution_worker(
                     "fitness_breakdown_after": fitness_after.breakdown,
                     "delta": delta,
                     "accepted": accepted,
+                    "status": "accepted" if accepted else "rejected",
                     "robustness_passed": robustness_passed,
                     "rejection_reason": rejection_reason,
                     "robustness_details": robustness_details,
                 }
             )
+            gen_record["fitness_summary"] = {
+                "before": {
+                    "score": fitness_before.value,
+                    "breakdown": fitness_before.breakdown,
+                },
+                "after": {
+                    "score": fitness_after.value,
+                    "breakdown": fitness_after.breakdown,
+                },
+                "delta": delta,
+            }
 
             feedback_store.record(
                 strategy=base_strategy,
@@ -485,7 +847,19 @@ def _evolution_worker(
                 fitness_before=fitness_before.value,
                 fitness_after=fitness_after.value,
                 accepted=accepted,
-                version_name=mutation.version_name,
+                version_name=gen_record["version_id"],
+            )
+            feedback_store.record_candidate_attempt(
+                strategy=base_strategy,
+                loop_id=loop_id,
+                generation_index=generation,
+                version_id=gen_record["version_id"],
+                candidate_vector=gen_record["candidate_vector"],
+                candidate_fingerprint=gen_record["candidate_fingerprint"],
+                status=gen_record["status"],
+                accepted=accepted,
+                fitness_after=fitness_after.value,
+                rejection_reason=rejection_reason,
             )
 
             _emit(
@@ -496,19 +870,30 @@ def _evolution_worker(
                 fitness_after=fitness_after.value,
                 delta=f"{delta:+.2f}",
                 accepted=accepted,
-                version_name=mutation.version_name,
+                version_id=gen_record["version_id"],
+                version_name=gen_record["version_id"],
+                parent_version_id=current_version_id,
+                generation_index=generation,
                 changes_summary=mutation.changes_summary,
                 new_run_id=new_run_id,
                 robustness_passed=robustness_passed,
                 rejection_reason=rejection_reason,
+                code_patch_ref=gen_record.get("code_patch_ref"),
+                candidate_vector=gen_record["candidate_vector"],
+                candidate_fingerprint=gen_record["candidate_fingerprint"],
+                duplicate_of=gen_record.get("duplicate_of"),
+                retry_attempt=gen_record.get("retry_attempt"),
+                retry_limit=gen_record.get("retry_limit"),
+                status=LoopEventStatus.OK.value if accepted else LoopEventStatus.INFO.value,
             )
 
             if accepted:
                 current_run_id = new_run_id
-                current_source_name = mutation.version_name
+                current_source_name = gen_record["version_id"]
+                current_version_id = gen_record["version_id"]
                 if fitness_after.value > best_fitness:
                     best_fitness = fitness_after.value
-                    best_version = mutation.version_name
+                    best_version = gen_record["version_id"]
 
             generations.append(gen_record)
             _update_session(
@@ -516,6 +901,7 @@ def _evolution_worker(
                 generations_completed=generation,
                 best_fitness=best_fitness,
                 best_version=best_version,
+                best_version_id=best_version,
                 strategy=base_strategy,
             )
             _save_run_log(loop_id, get_evolution_status(loop_id) or {}, generations)
@@ -525,10 +911,18 @@ def _evolution_worker(
             LoopEventType.LOOP_COMPLETED,
             generation=max_generations,
             best_version=best_version,
+            best_version_id=best_version,
             best_fitness=round(best_fitness, 2),
             done=True,
         )
-        _update_session(loop_id, status="completed", best_fitness=best_fitness, best_version=best_version, strategy=base_strategy)
+        _update_session(
+            loop_id,
+            status="completed",
+            best_fitness=best_fitness,
+            best_version=best_version,
+            best_version_id=best_version,
+            strategy=base_strategy,
+        )
 
     except Exception as exc:
         logger.exception("Evolution worker crashed (loop_id=%s)", loop_id)

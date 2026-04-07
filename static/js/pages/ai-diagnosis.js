@@ -128,6 +128,7 @@ window.AIDiagPage = (() => {
   let _evo = {
     loopId: null,
     evtSource: null,
+    running: false,
     activeTab: 'config',   // 'config' | 'running' | 'results'
     generations: [],       // accumulated generation events
     maxGenerations: 3,
@@ -374,6 +375,14 @@ window.AIDiagPage = (() => {
 
   function _snapshot() {
     const draft = _el.textarea?.value || '';
+    const stagedApply = _state.lastApplied && _state.lastApplied.staged
+      ? {
+          strategy: _state.lastApplied.strategy || '',
+          versionName: _state.lastApplied.version_name || '',
+          promotionEndpoint: _state.lastApplied.promotion_endpoint || '',
+          accepted: !!_state.lastApplied.accepted,
+        }
+      : null;
     return {
       provider: _state.provider,
       model: _state.model,
@@ -390,6 +399,7 @@ window.AIDiagPage = (() => {
       statusMessage: _state.statusMessage || '',
       draft,
       draftLength: draft.trim().length,
+      stagedApply,
     };
   }
 
@@ -477,6 +487,8 @@ window.AIDiagPage = (() => {
               <li>Use Evolve Strategy from the same workspace after injecting a backtest context.</li>
             </ul>
           </section>
+
+          <div id="ai-staged-change-slot"></div>
         </aside>
       </div>
     `;
@@ -694,6 +706,7 @@ window.AIDiagPage = (() => {
   async function _switchConversation(convId) {
     _closeLoopStream();
     _state.conversationId = convId;
+    _state.lastApplied = null;
     _el.thread.innerHTML = '';
 
     // Mark active in sidebar
@@ -739,6 +752,7 @@ window.AIDiagPage = (() => {
   function _newChat() {
     _closeLoopStream();
     _state.conversationId = null;
+    _state.lastApplied = null;
     _state.loopEnabled = false;
     _state.loopBusy = false;
     _state.pendingRerunPrompt = false;
@@ -829,6 +843,7 @@ window.AIDiagPage = (() => {
     _state.loopId = null;
     _el.deepAnalyseBtn.disabled = true;
     if (_el.evolveBtn) _el.evolveBtn.disabled = true;
+    _state.lastApplied = null;
     _publishState();
   }
 
@@ -1690,7 +1705,12 @@ window.AIDiagPage = (() => {
         return;
       }
       _state.lastApplied = data;
-      Toast.success(`Applied to ${data.strategy}.py`);
+      _publishState();
+      if (data.staged && data.version_name) {
+        Toast.success(`Staged ${data.version_name}. Manual accept required.`);
+      } else {
+        Toast.success(`Applied to ${data.strategy}.py`);
+      }
     }
   }
 
@@ -1798,11 +1818,26 @@ window.AIDiagPage = (() => {
 
   async function _startEvolution({ goalId, maxGen, provider, model }) {
     if (!_state.contextRunId) return;
+    if (_evo.running) {
+      _showEvoToast('Evolution is already running.', true);
+      return;
+    }
+
+    const providers = _state.providers || {};
+    const providerInfo = provider === 'ollama' ? providers.ollama : providers.openrouter;
+    if (providerInfo && !providerInfo.available) {
+      _showEvoToast(`${provider} is unavailable. Check provider settings first.`, true);
+      return;
+    }
 
     const startBtn = document.getElementById('evo-start-btn');
     if (startBtn) { startBtn.disabled = true; startBtn.textContent = "Starting..."; }
 
     try {
+      // Ensure only one live stream controller.
+      if (_evo.evtSource && typeof _evo.evtSource.abort === 'function') {
+        try { _evo.evtSource.abort(); } catch (_) {}
+      }
       const resp = await fetch('/evolution/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1811,7 +1846,7 @@ window.AIDiagPage = (() => {
           goal_id: goalId,
           max_generations: maxGen,
           provider,
-          model,
+          model: model || null,
         }),
       });
       if (!resp.ok) {
@@ -1822,17 +1857,19 @@ window.AIDiagPage = (() => {
       _evo.loopId = loop_id;
       _evo.maxGenerations = maxGen;
       _evo.generations = [];
+      _evo.running = true;
 
       // Capture original source for diff
       _evo.originalSource = null;
       try {
-        const versResp = await fetch(`/evolution/versions/${encodeURIComponent(_state.contextStrategyName || '')}`);
-        // We'll fetch source lazily when diff is opened
+        const srcResp = await fetch(`/strategies/${encodeURIComponent(_state.contextStrategyName || '')}/source`);
+        if (srcResp.ok) _evo.originalSource = await srcResp.text();
       } catch (_) {}
 
       _evoSwitchTab('running');
       _listenEvolutionStream(loop_id, maxGen);
     } catch (e) {
+      _evo.running = false;
       if (startBtn) { startBtn.disabled = false; startBtn.textContent = 'Start Evolution'; }
       _showEvoToast(`Failed to start: ${e.message}`, true);
     }
@@ -1867,11 +1904,19 @@ window.AIDiagPage = (() => {
 
     fetch(`/evolution/stream/${loopId}`, { signal: ctrl.signal })
       .then(resp => {
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        if (!resp.body) throw new Error('No stream body returned');
         const reader = resp.body.getReader();
         const decoder = new TextDecoder();
 
         const pump = () => reader.read().then(({ done, value }) => {
-          if (done) return;
+          if (done) {
+            if (_evo.running) {
+              _evo.running = false;
+              _showEvoToast('Evolution stream ended.');
+            }
+            return;
+          }
           buffer += decoder.decode(value, { stream: true });
           const lines = buffer.split('\n');
           buffer = lines.pop() || '';
@@ -1884,11 +1929,17 @@ window.AIDiagPage = (() => {
             } catch (_) {}
           }
           pump();
-        }).catch(() => {});
+        }).catch((err) => {
+          _evo.running = false;
+          _showEvoToast(`Evolution stream error: ${err.message || err}`, true);
+        });
 
         pump();
       })
-      .catch(() => {});
+      .catch((err) => {
+        _evo.running = false;
+        _showEvoToast(`Evolution stream failed: ${err.message || err}`, true);
+      });
   }
 
   function _handleEvoEvent(evt, maxGen) {
@@ -1910,12 +1961,14 @@ window.AIDiagPage = (() => {
     }
 
     if (step === 'loop_completed' || evt.done) {
+      _evo.running = false;
       if (_evo.activeTab === 'running') {
         setTimeout(() => _evoSwitchTab('results'), 1200);
       }
     }
 
     if (step === 'loop_failed' || step === 'mutation_failed' || step === 'backtest_failed') {
+      _evo.running = false;
       _showEvoToast(`Evolution error: ${evt.message}`, true);
     }
   }
@@ -1998,17 +2051,31 @@ window.AIDiagPage = (() => {
     if (!container) return;
 
     const gen = evt.generation;
-    const accepted = evt.accepted;
-    const fitBefore = (evt.fitness_before || 0).toFixed(1);
-    const fitAfter  = (evt.fitness_after  || 0).toFixed(1);
-    const delta     = evt.delta || '0';
+    const status = String(evt.status || '').toLowerCase();
+    const accepted = !!evt.accepted;
+    const fitBeforeVal = evt.fitness_after === null || evt.fitness_after === undefined ? evt.fitness_before : evt.fitness_before;
+    const fitAfterVal = evt.fitness_after;
+    const fitBefore = fitBeforeVal === null || fitBeforeVal === undefined ? '—' : Number(fitBeforeVal).toFixed(1);
+    const fitAfter  = fitAfterVal === null || fitAfterVal === undefined ? '—' : Number(fitAfterVal).toFixed(1);
+    const delta     = evt.delta === null || evt.delta === undefined ? '—' : evt.delta;
     const deltaNum  = parseFloat(delta);
     const deltaClass = deltaNum > 0 ? 'pos' : deltaNum < 0 ? 'neg' : 'zero';
-    const badgeClass = accepted ? 'accepted' : 'rejected';
-    const badgeText  = accepted ? 'ACCEPTED' : 'REJECTED';
+    const aborted = status === 'aborted_pre_mutation';
+    const duplicateBlocked = status === 'duplicate_blocked';
+    const duplicateRejected = status === 'duplicate_rejected';
+    const badgeClass = (aborted || duplicateBlocked || duplicateRejected)
+      ? 'rejected'
+      : (accepted ? 'accepted' : 'rejected');
+    const badgeText = aborted
+      ? 'ABORTED'
+      : duplicateBlocked
+        ? 'DUPLICATE BLOCKED'
+        : duplicateRejected
+          ? 'DUPLICATE REJECTED'
+          : (accepted ? 'ACCEPTED' : 'REJECTED');
     const changes    = evt.changes_summary || '';
     const newRunId   = evt.new_run_id || '';
-    const versionName = evt.version_name || '';
+    const versionName = evt.version_id || evt.version_name || '';
 
     // Replace live card if it exists, otherwise append
     let card = container.querySelector(`[data-gen="${gen}"]`);
@@ -2019,7 +2086,8 @@ window.AIDiagPage = (() => {
     }
     card.className = 'evo-gen-card';
 
-    const barWidth = Math.min(parseFloat(fitAfter), 100).toFixed(1);
+    const fitAfterNum = parseFloat(fitAfter);
+    const barWidth = Number.isFinite(fitAfterNum) ? Math.min(fitAfterNum, 100).toFixed(1) : "0";
 
     card.innerHTML = `
       <div class="evo-gen-card__head">
@@ -2038,7 +2106,7 @@ window.AIDiagPage = (() => {
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             <span>${fitAfter}</span>
           </div>
-          <span class="evo-fitness-delta evo-fitness-delta--${deltaClass}">(${delta})</span>
+          <span class="evo-fitness-delta evo-fitness-delta--${deltaClass}">${delta === '—' ? '—' : `(${delta})`}</span>
           <div class="evo-fitness-bar-wrap">
             <div class="evo-fitness-bar" style="width:${barWidth}%"></div>
           </div>
@@ -2070,7 +2138,7 @@ window.AIDiagPage = (() => {
       const gens = data.generations || [];
 
       const bestFitness = (session.best_fitness || 0).toFixed(1);
-      const bestVersion = session.best_version || "-";
+      const bestVersion = session.best_version_id || session.best_version || "-";
       const initialFitness = gens.length ? (gens[0].fitness_before || 0).toFixed(1) : "-";
       const totalDelta = gens.length ? ((session.best_fitness || 0) - (gens[0].fitness_before || 0)).toFixed(1) : '0';
       const totalDeltaNum = parseFloat(totalDelta);
@@ -2078,21 +2146,35 @@ window.AIDiagPage = (() => {
 
       // Find best generation index
       let bestGen = 1;
-      gens.forEach(g => { if (g.version_name === session.best_version) bestGen = g.generation; });
+      gens.forEach(g => {
+        const gid = g.version_id || g.version_name;
+        if (gid && gid === bestVersion) bestGen = g.generation;
+      });
 
       const rows = gens.map(g => {
-        const acc = g.accepted;
-        const badge = acc ? 'accepted' : 'rejected';
-        const label = acc ? 'Accepted' : 'Rejected';
-        const d = (g.delta || 0).toFixed(1);
+        const status = String(g.status || '').toLowerCase();
+        const acc = !!g.accepted;
+        const aborted = status === 'aborted_pre_mutation';
+        const duplicateBlocked = status === 'duplicate_blocked';
+        const duplicateRejected = status === 'duplicate_rejected';
+        const badge = (aborted || duplicateBlocked || duplicateRejected) ? 'rejected' : (acc ? 'accepted' : 'rejected');
+        const label = aborted
+          ? 'Aborted'
+          : duplicateBlocked
+            ? 'Duplicate Blocked'
+            : duplicateRejected
+              ? 'Duplicate Rejected'
+              : (acc ? 'Accepted' : 'Rejected');
+        const d = g.delta === null || g.delta === undefined ? '—' : Number(g.delta).toFixed(1);
         const dNum = parseFloat(d);
         const dc = dNum > 0 ? 'pos' : dNum < 0 ? 'neg' : 'zero';
+        const fitAfter = g.fitness_after === null || g.fitness_after === undefined ? '—' : Number(g.fitness_after).toFixed(1);
         return `
           <tr>
             <td>${g.generation}</td>
-            <td style="font-family:var(--font-mono);font-size:10px">${_escHtml(g.version_name || "-")}</td>
-            <td>${(g.fitness_after || 0).toFixed(1)}</td>
-            <td class="evo-fitness-delta evo-fitness-delta--${dc}">${dNum > 0 ? '+' : ''}${d}</td>
+            <td style="font-family:var(--font-mono);font-size:10px">${_escHtml(g.version_id || g.version_name || "-")}</td>
+            <td>${fitAfter}</td>
+            <td class="evo-fitness-delta evo-fitness-delta--${dc}">${d === '—' ? '—' : `${dNum > 0 ? '+' : ''}${d}`}</td>
             <td><span class="evo-badge evo-badge--${badge}">${label}</span></td>
           </tr>
         `;
@@ -2136,14 +2218,19 @@ window.AIDiagPage = (() => {
   }
 
   async function _acceptBestVersion(generation, versionName) {
-    if (!_evo.loopId) return;
+    if (!_evo.loopId || !_state.contextStrategyName) return;
     const btn = document.getElementById('evo-accept-best-btn');
     if (btn) { btn.disabled = true; btn.textContent = "Applying..."; }
     try {
-      const resp = await fetch(`/evolution/accept/${_evo.loopId}/${generation}`, { method: 'POST' });
+      const primaryEndpoint = `/strategies/${encodeURIComponent(_state.contextStrategyName)}/versions/${encodeURIComponent(versionName)}/accept`;
+      let resp = await fetch(primaryEndpoint, { method: 'POST' });
+      if (!resp.ok) {
+        // Backward-compatible fallback for older evolution acceptance path.
+        resp = await fetch(`/evolution/accept/${_evo.loopId}/${generation}`, { method: 'POST' });
+      }
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const data = await resp.json();
-      _showEvoToast(`OK ${data.accepted} has been applied as ${data.applied_to}`);
+      const data = await resp.json().catch(() => ({}));
+      _showEvoToast(`Applied ${data.accepted_version || data.accepted || versionName}`);
       _el.evoPanel.classList.remove('open');
     } catch (e) {
       if (btn) { btn.disabled = false; btn.textContent = `Accept Best Version (${versionName})`; }
@@ -2225,6 +2312,70 @@ window.AIDiagPage = (() => {
     }
   }
 
+  async function _acceptStagedChange() {
+    const staged = _state.lastApplied;
+    if (!staged?.staged || !staged?.promotion_endpoint) {
+      Toast.error('No staged version is ready for promotion.');
+      return;
+    }
+    const btn = document.getElementById('ai-promote-btn');
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Accepting...';
+    }
+    try {
+      const resp = await fetch(staged.promotion_endpoint, { method: 'POST' });
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        throw new Error(data.detail || `HTTP ${resp.status}`);
+      }
+      _state.lastApplied = {
+        ..._state.lastApplied,
+        accepted: true,
+        accepted_version: data.accepted_version || staged.version_name || null,
+      };
+      _publishState();
+      Toast.success(`Accepted ${_state.lastApplied.accepted_version || staged.version_name}.`);
+    } catch (err) {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'Accept Staged Version';
+      }
+      Toast.error(`Accept failed: ${err.message || err}`);
+    }
+  }
+
+  function _syncStagedChangeCard(snapshot = _snapshot()) {
+    const slot = document.getElementById('ai-staged-change-slot');
+    if (!slot) return;
+
+    const staged = snapshot.stagedApply;
+    if (!staged?.versionName || !staged?.promotionEndpoint) {
+      if (slot.innerHTML) slot.innerHTML = '';
+      return;
+    }
+
+    slot.innerHTML = `
+      <section class="ai-diagnosis-card" id="ai-staged-change-card">
+        <div class="ai-diagnosis-card__eyebrow">Staged Strategy Change</div>
+        <p class="ai-diagnosis-card__body" id="ai-staged-change-summary"></p>
+        <div class="ai-diagnosis-actions">
+          <button class="btn btn--primary" type="button" id="ai-promote-btn">Accept Staged Version</button>
+        </div>
+      </section>
+    `;
+    const summary = document.getElementById('ai-staged-change-summary');
+    const promoteBtn = document.getElementById('ai-promote-btn');
+    if (!summary || !promoteBtn) return;
+
+    summary.textContent = staged.accepted
+      ? `Version ${staged.versionName} accepted for ${staged.strategy}.`
+      : `Version ${staged.versionName} is staged for ${staged.strategy}.`;
+    promoteBtn.disabled = staged.accepted;
+    promoteBtn.textContent = staged.accepted ? 'Accepted' : 'Accept Staged Version';
+    promoteBtn.onclick = staged.accepted ? null : () => _acceptStagedChange();
+  }
+
   function _renderWorkspaceView(snapshot = _snapshot()) {
     if (!_pageMounted) return;
     const page = DOM.$('[data-view="ai-diagnosis"]');
@@ -2265,6 +2416,7 @@ window.AIDiagPage = (() => {
       });
     }
 
+    _syncStagedChangeCard(snapshot);
     _syncShellMount('ai-diagnosis');
     requestAnimationFrame(() => _syncShellMount('ai-diagnosis'));
   }
@@ -2441,6 +2593,9 @@ window.AIDiagPage = (() => {
 
     // Evolution panel close
     _el.evoPanelClose.addEventListener('click', () => {
+      if (_evo.evtSource && typeof _evo.evtSource.abort === 'function') {
+        try { _evo.evtSource.abort(); } catch (_) {}
+      }
       _el.evoPanel.classList.remove('open');
       _el.evoPanel.classList.remove('evo-panel--offset');
     });
@@ -2512,6 +2667,3 @@ window.AIDiagPage = (() => {
     _openDiff,
   };
 })();
-
-
-

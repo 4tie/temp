@@ -13,6 +13,7 @@ from app.services.strategies import (
     atomic_write_text,
     resolve_strategy_sidecar_path,
     resolve_strategy_source_path,
+    stage_strategy_source_change,
     validate_strategy_name as validate_strategy_identifier,
 )
 
@@ -53,6 +54,7 @@ def apply_code_impl(
     assistant_message_id: str,
     code_block_index: int,
     fallback_strategy: str | None,
+    direct_apply: bool = True,
 ) -> dict[str, Any]:
     thread = load_thread(thread_id)
     if not thread:
@@ -104,15 +106,38 @@ def apply_code_impl(
 
     old_py = py_path.read_text(encoding="utf-8")
     old_json = json_path.read_text(encoding="utf-8") if json_path.exists() else None
-    bytes_written = atomic_write_text(py_path, source)
-    new_json = json_path.read_text(encoding="utf-8") if json_path.exists() else None
+    bytes_written = 0
+    new_json = old_json
+    target_py_path = py_path
+    target_json_path = json_path
+    version_name: str | None = None
+    staged = not direct_apply
+
+    if direct_apply:
+        bytes_written = atomic_write_text(py_path, source)
+        new_json = json_path.read_text(encoding="utf-8") if json_path.exists() else None
+    else:
+        staged_result = stage_strategy_source_change(
+            strategy_name=strategy_name,
+            source=source,
+            strategies_dir=STRATEGIES_DIR,
+            reason="ai_chat_apply_code",
+            actor="ai",
+        )
+        bytes_written = int(staged_result.get("bytes_written") or 0)
+        version_name = str(staged_result.get("version_name") or "")
+        if not version_name:
+            raise HTTPException(status_code=500, detail="Failed to stage strategy change")
+        target_py_path = resolve_strategy_source_path(version_name, strategies_dir=STRATEGIES_DIR)
+        target_json_path = resolve_strategy_sidecar_path(version_name, strategies_dir=STRATEGIES_DIR)
+        new_json = target_json_path.read_text(encoding="utf-8") if target_json_path.exists() else None
 
     diff_lines = list(
         difflib.unified_diff(
             old_py.splitlines(),
             source.splitlines(),
             fromfile=f"{strategy_name}.py",
-            tofile=f"{strategy_name}.py",
+            tofile=target_py_path.name,
             lineterm="",
         )
     )
@@ -128,7 +153,7 @@ def apply_code_impl(
                 (old_json or "").splitlines(),
                 (new_json or "").splitlines(),
                 fromfile=f"{strategy_name}.json",
-                tofile=f"{strategy_name}.json",
+                tofile=target_json_path.name,
                 lineterm="",
             )
         )[:80]
@@ -136,18 +161,30 @@ def apply_code_impl(
     return {
         "ok": True,
         "strategy": strategy_name,
-        "file_path": str(py_path),
+        "file_path": str(target_py_path),
         "bytes_written": bytes_written,
         "diff_summary": {"added": added, "removed": removed, "changed": added + removed},
         "diff_preview": preview,
         "file_changes": {
-            "strategy_py": {"path": str(py_path), "changed": bool(preview), "diff_preview": preview},
+            "strategy_py": {
+                "path": str(target_py_path),
+                "changed": bool(preview),
+                "diff_preview": preview,
+                "staged": staged,
+                "version_name": version_name,
+            },
             "strategy_json": {
-                "path": str(json_path),
-                "exists": json_path.exists(),
+                "path": str(target_json_path),
+                "exists": target_json_path.exists(),
                 "changed": json_changed,
                 "diff_preview": json_preview,
             },
         },
+        "staged": staged,
+        "version_name": version_name,
+        "requires_manual_promotion": staged,
+        "promotion_endpoint": (
+            f"/strategies/{strategy_name}/versions/{version_name}/accept" if staged and version_name else None
+        ),
         "_old_source": old_py,
     }

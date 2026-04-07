@@ -7,9 +7,11 @@ from app.core.config import STRATEGIES_DIR
 from app.services.strategies import (
     get_strategy_editable_context,
     list_strategies,
+    promote_staged_strategy_version,
     read_strategy_source,
     save_strategy_current_values,
     save_strategy_source,
+    stage_strategy_source_change,
     validate_strategy_name,
 )
 
@@ -29,6 +31,10 @@ class ParamUpdate(BaseModel):
 
 class SourceUpdate(BaseModel):
     source: str
+
+
+class VersionAcceptRequest(BaseModel):
+    version_name: str
 
 
 @router.get("")
@@ -86,3 +92,75 @@ async def save_source(strategy_name: str, body: SourceUpdate):
         detail = f"Python syntax error at line {line}, column {col}: {exc.msg}"
         raise HTTPException(status_code=400, detail=detail)
     return {"ok": True, "strategy": strategy, "bytes_written": result.get("bytes_written", 0)}
+
+
+@router.post("/{strategy_name}/source/stage")
+async def stage_source(strategy_name: str, body: SourceUpdate):
+    strategy = _checked_strategy(strategy_name)
+    try:
+        result = stage_strategy_source_change(
+            strategy_name=strategy,
+            source=body.source,
+            strategies_dir=STRATEGIES_DIR,
+            reason="strategy_editor_stage",
+            actor="user",
+        )
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Strategy source not found")
+    except SyntaxError as exc:
+        line = exc.lineno or 0
+        col = exc.offset or 0
+        detail = f"Python syntax error at line {line}, column {col}: {exc.msg}"
+        raise HTTPException(status_code=400, detail=detail)
+    return result
+
+
+@router.get("/{strategy_name}/versions")
+async def list_strategy_versions(strategy_name: str):
+    strategy = _checked_strategy(strategy_name)
+    versions = []
+    for path in sorted(STRATEGIES_DIR.glob(f"{strategy}_evo_g*.py")):
+        versions.append(path.stem)
+    return {"strategy": strategy, "versions": versions}
+
+
+@router.post("/{strategy_name}/versions/accept")
+async def accept_strategy_version(strategy_name: str, body: VersionAcceptRequest):
+    strategy = _checked_strategy(strategy_name)
+    try:
+        result = promote_staged_strategy_version(
+            strategy_name=strategy,
+            version_name=body.version_name,
+            strategies_dir=STRATEGIES_DIR,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except SyntaxError as exc:
+        line = exc.lineno or 0
+        col = exc.offset or 0
+        detail = f"Python syntax error at line {line}, column {col}: {exc.msg}"
+        raise HTTPException(status_code=400, detail=detail)
+    return result
+
+
+@router.post("/{strategy_name}/versions/{version_name}/accept")
+async def accept_strategy_version_path(strategy_name: str, version_name: str):
+    strategy = _checked_strategy(strategy_name)
+    try:
+        result = promote_staged_strategy_version(
+            strategy_name=strategy,
+            version_name=version_name,
+            strategies_dir=STRATEGIES_DIR,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except SyntaxError as exc:
+        line = exc.lineno or 0
+        col = exc.offset or 0
+        detail = f"Python syntax error at line {line}, column {col}: {exc.msg}"
+        raise HTTPException(status_code=400, detail=detail)
+    return result

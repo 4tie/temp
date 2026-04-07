@@ -10,27 +10,27 @@ class MultiMa(IStrategy):
 
     buy_params = {
         "buy_ma_count": 3,
-        "buy_ma_gap": 10,
+        "buy_ma_gap": 6,
     }
 
     sell_params = {
-        "sell_ma_count": 3,
-        "sell_ma_gap": 10,
+        "sell_ma_count": 10,
+        "sell_ma_gap": 50,
     }
 
     minimal_roi = {
-        "0": 0.035,
-        "45": 0.02,
-        "135": 0.01,
-        "300": 0
+        "0": 0.4,
+        "3600": 0.08,
+        "7200": 0.04,
+        "14400": 0
     }
 
     stoploss = -0.01
 
     trailing_stop = True
-    trailing_stop_positive = 0.012
-    trailing_stop_positive_offset = 0.02
-    trailing_only_offset_is_reached = True
+    trailing_stop_positive = 0.02
+    trailing_stop_positive_offset = 0.0
+    trailing_only_offset_is_reached = False
 
     timeframe = "5m"
     process_only_new_candles = True
@@ -41,10 +41,10 @@ class MultiMa(IStrategy):
     gap_max = 100
 
     buy_ma_count = IntParameter(1, count_max, default=3, space="buy")
-    buy_ma_gap = IntParameter(1, gap_max, default=10, space="buy")
+    buy_ma_gap = IntParameter(1, gap_max, default=6, space="buy")
 
-    sell_ma_count = IntParameter(1, count_max, default=3, space="sell")
-    sell_ma_gap = IntParameter(1, gap_max, default=10, space="sell")
+    sell_ma_count = IntParameter(1, count_max, default=10, space="sell")
+    sell_ma_gap = IntParameter(1, gap_max, default=50, space="sell")
 
     @staticmethod
     def ma_col(period: int) -> str:

@@ -17,6 +17,7 @@ async def apply_code(req: ApplyCodeRequest):
         assistant_message_id=req.assistant_message_id,
         code_block_index=req.code_block_index,
         fallback_strategy=req.fallback_strategy,
+        direct_apply=False,
     )
     result.pop("_old_source", None)
     return result

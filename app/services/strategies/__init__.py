@@ -12,7 +12,11 @@ from app.services.strategies.strategy_sidecar_service import (
     read_strategy_sidecar_payload,
     save_strategy_current_values,
 )
-from app.services.strategies.strategy_snapshot_service import get_strategy_editable_context
+from app.services.strategies.strategy_snapshot_service import (
+    get_strategy_editable_context,
+    promote_staged_strategy_version,
+    stage_strategy_source_change,
+)
 from app.services.strategies.strategy_source_service import (
     atomic_write_text,
     load_strategy_source_record,
@@ -28,6 +32,8 @@ from app.services.strategies.strategy_validation_service import (
 
 __all__ = [
     "get_strategy_editable_context",
+    "promote_staged_strategy_version",
+    "stage_strategy_source_change",
     "get_strategy_param_metadata",
     "list_strategies",
     "load_strategy_param_metadata",

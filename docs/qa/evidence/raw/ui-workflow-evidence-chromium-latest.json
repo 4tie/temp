@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-04-07T01:30:43.352Z",
+  "generated_at": "2026-04-07T02:02:25.195Z",
   "browser": "chromium",
   "totals": {
-    "PASS": 54,
+    "PASS": 66,
     "FAIL": 0,
-    "BLOCKED": 22,
-    "MISSING": 3
+    "BLOCKED": 10,
+    "MISSING": 2
   },
   "rows": [
     {
@@ -17,7 +17,7 @@
       "reason": "No actionable controls were discovered in active view.",
       "observed_requests": [],
       "observed_effects": [],
-      "timestamp": "2026-04-07T01:30:26.545Z"
+      "timestamp": "2026-04-07T02:01:57.792Z"
     },
     {
       "browser": "chromium",
@@ -32,7 +32,7 @@
         "page-state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:27.227Z"
+      "timestamp": "2026-04-07T02:01:58.542Z"
     },
     {
       "browser": "chromium",
@@ -48,7 +48,7 @@
         "page-state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:27.383Z"
+      "timestamp": "2026-04-07T02:01:58.757Z"
     },
     {
       "browser": "chromium",
@@ -64,7 +64,7 @@
         "page-state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:27.580Z"
+      "timestamp": "2026-04-07T02:01:59.002Z"
     },
     {
       "browser": "chromium",
@@ -79,7 +79,7 @@
         "page-state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:27.735Z"
+      "timestamp": "2026-04-07T02:01:59.216Z"
     },
     {
       "browser": "chromium",
@@ -95,7 +95,7 @@
         "page-state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:27.888Z"
+      "timestamp": "2026-04-07T02:01:59.444Z"
     },
     {
       "browser": "chromium",
@@ -110,7 +110,7 @@
         "page-state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:28.042Z"
+      "timestamp": "2026-04-07T02:01:59.675Z"
     },
     {
       "browser": "chromium",
@@ -126,7 +126,7 @@
         "page-state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:28.198Z"
+      "timestamp": "2026-04-07T02:01:59.887Z"
     },
     {
       "browser": "chromium",
@@ -141,7 +141,7 @@
         "page-state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:28.569Z"
+      "timestamp": "2026-04-07T02:02:00.331Z"
     },
     {
       "browser": "chromium",
@@ -156,7 +156,7 @@
         "page-state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:28.741Z"
+      "timestamp": "2026-04-07T02:02:00.562Z"
     },
     {
       "browser": "chromium",
@@ -172,7 +172,7 @@
         "modal-open"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:28.911Z"
+      "timestamp": "2026-04-07T02:02:00.776Z"
     },
     {
       "browser": "chromium",
@@ -184,10 +184,11 @@
       "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
       "observed_effects": [
-        "page-state-change"
+        "page-state-change",
+        "modal-open"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:29.364Z"
+      "timestamp": "2026-04-07T02:02:01.281Z"
     },
     {
       "browser": "chromium",
@@ -207,7 +208,7 @@
         "modal-open"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:29.540Z"
+      "timestamp": "2026-04-07T02:02:01.832Z"
     },
     {
       "browser": "chromium",
@@ -223,7 +224,7 @@
         "page-state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:30.038Z"
+      "timestamp": "2026-04-07T02:02:02.444Z"
     },
     {
       "browser": "chromium",
@@ -231,12 +232,26 @@
       "selector": ".page-view.active div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(1)",
       "label": "Save and Run",
       "trigger_type": "click",
-      "status": "BLOCKED",
-      "reason": "Control is disabled due to workflow preconditions.",
-      "observed_requests": [],
-      "observed_effects": [],
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
+      "observed_requests": [
+        "POST /strategies/MomentumPulse/params",
+        "GET /pairs",
+        "POST /data-coverage",
+        "POST /run",
+        "GET /runs/bt_new_run",
+        "GET /strategies/MomentumPulse/params",
+        "GET /healthz",
+        "GET /runs",
+        "GET /runs/bt_run_completed_1"
+      ],
+      "observed_effects": [
+        "request",
+        "state-change",
+        "page-state-change"
+      ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:30.206Z"
+      "timestamp": "2026-04-07T02:02:02.719Z"
     },
     {
       "browser": "chromium",
@@ -244,12 +259,18 @@
       "selector": ".page-view.active div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > button:nth-of-type(3)",
       "label": "Save to Strategy",
       "trigger_type": "click",
-      "status": "BLOCKED",
-      "reason": "Control is disabled due to workflow preconditions.",
-      "observed_requests": [],
-      "observed_effects": [],
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
+      "observed_requests": [
+        "POST /strategies/MomentumPulse/params"
+      ],
+      "observed_effects": [
+        "request",
+        "state-change",
+        "page-state-change"
+      ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:30.215Z"
+      "timestamp": "2026-04-07T02:02:05.327Z"
     },
     {
       "browser": "chromium",
@@ -270,7 +291,7 @@
         "page-state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:30.221Z"
+      "timestamp": "2026-04-07T02:02:05.543Z"
     },
     {
       "browser": "chromium",
@@ -283,7 +304,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-07T01:30:30.402Z"
+      "timestamp": "2026-04-07T02:02:07.322Z"
     },
     {
       "browser": "chromium",
@@ -296,7 +317,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-07T01:30:30.407Z"
+      "timestamp": "2026-04-07T02:02:07.383Z"
     },
     {
       "browser": "chromium",
@@ -314,7 +335,7 @@
         "page-state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:30.414Z"
+      "timestamp": "2026-04-07T02:02:07.449Z"
     },
     {
       "browser": "chromium",
@@ -329,7 +350,7 @@
         "page-state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:30.602Z"
+      "timestamp": "2026-04-07T02:02:07.661Z"
     },
     {
       "browser": "chromium",
@@ -345,7 +366,7 @@
         "page-state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:30.986Z"
+      "timestamp": "2026-04-07T02:02:08.042Z"
     },
     {
       "browser": "chromium",
@@ -355,16 +376,13 @@
       "trigger_type": "click",
       "status": "PASS",
       "reason": "Trigger-to-end observable effect detected.",
-      "observed_requests": [
-        "GET /healthz"
-      ],
+      "observed_requests": [],
       "observed_effects": [
-        "request",
         "state-change",
         "page-state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:31.154Z"
+      "timestamp": "2026-04-07T02:02:08.220Z"
     },
     {
       "browser": "chromium",
@@ -380,7 +398,7 @@
         "page-state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:31.306Z"
+      "timestamp": "2026-04-07T02:02:08.397Z"
     },
     {
       "browser": "chromium",
@@ -395,7 +413,7 @@
         "page-state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:31.460Z"
+      "timestamp": "2026-04-07T02:02:08.565Z"
     },
     {
       "browser": "chromium",
@@ -410,7 +428,7 @@
         "page-state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:31.614Z"
+      "timestamp": "2026-04-07T02:02:08.748Z"
     },
     {
       "browser": "chromium",
@@ -423,7 +441,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-07T01:30:31.788Z"
+      "timestamp": "2026-04-07T02:02:08.931Z"
     },
     {
       "browser": "chromium",
@@ -438,7 +456,7 @@
         "page-state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:31.793Z"
+      "timestamp": "2026-04-07T02:02:08.936Z"
     },
     {
       "browser": "chromium",
@@ -453,7 +471,7 @@
         "page-state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:31.967Z"
+      "timestamp": "2026-04-07T02:02:09.111Z"
     },
     {
       "browser": "chromium",
@@ -468,7 +486,7 @@
         "page-state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:32.140Z"
+      "timestamp": "2026-04-07T02:02:09.290Z"
     },
     {
       "browser": "chromium",
@@ -481,7 +499,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-07T01:30:32.288Z"
+      "timestamp": "2026-04-07T02:02:09.455Z"
     },
     {
       "browser": "chromium",
@@ -492,7 +510,7 @@
       "reason": "No actionable controls were discovered in active view.",
       "observed_requests": [],
       "observed_effects": [],
-      "timestamp": "2026-04-07T01:30:32.306Z"
+      "timestamp": "2026-04-07T02:02:09.485Z"
     },
     {
       "browser": "chromium",
@@ -512,7 +530,7 @@
         "page-state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:32.331Z"
+      "timestamp": "2026-04-07T02:02:09.509Z"
     },
     {
       "browser": "chromium",
@@ -529,7 +547,7 @@
         "request"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:33.081Z"
+      "timestamp": "2026-04-07T02:02:10.266Z"
     },
     {
       "browser": "chromium",
@@ -549,7 +567,7 @@
         "modal-open"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:33.250Z"
+      "timestamp": "2026-04-07T02:02:10.445Z"
     },
     {
       "browser": "chromium",
@@ -564,7 +582,7 @@
         "page-state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:33.794Z"
+      "timestamp": "2026-04-07T02:02:10.974Z"
     },
     {
       "browser": "chromium",
@@ -580,7 +598,7 @@
         "page-state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:34.204Z"
+      "timestamp": "2026-04-07T02:02:11.367Z"
     },
     {
       "browser": "chromium",
@@ -596,7 +614,7 @@
         "page-state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:34.372Z"
+      "timestamp": "2026-04-07T02:02:11.535Z"
     },
     {
       "browser": "chromium",
@@ -611,7 +629,7 @@
         "page-state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:34.540Z"
+      "timestamp": "2026-04-07T02:02:11.690Z"
     },
     {
       "browser": "chromium",
@@ -627,7 +645,7 @@
         "page-state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:34.724Z"
+      "timestamp": "2026-04-07T02:02:11.859Z"
     },
     {
       "browser": "chromium",
@@ -643,7 +661,7 @@
         "page-state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:34.914Z"
+      "timestamp": "2026-04-07T02:02:12.027Z"
     },
     {
       "browser": "chromium",
@@ -659,7 +677,7 @@
         "page-state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:35.099Z"
+      "timestamp": "2026-04-07T02:02:12.196Z"
     },
     {
       "browser": "chromium",
@@ -669,13 +687,16 @@
       "trigger_type": "click",
       "status": "PASS",
       "reason": "Trigger-to-end observable effect detected.",
-      "observed_requests": [],
+      "observed_requests": [
+        "GET /healthz"
+      ],
       "observed_effects": [
+        "request",
         "state-change",
         "page-state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:35.277Z"
+      "timestamp": "2026-04-07T02:02:12.361Z"
     },
     {
       "browser": "chromium",
@@ -691,7 +712,7 @@
         "page-state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:35.459Z"
+      "timestamp": "2026-04-07T02:02:12.532Z"
     },
     {
       "browser": "chromium",
@@ -704,7 +725,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-07T01:30:35.645Z"
+      "timestamp": "2026-04-07T02:02:12.701Z"
     },
     {
       "browser": "chromium",
@@ -720,7 +741,7 @@
         "page-state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:35.816Z"
+      "timestamp": "2026-04-07T02:02:12.868Z"
     },
     {
       "browser": "chromium",
@@ -736,7 +757,7 @@
         "page-state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:36.001Z"
+      "timestamp": "2026-04-07T02:02:13.032Z"
     },
     {
       "browser": "chromium",
@@ -754,7 +775,7 @@
         "page-state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:36.195Z"
+      "timestamp": "2026-04-07T02:02:13.204Z"
     },
     {
       "browser": "chromium",
@@ -769,7 +790,7 @@
         "page-state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:36.368Z"
+      "timestamp": "2026-04-07T02:02:13.369Z"
     },
     {
       "browser": "chromium",
@@ -784,7 +805,7 @@
         "state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:36.888Z"
+      "timestamp": "2026-04-07T02:02:13.852Z"
     },
     {
       "browser": "chromium",
@@ -800,7 +821,7 @@
         "page-state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:37.066Z"
+      "timestamp": "2026-04-07T02:02:14.030Z"
     },
     {
       "browser": "chromium",
@@ -819,7 +840,7 @@
         "page-state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:37.237Z"
+      "timestamp": "2026-04-07T02:02:14.197Z"
     },
     {
       "browser": "chromium",
@@ -827,12 +848,12 @@
       "selector": "#ai-hamburger",
       "label": "(unlabeled control)",
       "trigger_type": "click",
-      "status": "BLOCKED",
-      "reason": "Control exists but is not visible in current state.",
+      "status": "MISSING",
+      "reason": "No observable request/navigation/state/modal effect after click.",
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-07T01:30:38.457Z"
+      "timestamp": "2026-04-07T02:02:14.566Z"
     },
     {
       "browser": "chromium",
@@ -840,12 +861,14 @@
       "selector": "#ai-deep-panel-close",
       "label": "(unlabeled control)",
       "trigger_type": "click",
-      "status": "BLOCKED",
-      "reason": "Control interaction was blocked by overlay/viewport constraints.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Element is outside of the viewport\nCall log:\n\u001b[2m  - waiting for locator('#ai-deep-panel-close').first()\u001b[22m\n\u001b[2m    - locator resolved to <button id=\"ai-deep-panel-close\" class=\"ai-deep-panel__close\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n",
-      "timestamp": "2026-04-07T01:30:38.462Z"
+      "observed_effects": [
+        "page-state-change"
+      ],
+      "error": "",
+      "timestamp": "2026-04-07T02:02:15.380Z"
     },
     {
       "browser": "chromium",
@@ -860,7 +883,7 @@
         "page-state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:39.026Z"
+      "timestamp": "2026-04-07T02:02:15.945Z"
     },
     {
       "browser": "chromium",
@@ -868,12 +891,14 @@
       "selector": "#evo-diff-close",
       "label": "(unlabeled control)",
       "trigger_type": "click",
-      "status": "BLOCKED",
-      "reason": "Control exists but is not visible in current state.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
+      "observed_effects": [
+        "page-state-change"
+      ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:39.183Z"
+      "timestamp": "2026-04-07T02:02:16.464Z"
     },
     {
       "browser": "chromium",
@@ -888,7 +913,7 @@
         "page-state-change"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:39.187Z"
+      "timestamp": "2026-04-07T02:02:16.725Z"
     },
     {
       "browser": "chromium",
@@ -901,7 +926,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-07T01:30:39.348Z"
+      "timestamp": "2026-04-07T02:02:16.986Z"
     },
     {
       "browser": "chromium",
@@ -909,12 +934,18 @@
       "selector": "#evo-tab-config",
       "label": "CONFIGURE",
       "trigger_type": "click",
-      "status": "MISSING",
-      "reason": "No observable request/navigation/state/modal effect after click.",
-      "observed_requests": [],
-      "observed_effects": [],
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
+      "observed_requests": [
+        "GET /healthz"
+      ],
+      "observed_effects": [
+        "request",
+        "page-state-change",
+        "modal-open"
+      ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:39.354Z"
+      "timestamp": "2026-04-07T02:02:17.186Z"
     },
     {
       "browser": "chromium",
@@ -922,12 +953,15 @@
       "selector": "#ai-deep-analyse-btn",
       "label": "Deep Analyse",
       "trigger_type": "click",
-      "status": "BLOCKED",
-      "reason": "Control is disabled due to workflow preconditions.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
+      "observed_effects": [
+        "page-state-change",
+        "modal-open"
+      ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:39.994Z"
+      "timestamp": "2026-04-07T02:02:17.676Z"
     },
     {
       "browser": "chromium",
@@ -935,12 +969,14 @@
       "selector": "#ai-evolve-btn",
       "label": "Evolve Strategy",
       "trigger_type": "click",
-      "status": "BLOCKED",
-      "reason": "Control is disabled due to workflow preconditions.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
+      "observed_effects": [
+        "modal-open"
+      ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:39.999Z"
+      "timestamp": "2026-04-07T02:02:18.397Z"
     },
     {
       "browser": "chromium",
@@ -952,10 +988,10 @@
       "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
       "observed_effects": [
-        "page-state-change"
+        "modal-open"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:40.005Z"
+      "timestamp": "2026-04-07T02:02:19.038Z"
     },
     {
       "browser": "chromium",
@@ -963,12 +999,15 @@
       "selector": "#ai-inject-btn",
       "label": "Inject latest backtest",
       "trigger_type": "click",
-      "status": "BLOCKED",
-      "reason": "Control exists but is not visible in current state.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
+      "observed_effects": [
+        "page-state-change",
+        "modal-open"
+      ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:40.162Z"
+      "timestamp": "2026-04-07T02:02:19.764Z"
     },
     {
       "browser": "chromium",
@@ -981,7 +1020,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-07T01:30:40.166Z"
+      "timestamp": "2026-04-07T02:02:20.502Z"
     },
     {
       "browser": "chromium",
@@ -997,10 +1036,11 @@
       ],
       "observed_effects": [
         "request",
-        "page-state-change"
+        "page-state-change",
+        "modal-open"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:40.170Z"
+      "timestamp": "2026-04-07T02:02:20.594Z"
     },
     {
       "browser": "chromium",
@@ -1010,15 +1050,13 @@
       "trigger_type": "click",
       "status": "PASS",
       "reason": "Trigger-to-end observable effect detected.",
-      "observed_requests": [
-        "GET /runs",
-        "GET /strategies/MomentumPulse/source"
-      ],
+      "observed_requests": [],
       "observed_effects": [
-        "request"
+        "page-state-change",
+        "modal-open"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:40.335Z"
+      "timestamp": "2026-04-07T02:02:20.839Z"
     },
     {
       "browser": "chromium",
@@ -1031,10 +1069,11 @@
       "observed_requests": [],
       "observed_effects": [
         "state-change",
-        "page-state-change"
+        "page-state-change",
+        "modal-open"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:40.507Z"
+      "timestamp": "2026-04-07T02:02:21.485Z"
     },
     {
       "browser": "chromium",
@@ -1047,7 +1086,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-07T01:30:40.671Z"
+      "timestamp": "2026-04-07T02:02:21.761Z"
     },
     {
       "browser": "chromium",
@@ -1060,7 +1099,7 @@
       "observed_requests": [],
       "observed_effects": [],
       "error": "",
-      "timestamp": "2026-04-07T01:30:40.677Z"
+      "timestamp": "2026-04-07T02:02:21.853Z"
     },
     {
       "browser": "chromium",
@@ -1073,10 +1112,11 @@
       "observed_requests": [],
       "observed_effects": [
         "state-change",
-        "page-state-change"
+        "page-state-change",
+        "modal-open"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:40.682Z"
+      "timestamp": "2026-04-07T02:02:21.861Z"
     },
     {
       "browser": "chromium",
@@ -1084,12 +1124,16 @@
       "selector": "#evo-tab-results",
       "label": "RESULTS",
       "trigger_type": "click",
-      "status": "BLOCKED",
-      "reason": "Control interaction was blocked by overlay/viewport constraints.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Element is outside of the viewport\nCall log:\n\u001b[2m  - waiting for locator('#evo-tab-results').first()\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"evo-tab\" data-tab=\"results\" id=\"evo-tab-results\">Results</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n",
-      "timestamp": "2026-04-07T01:30:40.853Z"
+      "observed_effects": [
+        "state-change",
+        "page-state-change",
+        "modal-open"
+      ],
+      "error": "",
+      "timestamp": "2026-04-07T02:02:22.175Z"
     },
     {
       "browser": "chromium",
@@ -1097,12 +1141,16 @@
       "selector": "#evo-tab-running",
       "label": "RUNNING",
       "trigger_type": "click",
-      "status": "BLOCKED",
-      "reason": "Control interaction was blocked by overlay/viewport constraints.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Element is outside of the viewport\nCall log:\n\u001b[2m  - waiting for locator('#evo-tab-running').first()\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"evo-tab\" data-tab=\"running\" id=\"evo-tab-running\">Running</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n",
-      "timestamp": "2026-04-07T01:30:41.419Z"
+      "observed_effects": [
+        "state-change",
+        "page-state-change",
+        "modal-open"
+      ],
+      "error": "",
+      "timestamp": "2026-04-07T02:02:22.512Z"
     },
     {
       "browser": "chromium",
@@ -1115,23 +1163,11 @@
       "observed_requests": [],
       "observed_effects": [
         "state-change",
-        "page-state-change"
+        "page-state-change",
+        "modal-open"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:41.975Z"
-    },
-    {
-      "browser": "chromium",
-      "page": "ai-diagnosis",
-      "selector": "#evo-start-btn",
-      "label": "Start Evolution",
-      "trigger_type": "click",
-      "status": "BLOCKED",
-      "reason": "Control interaction was blocked by overlay/viewport constraints.",
-      "observed_requests": [],
-      "observed_effects": [],
-      "error": "locator.click: Element is outside of the viewport\nCall log:\n\u001b[2m  - waiting for locator('#evo-start-btn').first()\u001b[22m\n\u001b[2m    - locator resolved to <button id=\"evo-start-btn\" class=\"evo-start-btn\">Start Evolution</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n",
-      "timestamp": "2026-04-07T01:30:42.142Z"
+      "timestamp": "2026-04-07T02:02:22.677Z"
     },
     {
       "browser": "chromium",
@@ -1139,12 +1175,15 @@
       "selector": "#ai-stop-btn",
       "label": "(unlabeled control)",
       "trigger_type": "click",
-      "status": "BLOCKED",
-      "reason": "Control exists but is not visible in current state.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
+      "observed_effects": [
+        "page-state-change",
+        "modal-open"
+      ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:42.691Z"
+      "timestamp": "2026-04-07T02:02:22.895Z"
     },
     {
       "browser": "chromium",
@@ -1157,10 +1196,11 @@
       "observed_requests": [],
       "observed_effects": [
         "state-change",
-        "page-state-change"
+        "page-state-change",
+        "modal-open"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:42.694Z"
+      "timestamp": "2026-04-07T02:02:23.540Z"
     },
     {
       "browser": "chromium",
@@ -1168,12 +1208,14 @@
       "selector": ".page-view.active div:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(2)",
       "label": "New Conversation",
       "trigger_type": "click",
-      "status": "MISSING",
-      "reason": "No observable request/navigation/state/modal effect after click.",
+      "status": "PASS",
+      "reason": "Trigger-to-end observable effect detected.",
       "observed_requests": [],
-      "observed_effects": [],
+      "observed_effects": [
+        "modal-open"
+      ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:42.847Z"
+      "timestamp": "2026-04-07T02:02:23.689Z"
     },
     {
       "browser": "chromium",
@@ -1183,16 +1225,12 @@
       "trigger_type": "click",
       "status": "PASS",
       "reason": "Trigger-to-end observable effect detected.",
-      "observed_requests": [
-        "POST /ai/chat"
-      ],
+      "observed_requests": [],
       "observed_effects": [
-        "request",
-        "state-change",
-        "page-state-change"
+        "modal-open"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:43.020Z"
+      "timestamp": "2026-04-07T02:02:24.323Z"
     },
     {
       "browser": "chromium",
@@ -1205,10 +1243,11 @@
       "observed_requests": [],
       "observed_effects": [
         "state-change",
-        "page-state-change"
+        "page-state-change",
+        "modal-open"
       ],
       "error": "",
-      "timestamp": "2026-04-07T01:30:43.188Z"
+      "timestamp": "2026-04-07T02:02:25.044Z"
     }
   ]
 }

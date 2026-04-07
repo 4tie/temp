@@ -6,12 +6,19 @@ Schema: list of feedback entry dicts, newest last.
 """
 from __future__ import annotations
 
+from datetime import datetime, timezone
+from typing import Any
+
 from app.core.config import AI_EVOLUTION_DIR
 from app.core.json_io import read_json, write_json
 
 
 def _path(strategy: str):
     return AI_EVOLUTION_DIR / f"{strategy}_feedback.json"
+
+
+def _candidate_path(strategy: str):
+    return AI_EVOLUTION_DIR / f"{strategy}_candidates.json"
 
 
 def record_pending(
@@ -95,3 +102,55 @@ def get_winning_patterns(strategy: str) -> list[str]:
         for e in history
         if e.get("accepted") and e.get("delta", 0) > 0
     ]
+
+
+def list_candidate_attempts(strategy: str, limit: int = 200) -> list[dict]:
+    history: list[dict] = read_json(_candidate_path(strategy), [])
+    if limit <= 0:
+        return []
+    return history[-limit:]
+
+
+def find_candidate(strategy: str, fingerprint: str) -> dict[str, Any] | None:
+    if not fingerprint:
+        return None
+    history: list[dict] = read_json(_candidate_path(strategy), [])
+    for entry in reversed(history):
+        if str(entry.get("candidate_fingerprint") or "") == fingerprint:
+            return entry
+    return None
+
+
+def record_candidate_attempt(
+    *,
+    strategy: str,
+    loop_id: str,
+    generation_index: int,
+    version_id: str,
+    candidate_vector: dict[str, Any],
+    candidate_fingerprint: str,
+    status: str,
+    accepted: bool | None,
+    fitness_after: float | None,
+    rejection_reason: str | None,
+) -> None:
+    history: list[dict] = read_json(_candidate_path(strategy), [])
+    history.append(
+        {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "strategy": strategy,
+            "loop_id": loop_id,
+            "generation_index": generation_index,
+            "version_id": version_id,
+            "candidate_vector": dict(candidate_vector or {}),
+            "candidate_fingerprint": candidate_fingerprint,
+            "status": status,
+            "accepted": accepted,
+            "fitness_after": None if fitness_after is None else round(float(fitness_after), 4),
+            "rejection_reason": rejection_reason,
+        }
+    )
+    # Keep file bounded for safety.
+    if len(history) > 2000:
+        history = history[-2000:]
+    write_json(_candidate_path(strategy), history)
