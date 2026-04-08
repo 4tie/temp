@@ -76,7 +76,8 @@ window.API = (() => {
   const getRun          = (id)      => get(`/runs/${id}`);
   const getRunRaw       = (id)      => get(`/runs/${id}/raw`);
   const getResultMetrics = ()       => get('/result-metrics');
-  const applyRunConfig  = (id)      => post(`/runs/${id}/apply-config`, {});`r`n  const applyStrategySuggestion = (id, body) => post(`/runs/${id}/apply-suggestion`, body);
+  const applyRunConfig  = (id)      => post(`/runs/${id}/apply-config`, {});
+  const applyStrategySuggestion = (id, body) => post(`/runs/${id}/apply-suggestion`, body);
   const startBacktest   = (body)    => post('/run', body);
   const deleteRun       = (id)      => del(`/runs/${id}`);
   const getLastConfig   = ()        => get('/last-config');

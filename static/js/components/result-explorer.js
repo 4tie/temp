@@ -24,12 +24,59 @@ window.ResultExplorer = (() => {
     raw: null,
     activeTab: 'overview',
     tables: _cloneSorts(),
+    suggestionApply: {},
   };
 
   function _cloneSorts() {
     return Object.fromEntries(
       Object.entries(DEFAULT_SORTS).map(([key, value]) => [key, { ...value }])
     );
+  }
+
+
+
+  function _suggestionApplyState(id) {
+    return _state.suggestionApply?.[id] || { phase: 'idle', result: null, error: '' };
+  }
+
+  function _setSuggestionApplyState(id, patch = {}) {
+    _state.suggestionApply = _state.suggestionApply || {};
+    _state.suggestionApply[id] = { ..._suggestionApplyState(id), ...patch };
+    _render();
+  }
+
+  async function _applySuggestion(suggestionId) {
+    if (!_state.runId || !suggestionId) return;
+    const current = _suggestionApplyState(suggestionId);
+    if (current.phase === 'applying') return;
+    _setSuggestionApplyState(suggestionId, { phase: 'applying', result: null, error: '' });
+    try {
+      const res = await API.applyStrategySuggestion(_state.runId, {
+        suggestion_id: suggestionId,
+        provider: 'openrouter',
+      });
+      _setSuggestionApplyState(suggestionId, { phase: 'applied', result: res, error: '' });
+      Toast.success('Suggestion applied. Review the diff, then retest explicitly.');
+    } catch (err) {
+      _setSuggestionApplyState(suggestionId, { phase: 'error', result: null, error: err.message || String(err) });
+      Toast.error('Failed to apply suggestion: ' + (err.message || err));
+    }
+  }
+
+  async function _retestSuggestion(suggestionId) {
+    const payload = _suggestionApplyState(suggestionId)?.result?.retest_payload;
+    if (!payload) {
+      Toast.warning('Apply the suggestion first to generate a retest payload.');
+      return;
+    }
+    if (window.BacktestPage?.runSuggestionRetest) {
+      await window.BacktestPage.runSuggestionRetest(payload, {
+        toastMessage: 'Started retest from the applied strategy intelligence suggestion.',
+      });
+      return;
+    }
+    const res = await API.startBacktest(payload);
+    Toast.success(`Backtest started: ${res.run_id}`);
   }
 
   function _ensureModal() {
@@ -55,6 +102,7 @@ window.ResultExplorer = (() => {
       raw: null,
       activeTab: 'overview',
       tables: _cloneSorts(),
+      suggestionApply: {},
     };
 
     DOM.setText(_title, `Result Explorer: ${FMT.truncate(runId, 28)}`);
@@ -273,6 +321,17 @@ window.ResultExplorer = (() => {
         }
       });
     }
+
+    _body.querySelectorAll('[data-intelligence-suggestion-apply]').forEach((el) => {
+      DOM.on(el, 'click', () => {
+        void _applySuggestion(el.dataset.intelligenceSuggestionApply || '');
+      });
+    });
+    _body.querySelectorAll('[data-intelligence-suggestion-retest]').forEach((el) => {
+      DOM.on(el, 'click', () => {
+        void _retestSuggestion(el.dataset.intelligenceSuggestionRetest || '');
+      });
+    });
   }
 
   function _renderOverviewTab(detail) {
@@ -662,143 +721,34 @@ window.ResultExplorer = (() => {
   }
 
   function _intelligenceActionCard(card, kind) {
+    const suggestionId = card.id || card.applyAction?.suggestion_id || '';
+    const applyState = _suggestionApplyState(suggestionId);
+    const preview = Array.isArray(applyState?.result?.diff_summary?.preview)
+      ? applyState.result.diff_summary.preview.slice(0, 12).join('\n')
+      : '';
+    const actionTag = kind === 'quick'
+      ? (card.parameter ? `PARAM ${card.parameter}` : 'QUICK APPLY')
+      : 'AI-ASSISTED';
     return `
       <article class="si-action-card si-action-card--${_esc(kind)}" data-intelligence-action-card="${_esc(kind)}">
+        <div class="si-action-card__top">
+          <span class="si-action-card__kind">${_esc(kind === 'quick' ? 'Quick Action' : 'AI Guidance')}</span>
+          <span class="si-action-card__tag">${_esc(actionTag)}</span>
+        </div>
         <div class="si-action-card__title">${_esc(card.title || 'Suggestion')}</div>
         <div class="si-action-card__body">${_esc(card.description || '')}</div>
         ${card.meta ? `<div class="si-action-card__meta">${_esc(card.meta)}</div>` : ''}
         ${card.evidence ? `<div class="si-action-card__evidence">${_esc(card.evidence)}</div>` : ''}
+        ${card.applyAction ? `
+          <div class="si-action-card__actions">
+            <button type="button" class="btn btn--secondary btn--sm" data-intelligence-suggestion-apply="${_esc(suggestionId)}" ${applyState.phase === 'applying' ? 'disabled' : ''}>${applyState.phase === 'applying' ? 'Applying...' : 'Apply'}</button>
+            ${applyState.result?.retest_payload ? `<button type="button" class="btn btn--primary btn--sm" data-intelligence-suggestion-retest="${_esc(suggestionId)}">Retest</button>` : ''}
+          </div>
+          ${applyState.error ? `<div class="si-action-card__evidence text-red">${_esc(applyState.error)}</div>` : ''}
+          ${applyState.result ? `<div class="si-action-card__meta">${_esc((applyState.result.applied_changes || []).join(' | '))}</div>` : ''}
+          ${preview ? `<pre class="si-action-card__diff">${_esc(preview)}</pre>` : ''}
+        ` : ''}
       </article>
-    `;
-  }
-
-  function _renderIntelligenceTab(detail) {
-    const results = detail.results || {};
-    const intelligence = results.strategy_intelligence || {};
-    const diagnosis = intelligence.diagnosis || {};
-    const primary = diagnosis.primary || {};
-    const issues = _visibleIntelligenceIssues(diagnosis);
-    const { quickParams, manualGuidance } = _intelligenceSuggestionGroups(intelligence);
-    const comparison = intelligence.comparison_to_parent || {};
-    const iterationMemory = intelligence.iteration_memory || {};
-    const comparisonRows = _intelligenceComparisonRows(comparison);
-    const primaryEvidence = primary.evidence || 'No metric-backed evidence was captured.';
-    const primaryMetrics = _metricSnapshotText(primary.metric_snapshot);
-    const secondaryIssues = Array.isArray(diagnosis.secondary_issues) ? diagnosis.secondary_issues : [];
-
-    if (!issues.length && !quickParams.length && !manualGuidance.length && !primary.title) {
-      return '<div class="empty-state">No strategy intelligence is available for this run yet.</div>';
-    }
-
-    return `
-      <div class="result-explorer__section">
-        <div class="section-heading">Primary Diagnosis</div>
-        <div class="detail-grid">
-          ${_detailItem('Issue', _esc(primary.title || '—'), _severityTone(primary.severity))}
-          ${_detailItem('Severity', _esc(primary.severity || '—'), _severityTone(primary.severity))}
-          ${_detailItem('Confidence', _esc(primary.confidence || '—'))}
-          ${_detailItem('Why It Matters', _esc(primary.explanation || '—'))}
-        </div>
-        <div class="result-explorer__stack result-explorer__stack--spaced">
-          <article class="result-explorer__insight-card result-explorer__insight-card--${_severityTone(primary.severity)}">
-            <div class="result-explorer__insight-title">Metric Evidence</div>
-            <div class="result-explorer__insight-body">${_esc(primaryEvidence)}</div>
-            ${primaryMetrics ? `<div class="result-explorer__insight-meta">${_esc(primaryMetrics)}</div>` : ''}
-            ${primary.confidence_note ? `<div class="result-explorer__insight-meta">${_esc(primary.confidence_note)}</div>` : ''}
-          </article>
-        </div>
-      </div>
-      <div class="result-explorer__section">
-        <div class="section-heading">Detected Issues</div>
-        <div class="result-explorer__stack">
-          ${issues.length ? issues.map((issue) => `
-            <article class="result-explorer__insight-card result-explorer__insight-card--${_severityTone(issue.severity)}">
-              <div class="result-explorer__insight-title">${_esc(issue.title || 'Issue')}</div>
-              <div class="result-explorer__insight-body">${_esc(issue.explanation || issue.evidence || '')}</div>
-              ${issue.evidence ? `<div class="result-explorer__insight-meta">Metric evidence: ${_esc(issue.evidence)}</div>` : ''}
-            </article>
-          `).join('') : '<div class="empty-state">No secondary issues were detected beyond the primary diagnosis.</div>'}
-          ${secondaryIssues.length ? secondaryIssues.slice(0, 3).map((item) => `
-            <article class="result-explorer__insight-card result-explorer__insight-card--amber">
-              <div class="result-explorer__insight-title">Secondary Issue</div>
-              <div class="result-explorer__insight-body">${_esc(item)}</div>
-            </article>
-          `).join('') : ''}
-        </div>
-      </div>
-      <div class="result-explorer__section">
-        <div class="section-heading">Next Moves</div>
-        <div class="result-explorer__meta-chips">
-          <span class="result-explorer__meta-chip">${_esc(`${quickParams.length} quick action${quickParams.length === 1 ? '' : 's'}`)}</span>
-          <span class="result-explorer__meta-chip">${_esc(`${manualGuidance.length} manual item${manualGuidance.length === 1 ? '' : 's'}`)}</span>
-        </div>
-        <div class="result-explorer__subheading">Quick Parameter Actions</div>
-        <div class="result-explorer__stack">
-          ${quickParams.length ? quickParams.map((item) => `
-            <article class="result-explorer__insight-card">
-              <div class="result-explorer__insight-title">${_esc(item.title || 'Suggestion')}</div>
-              <div class="result-explorer__insight-body">${_esc(item.description || '')}</div>
-              <div class="result-explorer__insight-meta">${_esc(`Quick Params can apply ${item.parameter} = ${item.suggested_value}`)}</div>
-              ${item.evidence ? `<div class="result-explorer__insight-meta">Metric evidence: ${_esc(item.evidence)}</div>` : ''}
-            </article>
-          `).join('') : '<div class="empty-state">No direct quick-parameter changes were identified for this run.</div>'}
-        </div>
-        <div class="result-explorer__subheading result-explorer__subheading--spaced">Manual Guidance</div>
-        <div class="result-explorer__stack">
-          ${manualGuidance.length ? manualGuidance.map((item) => `
-            <article class="result-explorer__insight-card">
-              <div class="result-explorer__insight-title">${_esc(item.title || 'Suggestion')}</div>
-              <div class="result-explorer__insight-body">${_esc(item.description || '')}</div>
-              <div class="result-explorer__insight-meta">${_esc('Manual guidance only. No strategy code will be changed automatically.')}</div>
-              ${item.evidence ? `<div class="result-explorer__insight-meta">Metric evidence: ${_esc(item.evidence)}</div>` : ''}
-            </article>
-          `).join('') : '<div class="empty-state">No manual follow-up guidance was generated for this run.</div>'}
-        </div>
-      </div>
-      ${comparisonRows.length ? `
-        <div class="result-explorer__section">
-          <div class="section-heading">Compared To Parent Run</div>
-          <div class="detail-grid">
-            ${comparisonRows.map((row) => _detailItem(
-              row.label,
-              row.diff == null
-                ? '—'
-                : (row.format === 'currency'
-                  ? FMT.currency(row.diff)
-                  : row.format === 'integer'
-                    ? `${row.diff > 0 ? '+' : ''}${FMT.integer(row.diff)}`
-                    : row.format === 'ratio'
-                      ? `${row.diff > 0 ? '+' : ''}${FMT.number(row.diff, 2)}`
-                      : FMT.pct(row.diff, 1, true)),
-              row.diff == null ? '' : (row.higher_is_better === false ? _toneFromNumber(-row.diff) : _toneFromNumber(row.diff))
-            )).join('')}
-          </div>
-        </div>
-      ` : ''}
-      ${(iterationMemory.improvement_applied?.length || iterationMemory.improvement_skipped?.length || iterationMemory.improvement_brief) ? `
-        <div class="result-explorer__section">
-          <div class="section-heading">Last Rerun Intent</div>
-          <div class="result-explorer__stack">
-            ${iterationMemory.improvement_brief ? `
-              <article class="result-explorer__insight-card">
-                <div class="result-explorer__insight-body">${_esc(iterationMemory.improvement_brief)}</div>
-              </article>
-            ` : ''}
-            ${iterationMemory.improvement_applied?.length ? `
-              <article class="result-explorer__insight-card">
-                <div class="result-explorer__insight-title">Applied</div>
-                <div class="result-explorer__insight-body">${_esc(iterationMemory.improvement_applied.join(', '))}</div>
-              </article>
-            ` : ''}
-            ${iterationMemory.improvement_skipped?.length ? `
-              <article class="result-explorer__insight-card">
-                <div class="result-explorer__insight-title">Skipped</div>
-                <div class="result-explorer__insight-body">${_esc(iterationMemory.improvement_skipped.join(', '))}</div>
-              </article>
-            ` : ''}
-          </div>
-        </div>
-      ` : ''}
     `;
   }
 
@@ -811,6 +761,7 @@ window.ResultExplorer = (() => {
     const quickParams = Array.isArray(vm.quickActionCards) ? vm.quickActionCards : [];
     const manualGuidance = Array.isArray(vm.manualGuidanceCards) ? vm.manualGuidanceCards : [];
     const summaryChips = Array.isArray(vm.summaryChips) ? vm.summaryChips : [];
+    const heroActions = Array.isArray(vm.heroActions) ? vm.heroActions : summaryChips;
     const primaryStats = Array.isArray(vm.primaryStats) ? vm.primaryStats : [];
     const comparison = intelligence.comparison_to_parent || {};
     const iterationMemory = intelligence.iteration_memory || {};
@@ -821,103 +772,100 @@ window.ResultExplorer = (() => {
     }
 
     return `
-      <div class="result-explorer__section">
-        <div class="section-heading">Primary Diagnosis</div>
-        <div class="si-hero si-hero--${_severityTone(primary.severity)}" data-intelligence-primary>
-          <div class="si-hero__head">
-            <div>
-              <div class="si-hero__eyebrow">Primary diagnosis</div>
-              <div class="si-hero__title">${_esc(primary.title || '—')}</div>
-            </div>
-            <div class="si-chip-row">
-              ${primary.severity ? `<span class="si-chip si-chip--tone-${_severityTone(primary.severity)}">${_esc(primary.severity)}</span>` : ''}
-              ${primary.confidence ? `<span class="si-chip">Confidence: ${_esc(primary.confidence)}</span>` : ''}
-            </div>
-          </div>
-          <div class="si-hero__body">${_esc(primary.explanation || '—')}</div>
-          <div class="si-hero__evidence" data-intelligence-evidence>${_esc(primary.evidence || 'No metric-backed evidence was captured.')}</div>
-          ${primaryStats.length ? `<div class="si-stat-row" data-intelligence-stats>${primaryStats.map(_intelligenceStatPill).join('')}</div>` : ''}
-          ${primary.confidenceNote ? `<div class="si-hero__confidence" data-intelligence-confidence-note>${_esc(primary.confidenceNote)}</div>` : ''}
-        </div>
-      </div>
-      <div class="result-explorer__section">
-        <div class="section-heading">Detected Issues</div>
-        <div class="result-explorer__stack si-issue-list">
-          ${issues.length ? issues.map((issue) => `
-            <article class="si-issue-card si-issue-card--${_esc(issue.tone || 'muted')}" data-intelligence-issue-card>
-              <div class="si-issue-card__title">${_esc(issue.title || 'Issue')}</div>
-              <div class="si-issue-card__body">${_esc(issue.description || '')}</div>
-              ${issue.evidence ? `<div class="si-issue-card__evidence">${_esc(issue.evidence)}</div>` : ''}
-            </article>
-          `).join('') : '<div class="empty-state">No secondary issues were detected beyond the primary diagnosis.</div>'}
-        </div>
-      </div>
-      <div class="result-explorer__section">
-        <div class="section-heading">Next Moves</div>
-        <div class="result-explorer__meta-chips">
-          ${summaryChips.map((chip) => `<span class="result-explorer__meta-chip">${_esc(chip.label || '')}</span>`).join('')}
-        </div>
-        ${quickParams.length ? `
-          <div class="si-action-group" data-intelligence-action-group="quick">
-            <div class="result-explorer__subheading">Quick Parameter Actions</div>
-            <div class="result-explorer__stack">
-              ${quickParams.map((item) => _intelligenceActionCard(item, 'quick')).join('')}
+      <div class="result-explorer__intelligence">
+        <div class="result-explorer__intelligence-grid">
+          <div class="result-explorer__section result-explorer__section--intelligence-hero">
+            <div class="section-heading">Primary Diagnosis</div>
+            <div class="si-hero si-hero--${_severityTone(primary.severity)}" data-intelligence-primary>
+              <div class="si-hero__head">
+                <div>
+                  <div class="si-hero__eyebrow">Signal overview</div>
+                  <div class="si-hero__title">${_esc(primary.title || '?')}</div>
+                </div>
+                <div class="si-chip-row">
+                  ${primary.severity ? `<span class="si-chip si-chip--tone-${_severityTone(primary.severity)}">${_esc(primary.severityBadge || primary.severity)}</span>` : ''}
+                  ${primary.confidence ? `<span class="si-chip">Confidence: ${_esc(primary.confidence)}</span>` : ''}
+                </div>
+              </div>
+              <div class="si-hero__body">${_esc(primary.explanation || '?')}</div>
+              <div class="si-hero__evidence" data-intelligence-evidence>${_esc(primary.evidence || 'No metric-backed evidence was captured.')}</div>
+              ${primaryStats.length ? `<div class="si-stat-row" data-intelligence-stats>${primaryStats.map(_intelligenceStatPill).join('')}</div>` : ''}
+              ${primary.confidenceNote ? `<div class="si-hero__confidence" data-intelligence-confidence-note>${_esc(primary.confidenceNote)}</div>` : ''}
+              <div class="result-explorer__meta-chips result-explorer__meta-chips--terminal">
+                ${heroActions.map((chip) => `<span class="result-explorer__meta-chip">${_esc(chip.label || '')}</span>`).join('')}
+              </div>
             </div>
           </div>
-        ` : '<div class="empty-state">No direct quick-parameter changes were identified for this run.</div>'}
-        ${manualGuidance.length ? `
-          <div class="si-action-group si-action-group--manual" data-intelligence-action-group="manual">
-            <div class="result-explorer__subheading result-explorer__subheading--spaced">Manual Guidance</div>
-            <div class="result-explorer__stack">
-              ${manualGuidance.map((item) => _intelligenceActionCard(item, 'manual')).join('')}
+          <div class="result-explorer__section result-explorer__section--intelligence-rail">
+            <div class="section-heading">Detected Issues</div>
+            <div class="result-explorer__stack si-issue-list">
+              ${issues.length ? issues.map((issue) => `
+                <article class="si-issue-card si-issue-card--${_esc(issue.tone || 'muted')}" data-intelligence-issue-card>
+                  <div class="si-issue-card__kicker">${_esc(issue.tone || 'signal')}</div>
+                  <div class="si-issue-card__title">${_esc(issue.title || 'Issue')}</div>
+                  <div class="si-issue-card__body">${_esc(issue.description || '')}</div>
+                  ${issue.evidence ? `<div class="si-issue-card__evidence">${_esc(issue.evidence)}</div>` : ''}
+                </article>
+              `).join('') : '<div class="empty-state">No secondary issues were detected beyond the primary diagnosis.</div>'}
             </div>
           </div>
-        ` : '<div class="empty-state">No manual follow-up guidance was generated for this run.</div>'}
-      </div>
-      ${comparisonRows.length ? `
-        <div class="result-explorer__section">
-          <div class="section-heading">Compared To Parent Run</div>
-          <div class="detail-grid">
-            ${comparisonRows.map((row) => _detailItem(
-              row.label,
-              row.diff == null
-                ? '—'
-                : (row.format === 'currency'
-                  ? FMT.currency(row.diff)
-                  : row.format === 'integer'
-                    ? `${row.diff > 0 ? '+' : ''}${FMT.integer(row.diff)}`
-                    : row.format === 'ratio'
-                      ? `${row.diff > 0 ? '+' : ''}${FMT.number(row.diff, 2)}`
-                      : FMT.pct(row.diff, 1, true)),
-              row.diff == null ? '' : (row.higher_is_better === false ? _toneFromNumber(-row.diff) : _toneFromNumber(row.diff))
-            )).join('')}
+          <div class="result-explorer__section result-explorer__section--intelligence-actions">
+            <div class="section-heading">Next Moves</div>
+            <div class="result-explorer__intelligence-actionboard">
+              ${quickParams.length ? `
+                <div class="si-action-group" data-intelligence-action-group="quick">
+                  <div class="result-explorer__subheading">Quick Parameter Actions</div>
+                  <div class="result-explorer__stack">
+                    ${quickParams.map((item) => _intelligenceActionCard(item, 'quick')).join('')}
+                  </div>
+                </div>
+              ` : '<div class="empty-state">No direct quick-parameter changes were identified for this run.</div>'}
+              ${manualGuidance.length ? `
+                <div class="si-action-group si-action-group--manual" data-intelligence-action-group="manual">
+                  <div class="result-explorer__subheading result-explorer__subheading--spaced">AI / Manual Guidance</div>
+                  <div class="result-explorer__stack">
+                    ${manualGuidance.map((item) => _intelligenceActionCard(item, 'manual')).join('')}
+                  </div>
+                </div>
+              ` : '<div class="empty-state">No manual follow-up guidance was generated for this run.</div>'}
+            </div>
           </div>
         </div>
-      ` : ''}
-      ${(iterationMemory.improvement_applied?.length || iterationMemory.improvement_skipped?.length || iterationMemory.improvement_brief) ? `
-        <div class="result-explorer__section">
-          <div class="section-heading">Last Rerun Intent</div>
-          <div class="result-explorer__stack">
-            ${iterationMemory.improvement_brief ? `
-              <article class="result-explorer__insight-card">
-                <div class="result-explorer__insight-body">${_esc(iterationMemory.improvement_brief)}</div>
-              </article>
+        ${(comparisonRows.length || iterationMemory.improvement_applied?.length || iterationMemory.improvement_skipped?.length || iterationMemory.improvement_brief) ? `
+          <div class="result-explorer__intelligence-context">
+            ${comparisonRows.length ? `
+              <div class="result-explorer__section">
+                <div class="section-heading">Compared To Parent Run</div>
+                <div class="detail-grid">
+                  ${comparisonRows.map((row) => _detailItem(
+                    row.label,
+                    row.diff == null
+                      ? '?'
+                      : (row.format === 'currency'
+                        ? FMT.currency(row.diff)
+                        : row.format === 'integer'
+                          ? `${row.diff > 0 ? '+' : ''}${FMT.integer(row.diff)}`
+                          : row.format === 'ratio'
+                            ? `${row.diff > 0 ? '+' : ''}${FMT.number(row.diff, 2)}`
+                            : FMT.pct(row.diff, 1, true)),
+                    row.diff == null ? '' : (row.higher_is_better === false ? _toneFromNumber(-row.diff) : _toneFromNumber(row.diff))
+                  )).join('')}
+                </div>
+              </div>
             ` : ''}
-            ${iterationMemory.improvement_applied?.length ? `
-              <article class="result-explorer__insight-card">
-                <div class="result-explorer__insight-title">Applied</div>
-                <div class="result-explorer__insight-body">${_esc(iterationMemory.improvement_applied.join(', '))}</div>
-              </article>
-            ` : ''}
-            ${iterationMemory.improvement_skipped?.length ? `
-              <article class="result-explorer__insight-card">
-                <div class="result-explorer__insight-title">Skipped</div>
-                <div class="result-explorer__insight-body">${_esc(iterationMemory.improvement_skipped.join(', '))}</div>
-              </article>
+            ${(iterationMemory.improvement_applied?.length || iterationMemory.improvement_skipped?.length || iterationMemory.improvement_brief) ? `
+              <div class="result-explorer__section">
+                <div class="section-heading">Last Rerun Intent</div>
+                <div class="result-explorer__memory-list">
+                  ${iterationMemory.improvement_brief ? `<article class="result-explorer__insight-card"><div class="result-explorer__insight-body">${_esc(iterationMemory.improvement_brief)}</div></article>` : ''}
+                  ${iterationMemory.improvement_applied?.length ? `<article class="result-explorer__insight-card result-explorer__insight-card--green"><div class="result-explorer__insight-title">Applied</div><div class="result-explorer__insight-body">${_esc(iterationMemory.improvement_applied.join(', '))}</div></article>` : ''}
+                  ${iterationMemory.improvement_skipped?.length ? `<article class="result-explorer__insight-card"><div class="result-explorer__insight-title">Skipped</div><div class="result-explorer__insight-body">${_esc(iterationMemory.improvement_skipped.join(', '))}</div></article>` : ''}
+                </div>
+              </div>
             ` : ''}
           </div>
-        </div>
-      ` : ''}
+        ` : ''}
+      </div>
     `;
   }
 

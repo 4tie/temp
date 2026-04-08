@@ -23,6 +23,7 @@ from app.services.results.strategy_intelligence_service import (
     build_strategy_intelligence,
     has_strategy_intelligence,
 )
+from app.services.results.strategy_intelligence_apply_service import apply_strategy_intelligence_suggestion
 from app.services.storage import (
     load_run_meta, load_run_results, list_runs, delete_run,
     save_last_config, load_last_config, save_run_logs, load_run_raw_payload, get_run_dir, save_run_results,
@@ -256,6 +257,8 @@ async def apply_strategy_suggestion(run_id: str, req: ApplyStrategySuggestionReq
         suggestion_id=req.suggestion_id,
         provider=req.provider,
     )
+
+
 @router.post("/runs/{run_id}/apply-config")
 async def apply_run_config(run_id: str):
     _checked_id(run_id)

@@ -14,6 +14,7 @@ window.BacktestPage = (() => {
   let _strategyRerunPhase = 'idle';
   let _quickParamsState = _createQuickParamsState();
   let _strategyRerunReview = _createStrategyRerunReviewState();
+  let _strategySuggestionApplyState = {};
   let _intelligenceEventBound = false;
   let _pendingStrategyRerunConsuming = false;
 
@@ -526,6 +527,20 @@ window.BacktestPage = (() => {
     DOM.on(resultCard, 'click', (e) => {
       if (!_resultRunId) return;
       if (e.target.closest('#bt-delete-btn')) return;
+      const suggestionApply = e.target.closest('[data-intelligence-suggestion-apply]');
+      if (suggestionApply) {
+        e.preventDefault();
+        e.stopPropagation();
+        void _applyStrategySuggestion(suggestionApply.dataset.intelligenceSuggestionApply || '');
+        return;
+      }
+      const suggestionRetest = e.target.closest('[data-intelligence-suggestion-retest]');
+      if (suggestionRetest) {
+        e.preventDefault();
+        e.stopPropagation();
+        void _retestStrategySuggestion(suggestionRetest.dataset.intelligenceSuggestionRetest || '');
+        return;
+      }
       const reviewPanel = e.target.closest('.bt-intelligence__panel--comparison');
       if (reviewPanel) {
         const reviewAction = e.target.closest('[data-intelligence-review-action]');
@@ -731,6 +746,7 @@ window.BacktestPage = (() => {
     _strategyRerunStarting = false;
     _strategyRerunPhase = 'idle';
     _strategyRerunReview = _createStrategyRerunReviewState();
+    _strategySuggestionApplyState = {};
     DOM.hide(DOM.$('#bt-results-card', _el));
     _resetQuickParamsState();
     _syncIntelligenceRerunUiState();
@@ -1521,6 +1537,91 @@ window.BacktestPage = (() => {
     _refreshCommandPreview();
   }
 
+
+
+  async function _startBacktestFromPayload(body, options = {}) {
+    if (_activeRunId) {
+      Toast.warning('A backtest is already running. Wait for it to finish before starting a retest.');
+      return false;
+    }
+    await _syncFormToRunContext(body, body.strategy, body.strategy_label);
+
+    try {
+      const hasCoverage = await _ensureCoverageWithAutoDownload(body);
+      if (!hasCoverage) return false;
+    } catch (err) {
+      Toast.error('Failed to validate/download pair data: ' + err.message);
+      return false;
+    }
+
+    _clearLoadedResult();
+    _setRunning(true);
+    try {
+      const res = await API.startBacktest(body);
+      _activeRunId = res.run_id;
+      AppState.set('stream', `Backtest started: ${_activeRunId}`);
+      Auth.setRunning(true);
+      _startPoll(_activeRunId);
+      Toast.success(options.toastMessage || 'Backtest started from the loaded result context.');
+      return true;
+    } catch (err) {
+      _setRunning(false);
+      Toast.error('Failed to start backtest: ' + err.message);
+      return false;
+    }
+  }
+
+  function _strategySuggestionState(id) {
+    return _strategySuggestionApplyState[id] || { phase: 'idle', result: null, error: '' };
+  }
+
+  function _setStrategySuggestionState(id, patch = {}) {
+    if (!id) return;
+    const current = _strategySuggestionState(id);
+    _strategySuggestionApplyState[id] = { ...current, ...patch };
+    if (_loadedResult?.results) {
+      _renderResults(DOM.$('#bt-results-body', _el), _loadedResult.results);
+    }
+  }
+
+  async function _applyStrategySuggestion(suggestionId) {
+    if (!_resultRunId || !suggestionId) return;
+    const current = _strategySuggestionState(suggestionId);
+    if (current.phase === 'applying') return;
+    _setStrategySuggestionState(suggestionId, { phase: 'applying', error: '', result: null });
+    try {
+      const res = await API.applyStrategySuggestion(_resultRunId, {
+        suggestion_id: suggestionId,
+        provider: 'openrouter',
+      });
+      if (_loadedResult?.meta && res.strategy_params) {
+        _loadedResult.meta.strategy_params = { ...res.strategy_params };
+      }
+      if (_quickHasParams() && res.strategy_params) {
+        _quickParamsState.currentValues = { ...res.strategy_params };
+        _quickParamsState.seedValues = { ...res.strategy_params };
+        _renderQuickParams();
+      }
+      _setStrategySuggestionState(suggestionId, { phase: 'applied', result: res, error: '' });
+      Toast.success('Suggestion applied. Review the diff, then retest explicitly.');
+    } catch (err) {
+      _setStrategySuggestionState(suggestionId, { phase: 'error', error: err.message || String(err), result: null });
+      Toast.error('Failed to apply suggestion: ' + (err.message || err));
+    }
+  }
+
+  async function _retestStrategySuggestion(suggestionId) {
+    const state = _strategySuggestionState(suggestionId);
+    const payload = state?.result?.retest_payload;
+    if (!payload) {
+      Toast.warning('Apply the suggestion first to generate a retest payload.');
+      return;
+    }
+    await _startBacktestFromPayload(payload, {
+      toastMessage: 'Started retest from the applied strategy intelligence suggestion.',
+    });
+  }
+
   async function _runQuickParamsBacktest(options = {}) {
     if (!_loadedResult?.meta) {
       Toast.warning('No completed run is loaded.');
@@ -1580,27 +1681,9 @@ window.BacktestPage = (() => {
         }
       }
 
-      try {
-        const hasCoverage = await _ensureCoverageWithAutoDownload(body);
-        if (!hasCoverage) return;
-      } catch (err) {
-        Toast.error('Failed to validate/download pair data: ' + err.message);
-        return;
-      }
-
-      _clearLoadedResult();
-      _setRunning(true);
-      try {
-        const res = await API.startBacktest(body);
-        _activeRunId = res.run_id;
-        AppState.set('stream', `Backtest started: ${_activeRunId}`);
-        Auth.setRunning(true);
-        _startPoll(_activeRunId);
-        Toast.success(options.toastMessage || 'Backtest started from the loaded result context.');
-      } catch (err) {
-        _setRunning(false);
-        Toast.error('Failed to start backtest: ' + err.message);
-      }
+      await _startBacktestFromPayload(body, {
+        toastMessage: options.toastMessage || 'Backtest started from the loaded result context.',
+      });
     } finally {
       if (fromIntelligence) {
         _strategyRerunStarting = false;
@@ -2091,12 +2174,33 @@ window.BacktestPage = (() => {
   }
 
   function _intelligenceActionCard(card, kind) {
+    const suggestionId = card.id || card.applyAction?.suggestion_id || '';
+    const applyState = _strategySuggestionState(suggestionId);
+    const preview = Array.isArray(applyState?.result?.diff_summary?.preview)
+      ? applyState.result.diff_summary.preview.slice(0, 12).join('\n')
+      : '';
+    const actionTag = kind === 'quick'
+      ? (card.parameter ? `PARAM ${card.parameter}` : 'QUICK APPLY')
+      : 'AI-ASSISTED';
     return `
       <article class="si-action-card si-action-card--${_esc(kind)}" data-intelligence-action-card="${_esc(kind)}">
+        <div class="si-action-card__top">
+          <span class="si-action-card__kind">${_esc(kind === 'quick' ? 'Quick Action' : 'AI Guidance')}</span>
+          <span class="si-action-card__tag">${_esc(actionTag)}</span>
+        </div>
         <div class="si-action-card__title">${_esc(card.title || 'Suggestion')}</div>
         <div class="si-action-card__body">${_esc(card.description || '')}</div>
         ${card.meta ? `<div class="si-action-card__meta">${_esc(card.meta)}</div>` : ''}
         ${card.evidence ? `<div class="si-action-card__evidence">${_esc(card.evidence)}</div>` : ''}
+        ${card.applyAction ? `
+          <div class="si-action-card__actions">
+            <button type="button" class="btn btn--secondary btn--sm" data-intelligence-suggestion-apply="${_esc(suggestionId)}" ${applyState.phase === 'applying' ? 'disabled' : ''}>${applyState.phase === 'applying' ? 'Applying...' : 'Apply'}</button>
+            ${applyState.result?.retest_payload ? `<button type="button" class="btn btn--primary btn--sm" data-intelligence-suggestion-retest="${_esc(suggestionId)}" ${_activeRunId ? 'disabled' : ''}>Retest</button>` : ''}
+          </div>
+          ${applyState.error ? `<div class="si-action-card__evidence text-red">${_esc(applyState.error)}</div>` : ''}
+          ${applyState.result ? `<div class="si-action-card__meta">${_esc((applyState.result.applied_changes || []).join(' | '))}</div>` : ''}
+          ${preview ? `<pre class="si-action-card__diff">${_esc(preview)}</pre>` : ''}
+        ` : ''}
       </article>
     `;
   }
@@ -2279,6 +2383,7 @@ window.BacktestPage = (() => {
     const quickParams = Array.isArray(vm.quickActionCards) ? vm.quickActionCards : [];
     const manualGuidance = Array.isArray(vm.manualGuidanceCards) ? vm.manualGuidanceCards : [];
     const summaryChips = Array.isArray(vm.summaryChips) ? vm.summaryChips : [];
+    const heroActions = Array.isArray(vm.heroActions) ? vm.heroActions : summaryChips;
     const primaryStats = Array.isArray(vm.primaryStats) ? vm.primaryStats : [];
     const comparison = intelligence.comparison_to_parent || null;
     const iterationMemory = intelligence.iteration_memory || {};
@@ -2288,97 +2393,102 @@ window.BacktestPage = (() => {
 
     return `
       <section class="bt-intelligence">
-        <div class="bt-intelligence__header">
-          <div class="bt-intelligence__copy">
-            <div class="bt-intelligence__eyebrow">Strategy Intelligence</div>
-            <div class="bt-intelligence__title">Diagnosis and next moves</div>
-            <div class="bt-intelligence__subtitle">Review the diagnosis, evidence, and recommended next moves before rerunning.</div>
-            <div class="bt-intelligence__meta">
-              ${summaryChips.map((chip) => `<span class="bt-intelligence__meta-chip">${_esc(chip.label || '')}</span>`).join('')}
+        <div class="bt-intelligence__shell">
+          <div class="bt-intelligence__masthead">
+            <div class="bt-intelligence__copy">
+              <div class="bt-intelligence__eyebrow">Strategy Intelligence</div>
+              <div class="bt-intelligence__title">Diagnosis and next moves</div>
+              <div class="bt-intelligence__subtitle">Review the diagnosis, evidence, and recommended next moves before rerunning.</div>
+            </div>
+            <div class="bt-intelligence__actions">
+              <button type="button" class="btn btn--primary btn--sm" data-intelligence-action="rerun" data-state="idle">Improve & Run</button>
+              <button type="button" class="btn btn--secondary btn--sm" data-intelligence-action="explore">Open Full Explorer</button>
             </div>
           </div>
-          <div class="bt-intelligence__actions">
-            <button type="button" class="btn btn--primary btn--sm" data-intelligence-action="rerun" data-state="idle">Improve & Run</button>
-            <button type="button" class="btn btn--secondary btn--sm" data-intelligence-action="explore">Open Full Explorer</button>
-          </div>
-        </div>
-        <div class="bt-intelligence__grid">
-          <article class="bt-intelligence__panel">
-            <div class="bt-intelligence__panel-title">Primary Diagnosis</div>
-            <div class="si-hero si-hero--${_issueTone(primary.severity)}" data-intelligence-primary>
-              <div class="si-hero__head">
-                <div>
-                  <div class="si-hero__eyebrow">Primary diagnosis</div>
-                  <div class="si-hero__title">${_esc(primary.title || 'Run diagnosis')}</div>
+          <div class="bt-intelligence__command-grid">
+            <article class="bt-intelligence__panel bt-intelligence__panel--hero">
+              <div class="bt-intelligence__panel-title">Primary Diagnosis</div>
+              <div class="si-hero si-hero--${_issueTone(primary.severity)}" data-intelligence-primary>
+                <div class="si-hero__head">
+                  <div>
+                    <div class="si-hero__eyebrow">Signal overview</div>
+                    <div class="si-hero__title">${_esc(primary.title || 'Run diagnosis')}</div>
+                  </div>
+                  <div class="si-chip-row">
+                    ${primary.severity ? `<span class="si-chip si-chip--tone-${_issueTone(primary.severity)}">${_esc(primary.severityBadge || primary.severity)}</span>` : ''}
+                    ${primary.confidence ? `<span class="si-chip">Confidence: ${_esc(primary.confidence)}</span>` : ''}
+                  </div>
                 </div>
-                <div class="si-chip-row">
-                  ${primary.severity ? `<span class="si-chip si-chip--tone-${_issueTone(primary.severity)}">${_esc(primary.severity)}</span>` : ''}
-                  ${primary.confidence ? `<span class="si-chip">Confidence: ${_esc(primary.confidence)}</span>` : ''}
+                <div class="si-hero__body">${_esc(primary.explanation || 'Review the issues and suggested next moves before rerunning.')}</div>
+                <div class="si-hero__evidence" data-intelligence-evidence>${_esc(primary.evidence || 'No metric-backed evidence was captured.')}</div>
+                ${primaryStats.length ? `<div class="si-stat-row" data-intelligence-stats>${primaryStats.map(_intelligenceStatPill).join('')}</div>` : ''}
+                ${primary.confidenceNote ? `<div class="si-hero__confidence" data-intelligence-confidence-note>${_esc(primary.confidenceNote)}</div>` : ''}
+                <div class="bt-intelligence__hero-strip">
+                  ${heroActions.map((chip) => `<span class="bt-intelligence__meta-chip">${_esc(chip.label || '')}</span>`).join('')}
                 </div>
               </div>
-              <div class="si-hero__body">${_esc(primary.explanation || 'Review the issues and suggested next moves before rerunning.')}</div>
-              <div class="si-hero__evidence" data-intelligence-evidence>${_esc(primary.evidence || 'No metric-backed evidence was captured.')}</div>
-              ${primaryStats.length ? `<div class="si-stat-row" data-intelligence-stats>${primaryStats.map(_intelligenceStatPill).join('')}</div>` : ''}
-              ${primary.confidenceNote ? `<div class="si-hero__confidence" data-intelligence-confidence-note>${_esc(primary.confidenceNote)}</div>` : ''}
-            </div>
-          </article>
-          <article class="bt-intelligence__panel">
-            <div class="bt-intelligence__panel-title">Detected Issues</div>
-            <div class="bt-intelligence__list si-issue-list">
-              ${issues.length ? issues.slice(0, 3).map((issue) => `
-                <article class="si-issue-card si-issue-card--${_esc(issue.tone || 'muted')}" data-intelligence-issue-card>
-                  <div class="si-issue-card__title">${_esc(issue.title || 'Issue')}</div>
-                  <div class="si-issue-card__body">${_esc(issue.description || '')}</div>
-                  ${issue.evidence ? `<div class="si-issue-card__evidence">${_esc(issue.evidence)}</div>` : ''}
+            </article>
+            <article class="bt-intelligence__panel bt-intelligence__panel--issues">
+              <div class="bt-intelligence__panel-title">Detected Issues</div>
+              <div class="bt-intelligence__list si-issue-list">
+                ${issues.length ? issues.slice(0, 4).map((issue) => `
+                  <article class="si-issue-card si-issue-card--${_esc(issue.tone || 'muted')}" data-intelligence-issue-card>
+                    <div class="si-issue-card__kicker">${_esc(issue.tone || 'signal')}</div>
+                    <div class="si-issue-card__title">${_esc(issue.title || 'Issue')}</div>
+                    <div class="si-issue-card__body">${_esc(issue.description || '')}</div>
+                    ${issue.evidence ? `<div class="si-issue-card__evidence">${_esc(issue.evidence)}</div>` : ''}
+                  </article>
+                `).join('') : `<div class="bt-intelligence__item"><div class="bt-intelligence__item-body">No secondary issues were detected beyond the primary diagnosis.</div></div>`}
+              </div>
+            </article>
+            <article class="bt-intelligence__panel bt-intelligence__panel--actions">
+              <div class="bt-intelligence__panel-title">Next Moves</div>
+              <div class="bt-intelligence__actionboard">
+                ${quickParams.length ? `
+                  <div class="si-action-group" data-intelligence-action-group="quick">
+                    <div class="si-action-group__title">Quick Parameter Actions</div>
+                    <div class="si-action-group__list">
+                      ${quickParams.slice(0, 4).map((suggestion) => _intelligenceActionCard(suggestion, 'quick')).join('')}
+                    </div>
+                  </div>
+                ` : '<div class="bt-intelligence__item"><div class="bt-intelligence__item-body">No direct quick-parameter changes were identified for this run.</div></div>'}
+                ${manualGuidance.length ? `
+                  <div class="si-action-group si-action-group--manual" data-intelligence-action-group="manual">
+                    <div class="si-action-group__title">AI / Manual Guidance</div>
+                    <div class="si-action-group__list">
+                      ${manualGuidance.slice(0, 4).map((suggestion) => _intelligenceActionCard(suggestion, 'manual')).join('')}
+                    </div>
+                  </div>
+                ` : '<div class="bt-intelligence__item"><div class="bt-intelligence__item-body">No manual follow-up guidance was generated for this run.</div></div>'}
+              </div>
+            </article>
+          </div>
+          ${(comparisonRows.length || iterationMemory.improvement_applied?.length || iterationMemory.improvement_skipped?.length || iterationMemory.improvement_brief) ? `
+            <div class="bt-intelligence__context-grid">
+              ${comparisonRows.length ? `
+                <article class="bt-intelligence__panel bt-intelligence__panel--comparison">
+                  <div class="bt-intelligence__panel-title">Compared To Previous Iteration</div>
+                  <div class="bt-intelligence__compare-grid">
+                    ${comparisonRows.map((row) => `
+                      <div class="bt-intelligence__compare-item">
+                        <span class="bt-intelligence__compare-label">${_esc(row.label)}</span>
+                        <span class="bt-intelligence__compare-value ${_comparisonTone(row) ? `text-${_comparisonTone(row)}` : ''}">${_comparisonDeltaValue(row)}</span>
+                      </div>
+                    `).join('')}
+                  </div>
                 </article>
-              `).join('') : ''}
-              ${!issues.length ? `<div class="bt-intelligence__item"><div class="bt-intelligence__item-body">No secondary issues were detected beyond the primary diagnosis.</div></div>` : ''}
-            </div>
-          </article>
-          <article class="bt-intelligence__panel">
-            <div class="bt-intelligence__panel-title">Next Moves</div>
-            <div class="bt-intelligence__list">
-              ${quickParams.length ? `
-                <div class="si-action-group" data-intelligence-action-group="quick">
-                  <div class="si-action-group__title">Quick Parameter Actions</div>
-                  <div class="si-action-group__list">
-                    ${quickParams.slice(0, 3).map((suggestion) => _intelligenceActionCard(suggestion, 'quick')).join('')}
-                  </div>
-                </div>
               ` : ''}
-              ${manualGuidance.length ? `
-                <div class="si-action-group si-action-group--manual" data-intelligence-action-group="manual">
-                  <div class="si-action-group__title">Manual Guidance</div>
-                  <div class="si-action-group__list">
-                    ${manualGuidance.slice(0, 3).map((suggestion) => _intelligenceActionCard(suggestion, 'manual')).join('')}
+              ${(iterationMemory.improvement_applied?.length || iterationMemory.improvement_skipped?.length || iterationMemory.improvement_brief) ? `
+                <article class="bt-intelligence__panel bt-intelligence__panel--memory">
+                  <div class="bt-intelligence__panel-title">Last Rerun Intent</div>
+                  <div class="bt-intelligence__memory-list">
+                    ${iterationMemory.improvement_brief ? `<div class="bt-intelligence__memory-item">${_esc(iterationMemory.improvement_brief)}</div>` : ''}
+                    ${iterationMemory.improvement_applied?.length ? `<div class="bt-intelligence__memory-item bt-intelligence__memory-item--positive">Applied: ${_esc(iterationMemory.improvement_applied.join(', '))}</div>` : ''}
+                    ${iterationMemory.improvement_skipped?.length ? `<div class="bt-intelligence__memory-item">Skipped: ${_esc(iterationMemory.improvement_skipped.join(', '))}</div>` : ''}
                   </div>
-                </div>
+                </article>
               ` : ''}
-              ${!quickParams.length && !manualGuidance.length ? `<div class="bt-intelligence__item"><div class="bt-intelligence__item-body">No suggested follow-up actions were generated for this run.</div></div>` : ''}
             </div>
-          </article>
-          ${comparisonRows.length ? `
-            <article class="bt-intelligence__panel bt-intelligence__panel--comparison">
-              <div class="bt-intelligence__panel-title">Compared To Previous Iteration</div>
-              <div class="bt-intelligence__compare-grid">
-                ${comparisonRows.map((row) => `
-                  <div class="bt-intelligence__compare-item">
-                    <span class="bt-intelligence__compare-label">${_esc(row.label)}</span>
-                    <span class="bt-intelligence__compare-value ${_comparisonTone(row) ? `text-${_comparisonTone(row)}` : ''}">${_comparisonDeltaValue(row)}</span>
-                  </div>
-                `).join('')}
-              </div>
-            </article>
-          ` : ''}
-          ${(iterationMemory.improvement_applied?.length || iterationMemory.improvement_skipped?.length || iterationMemory.improvement_brief) ? `
-            <article class="bt-intelligence__panel bt-intelligence__panel--comparison">
-              <div class="bt-intelligence__panel-title">Last Rerun Intent</div>
-              <div class="bt-intelligence__list">
-                ${iterationMemory.improvement_brief ? `<div class="bt-intelligence__item"><div class="bt-intelligence__item-body">${_esc(iterationMemory.improvement_brief)}</div></div>` : ''}
-                ${iterationMemory.improvement_applied?.length ? `<div class="bt-intelligence__item-evidence">${_esc(`Applied: ${iterationMemory.improvement_applied.join(', ')}`)}</div>` : ''}
-                ${iterationMemory.improvement_skipped?.length ? `<div class="bt-intelligence__item-evidence">${_esc(`Skipped: ${iterationMemory.improvement_skipped.join(', ')}`)}</div>` : ''}
-              </div>
-            </article>
           ` : ''}
           ${_renderStrategyRerunReview()}
         </div>
@@ -2670,7 +2780,7 @@ window.BacktestPage = (() => {
     void _consumePendingStrategyIntelligenceRerun();
   }
 
-  return { init, refresh };
+  return { init, refresh, runSuggestionRetest: _startBacktestFromPayload };
 })();
 
 

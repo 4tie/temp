@@ -1,4 +1,13 @@
 {
   "strategy_name": "MultiMa_evo_g3",
-  "params": {}
+  "params": {
+    "buy": {
+      "buy_ma_count": 5,
+      "buy_ma_gap": 7
+    },
+    "sell": {
+      "sell_ma_count": 15,
+      "sell_ma_gap": 50
+    }
+  }
 }

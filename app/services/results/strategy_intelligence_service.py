@@ -37,7 +37,13 @@ def build_strategy_intelligence(
     editable_param_lookup = _editable_param_lookup(meta)
 
     diagnosis_items = _build_diagnosis_items(root, weaknesses, analysis)
-    suggestions, rerun_plan = _build_suggestions(`r`n        run_id=run_id,`r`n        root=root,`r`n        parameter_recommendations=parameter_recommendations,`r`n        editable_param_lookup=editable_param_lookup,`r`n        meta=meta,`r`n    )
+    suggestions, rerun_plan = _build_suggestions(
+        run_id=run_id,
+        root=root,
+        parameter_recommendations=parameter_recommendations,
+        editable_param_lookup=editable_param_lookup,
+        meta=meta,
+    )
     summary_card = _build_summary(summary, normalized_result)
     comparison = _build_parent_comparison(
         current_result=normalized_result,

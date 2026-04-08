@@ -801,6 +801,64 @@
   margin-top: var(--space-2);
 }
 
+
+.result-explorer__intelligence {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.result-explorer__intelligence-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.85fr);
+  grid-template-areas:
+    "hero rail"
+    "actions actions";
+  gap: var(--space-4);
+}
+
+.result-explorer__section--intelligence-rail {
+  padding-left: var(--space-2);
+  border-left: 1px solid rgba(239, 68, 68, 0.10);
+}
+
+.result-explorer__section--intelligence-hero {
+  grid-area: hero;
+}
+
+.result-explorer__section--intelligence-rail {
+  grid-area: rail;
+}
+
+.result-explorer__section--intelligence-actions {
+  grid-area: actions;
+}
+
+.result-explorer__intelligence-actionboard {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.result-explorer__intelligence-context {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  padding-top: 2px;
+  border-top: 1px solid rgba(148, 163, 184, 0.10);
+}
+
+.result-explorer__meta-chips--terminal {
+  margin-top: var(--space-3);
+  margin-bottom: 0;
+}
+
+.result-explorer__memory-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-2);
+}
+
 .result-explorer__section .si-action-group + .si-action-group {
   margin-top: var(--space-3);
 }
@@ -916,6 +974,17 @@
   .result-explorer__table-tools .form-input {
     max-width: none;
   }
+
+  .result-explorer__intelligence,
+  .result-explorer__intelligence-grid,
+  .result-explorer__intelligence-actionboard,
+  .result-explorer__intelligence-context {
+    gap: var(--space-3);
+  }
+
+  .result-explorer__meta-chips--terminal {
+    gap: var(--space-2);
+  }
 }
 /* Results viewport visibility guard */
 .results-page {
@@ -1014,3 +1083,25 @@
 .results-table__id-text {
   background: var(--surface-2);
 }
+
+
+@media (max-width: 1100px) {
+  .result-explorer__intelligence-grid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "hero"
+      "actions"
+      "rail";
+  }
+
+  .result-explorer__section--intelligence-rail {
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .result-explorer__intelligence-actionboard,
+  .result-explorer__intelligence-context {
+    grid-template-columns: 1fr;
+  }
+}
+

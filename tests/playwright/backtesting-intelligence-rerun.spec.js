@@ -85,24 +85,45 @@ function buildCompletedRunPayload() {
         },
         suggestions: [
           {
+            id: 'param-1',
             title: 'Tighten stoploss',
             action_type: 'quick_param',
             auto_applicable: true,
             parameter: 'stoploss',
             suggested_value: -0.08,
+            apply_action: {
+              suggestion_id: 'param-1',
+              action_type: 'quick_param',
+              label: 'Apply',
+              target: { parameter: 'stoploss', value: -0.08 },
+            },
           },
           {
+            id: 'param-2',
             title: 'Enable trailing stop',
             action_type: 'quick_param',
             auto_applicable: true,
             parameter: 'trailing_stop',
             suggested_value: true,
+            apply_action: {
+              suggestion_id: 'param-2',
+              action_type: 'quick_param',
+              label: 'Apply',
+              target: { parameter: 'trailing_stop', value: true },
+            },
           },
           {
+            id: 'fix-1',
             title: 'Manual follow-up',
             action_type: 'manual_guidance',
             auto_applicable: false,
             description: 'Refine entry conditions.',
+            apply_action: {
+              suggestion_id: 'fix-1',
+              action_type: 'manual_guidance',
+              label: 'Apply',
+              ai_apply_payload: { title: 'Manual follow-up' },
+            },
           },
         ],
         rerun_plan: {
@@ -119,6 +140,7 @@ function buildCompletedRunPayload() {
 
 async function installBacktestingMocks(page, { strategyParamsDelayMs = 0, dataCoverageDelayMs = 0, includeActiveRun = false } = {}) {
   const startBacktestBodies = [];
+  const applySuggestionBodies = [];
   const completedRun = buildCompletedRunPayload();
 
   await page.route('**/*', async (route) => {
@@ -234,6 +256,64 @@ async function installBacktestingMocks(page, { strategyParamsDelayMs = 0, dataCo
       });
     }
 
+    if (method === 'POST' && pathname === `/runs/${LOADED_RUN_ID}/apply-suggestion`) {
+      const body = request.postDataJSON();
+      applySuggestionBodies.push(body);
+      const suggestionId = body.suggestion_id;
+      if (suggestionId === 'param-1') {
+        return fulfillJson(route, {
+          ok: true,
+          suggestion_id: 'param-1',
+          action_type: 'quick_param',
+          applied_changes: ['stoploss: -0.15 -> -0.08'],
+          diff_summary: { preview: ['-  "stoploss": -0.15', '+  "stoploss": -0.08'] },
+          warnings: [],
+          strategy_name: 'TestStrategy',
+          strategy_params: { stoploss: -0.08, trailing_stop: false },
+          source_changed: false,
+          retest_payload: {
+            strategy: 'TestStrategy',
+            pairs: ['BTC/USDT'],
+            timeframe: '5m',
+            timerange: '20250101-20250131',
+            exchange: 'binance',
+            parent_run_id: LOADED_RUN_ID,
+            improvement_source: 'strategy_intelligence_apply',
+            improvement_items: ['Tighten stoploss'],
+            improvement_applied: ['Tighten stoploss'],
+            improvement_skipped: [],
+            improvement_brief: 'Reduce loss size',
+            strategy_params: { stoploss: -0.08, trailing_stop: false },
+          },
+        });
+      }
+      return fulfillJson(route, {
+        ok: true,
+        suggestion_id: suggestionId,
+        action_type: 'manual_guidance',
+        applied_changes: ['Updated TestStrategy.py from AI guidance.'],
+        diff_summary: { preview: ['-    enter_tag = "base"', '+    enter_tag = "refined"'] },
+        warnings: [],
+        strategy_name: 'TestStrategy',
+        strategy_params: { stoploss: -0.15, trailing_stop: false },
+        source_changed: true,
+        retest_payload: {
+          strategy: 'TestStrategy',
+          pairs: ['BTC/USDT'],
+          timeframe: '5m',
+          timerange: '20250101-20250131',
+          exchange: 'binance',
+          parent_run_id: LOADED_RUN_ID,
+          improvement_source: 'strategy_intelligence_apply',
+          improvement_items: ['Manual follow-up'],
+          improvement_applied: ['Manual follow-up'],
+          improvement_skipped: [],
+          improvement_brief: 'Refine entry conditions.',
+          strategy_params: { stoploss: -0.15, trailing_stop: false },
+        },
+      });
+    }
+
     if (method === 'POST' && pathname === '/run') {
       startBacktestBodies.push(request.postDataJSON());
       return fulfillJson(route, { run_id: RERUN_ID, status: 'running' });
@@ -244,6 +324,7 @@ async function installBacktestingMocks(page, { strategyParamsDelayMs = 0, dataCo
 
   return {
     getStartBacktestBodies: () => startBacktestBodies,
+    getApplySuggestionBodies: () => applySuggestionBodies,
   };
 }
 
@@ -320,6 +401,40 @@ test.describe('Backtesting Strategy Intelligence rerun', () => {
     await expect(panel.locator('[data-intelligence-action-group="quick"] [data-intelligence-action-card="quick"]')).toHaveCount(2);
     await expect(panel.locator('[data-intelligence-action-group="manual"] [data-intelligence-action-card="manual"]')).toHaveCount(1);
   });
+
+
+  test('Per-suggestion Apply shows diff and Retest starts a rerun', async ({ page }) => {
+    const mocks = await installBacktestingMocks(page);
+
+    await page.goto('/#backtesting');
+    await page.click('[data-intelligence-suggestion-apply="param-1"]');
+
+    await expect.poll(() => mocks.getApplySuggestionBodies().length).toBe(1);
+    await expect(page.locator('[data-intelligence-suggestion-retest="param-1"]')).toBeVisible();
+    await expect(page.locator('.si-action-card__diff').first()).toContainText('stoploss');
+
+    await page.evaluate(() => {
+      document.querySelector('[data-intelligence-suggestion-retest="param-1"]')?.click();
+    });
+    await expect.poll(() => mocks.getStartBacktestBodies().length).toBe(1);
+    const body = mocks.getStartBacktestBodies()[0];
+    expect(body.improvement_source).toBe('strategy_intelligence_apply');
+    expect(body.strategy_params.stoploss).toBe(-0.08);
+  });
+
+  test('Result explorer intelligence tab can apply manual guidance and expose Retest', async ({ page }) => {
+    const mocks = await installBacktestingMocks(page);
+
+    await page.goto('/#backtesting');
+    await page.click('[data-intelligence-action="explore"]');
+    await page.click('[data-tab="intelligence"]');
+    await page.click('#result-explorer-modal [data-intelligence-suggestion-apply="fix-1"]');
+
+    await expect.poll(() => mocks.getApplySuggestionBodies().length).toBe(1);
+    await expect(page.locator('#result-explorer-modal [data-intelligence-suggestion-retest="fix-1"]')).toBeVisible();
+    await expect(page.locator('#result-explorer-modal .si-action-card__diff').first()).toContainText('refined');
+  });
+
 
   test('Result explorer intelligence tab uses guided summary layout', async ({ page }) => {
     await installBacktestingMocks(page);
