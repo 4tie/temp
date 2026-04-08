@@ -1,2 +1,0 @@
-[32mINFO[0m:     Will watch for changes in these directories: ['/home/runner/workspace/app', '/home/runner/workspace/static', '/home/runner/workspace/templates']
-[31mERROR[0m:    [Errno 98] Address already in use
