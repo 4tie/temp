@@ -797,6 +797,14 @@
   margin-top: var(--space-3);
 }
 
+.result-explorer__section .si-hero {
+  margin-top: var(--space-2);
+}
+
+.result-explorer__section .si-action-group + .si-action-group {
+  margin-top: var(--space-3);
+}
+
 .result-explorer__insight-card {
   padding: var(--space-3);
   border: 1px solid var(--border-subtle);
@@ -988,4 +996,21 @@
   .results-table td {
     padding-inline: var(--space-3);
   }
+}
+
+/* Minimal SaaS overrides */
+.results-header {
+  align-items: end;
+}
+
+.results-table-card,
+.result-explorer__hero,
+.result-explorer__chart-card,
+.result-explorer__insight-card,
+.result-explorer__table-wrap {
+  box-shadow: var(--shadow-sm);
+}
+
+.results-table__id-text {
+  background: var(--surface-2);
 }

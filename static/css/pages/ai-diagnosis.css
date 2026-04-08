@@ -265,3 +265,12 @@
     linear-gradient(180deg, color-mix(in srgb, var(--text-primary) 1.5%, transparent), transparent 100%),
     color-mix(in srgb, var(--surface-2) 92%, transparent);
 }
+
+/* Minimal SaaS overrides */
+.ai-diagnosis-workbench {
+  gap: 18px;
+}
+
+.ai-diagnosis-stage__mount {
+  box-shadow: var(--shadow-md);
+}

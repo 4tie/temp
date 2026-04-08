@@ -1,122 +1,131 @@
 /* =================================================================
-   THEME — app-wide color preset management
+   THEME - app-wide theme mode + accent management
    Exposes: window.ThemeManager
    ================================================================= */
 
 window.ThemeManager = (() => {
-  const STORAGE_KEY = '4tie_theme_preset';
-  const DEFAULT_PRESET = 'ocean';
-  const PRESETS = [
-    {
-      id: 'ocean',
-      name: 'Ocean',
-      description: 'Teal and cyan',
-      swatches: ['#2ab7c7', '#77d7de', '#22c55e'],
-      background: '#07131b',
-    },
-    {
-      id: 'ember',
-      name: 'Ember',
-      description: 'Amber and coral',
-      swatches: ['#f97316', '#fb923c', '#facc15'],
-      background: '#190c05',
-    },
-    {
-      id: 'aurora',
-      name: 'Aurora',
-      description: 'Green and mint',
-      swatches: ['#22c55e', '#4ade80', '#14b8a6'],
-      background: '#09120a',
-    },
-    {
-      id: 'cobalt',
-      name: 'Cobalt',
-      description: 'Blue and ice',
-      swatches: ['#3b82f6', '#60a5fa', '#22d3ee'],
-      background: '#081124',
-    },
-    {
-      id: 'ruby',
-      name: 'Ruby',
-      description: 'Rose and magenta',
-      swatches: ['#e11d48', '#fb7185', '#f472b6'],
-      background: '#22060d',
-    },
-    {
-      id: 'amethyst',
-      name: 'Amethyst',
-      description: 'Purple and lavender',
-      swatches: ['#8b5cf6', '#a78bfa', '#c084fc'],
-      background: '#120e26',
-    },
-    {
-      id: 'sunset',
-      name: 'Sunset',
-      description: 'Orange and peach',
-      swatches: ['#ea580c', '#fb923c', '#fdba74'],
-      background: '#25130b',
-    },
-    {
-      id: 'forest',
-      name: 'Forest',
-      description: 'Deep green and moss',
-      swatches: ['#166534', '#16a34a', '#84cc16'],
-      background: '#08160d',
-    },
-    {
-      id: 'sakura',
-      name: 'Sakura',
-      description: 'Pink and cherry blossom',
-      swatches: ['#db2777', '#f472b6', '#fb7185'],
-      background: '#241023',
-    },
-    {
-      id: 'midnight',
-      name: 'Midnight',
-      description: 'Dark blue and slate',
-      swatches: ['#475569', '#64748b', '#334155'],
-      background: '#031024',
-    },
+  const MODE_KEY = '4tie_theme_mode';
+  const ACCENT_KEY = '4tie_theme_accent';
+  const LEGACY_PRESET_KEY = '4tie_theme_preset';
+  const DEFAULT_MODE = 'dark';
+  const DEFAULT_ACCENT = 'indigo';
+
+  const MODES = [
+    { id: 'dark', name: 'Dark', description: 'Low-glare workspace with high contrast surfaces.' },
+    { id: 'light', name: 'Light', description: 'Bright product UI with softer chrome and cleaner content framing.' },
   ];
 
-  function getPresets() {
-    return PRESETS.slice();
+  const ACCENTS = [
+    { id: 'indigo', name: 'Indigo', description: 'Default product blue.', swatches: ['#4f46e5', '#818cf8', '#0f172a'] },
+    { id: 'teal', name: 'Teal', description: 'Cool productivity accent.', swatches: ['#0f766e', '#14b8a6', '#0f172a'] },
+    { id: 'rose', name: 'Rose', description: 'Warmer contrast accent.', swatches: ['#e11d48', '#fb7185', '#111827'] },
+    { id: 'amber', name: 'Amber', description: 'Brighter editorial accent.', swatches: ['#d97706', '#f59e0b', '#111827'] },
+    { id: 'emerald', name: 'Emerald', description: 'Balanced green accent.', swatches: ['#059669', '#34d399', '#0f172a'] },
+    { id: 'slate', name: 'Slate', description: 'Muted neutral accent.', swatches: ['#475569', '#94a3b8', '#0f172a'] },
+  ];
+
+  const LEGACY_PRESET_MAP = {
+    ocean: { mode: 'dark', accent: 'teal' },
+    ember: { mode: 'dark', accent: 'amber' },
+    aurora: { mode: 'dark', accent: 'emerald' },
+    cobalt: { mode: 'dark', accent: 'indigo' },
+    ruby: { mode: 'dark', accent: 'rose' },
+    amethyst: { mode: 'dark', accent: 'indigo' },
+    sunset: { mode: 'light', accent: 'amber' },
+    forest: { mode: 'dark', accent: 'emerald' },
+    sakura: { mode: 'light', accent: 'rose' },
+    midnight: { mode: 'dark', accent: 'slate' },
+  };
+
+  function _isValidMode(mode) {
+    return MODES.some(item => item.id === mode);
   }
 
-  function isValidPreset(presetId) {
-    return PRESETS.some(preset => preset.id === presetId);
+  function _isValidAccent(accent) {
+    return ACCENTS.some(item => item.id === accent);
   }
 
-  function getStoredPreset() {
+  function _readLegacyPreset() {
     try {
-      const value = localStorage.getItem(STORAGE_KEY) || '';
-      return isValidPreset(value) ? value : DEFAULT_PRESET;
+      return localStorage.getItem(LEGACY_PRESET_KEY) || '';
     } catch {
-      return DEFAULT_PRESET;
+      return '';
     }
   }
 
-  function applyPreset(presetId, options = {}) {
-    const nextPreset = isValidPreset(presetId) ? presetId : DEFAULT_PRESET;
-    document.documentElement.setAttribute('data-theme-preset', nextPreset);
-    if (options.persist !== false) {
+  function _getLegacyDefaults() {
+    return LEGACY_PRESET_MAP[_readLegacyPreset()] || {};
+  }
+
+  function getStoredMode() {
+    const legacy = _getLegacyDefaults();
+    try {
+      const value = localStorage.getItem(MODE_KEY) || '';
+      return _isValidMode(value) ? value : (legacy.mode || DEFAULT_MODE);
+    } catch {
+      return legacy.mode || DEFAULT_MODE;
+    }
+  }
+
+  function getStoredAccent() {
+    const legacy = _getLegacyDefaults();
+    try {
+      const value = localStorage.getItem(ACCENT_KEY) || '';
+      return _isValidAccent(value) ? value : (legacy.accent || DEFAULT_ACCENT);
+    } catch {
+      return legacy.accent || DEFAULT_ACCENT;
+    }
+  }
+
+  function applyTheme({ mode, accent, persist = true } = {}) {
+    const nextMode = _isValidMode(mode) ? mode : getStoredMode();
+    const nextAccent = _isValidAccent(accent) ? accent : getStoredAccent();
+    document.documentElement.setAttribute('data-theme', nextMode);
+    document.documentElement.setAttribute('data-theme-accent', nextAccent);
+    const themePill = document.getElementById('statusbar-theme-pill');
+    if (themePill) {
+      themePill.textContent = `${nextMode} / ${nextAccent}`;
+      themePill.setAttribute('data-theme-mode', nextMode);
+    }
+    if (persist) {
       try {
-        localStorage.setItem(STORAGE_KEY, nextPreset);
+        localStorage.setItem(MODE_KEY, nextMode);
+        localStorage.setItem(ACCENT_KEY, nextAccent);
       } catch {}
     }
-    return nextPreset;
+    return { mode: nextMode, accent: nextAccent };
+  }
+
+  function applyMode(mode, options = {}) {
+    return applyTheme({ mode, accent: options.accent, persist: options.persist !== false });
+  }
+
+  function applyAccent(accent, options = {}) {
+    return applyTheme({ mode: options.mode, accent, persist: options.persist !== false });
   }
 
   function init() {
-    applyPreset(getStoredPreset(), { persist: false });
+    applyTheme({ persist: false });
   }
 
   return {
-    DEFAULT_PRESET,
-    STORAGE_KEY,
-    getPresets,
-    getStoredPreset,
-    applyPreset,
+    MODE_KEY,
+    ACCENT_KEY,
+    LEGACY_PRESET_KEY,
+    DEFAULT_MODE,
+    DEFAULT_ACCENT,
+    getModes: () => MODES.slice(),
+    getAccents: () => ACCENTS.slice(),
+    getStoredMode,
+    getStoredAccent,
+    applyTheme,
+    applyMode,
+    applyAccent,
     init,
+
+    // Compatibility aliases while the frontend transitions away from preset-first calls.
+    getPresets: () => ACCENTS.slice(),
+    getStoredPreset: getStoredAccent,
+    applyPreset: (accent, options = {}) => applyAccent(accent, options),
   };
 })();

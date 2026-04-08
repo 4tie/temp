@@ -9,6 +9,13 @@ from app.ai.models.ollama_client import is_available, list_models as oll_list_mo
 logger = logging.getLogger(__name__)
 
 
+def _safe_log_text(value: object) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return "unknown error"
+    return text.encode("ascii", "backslashreplace").decode("ascii")
+
+
 async def get_providers_payload() -> dict[str, Any]:
     openrouter_available = has_api_keys()
     openrouter_models = []
@@ -17,7 +24,7 @@ async def get_providers_payload() -> dict[str, Any]:
             raw = await or_list_models()
             openrouter_models = [{"id": model["id"], "name": model.get("name", model["id"])} for model in raw[:50]]
         except Exception as exc:
-            logger.warning("OpenRouter model list failed: %s", exc)
+            logger.warning("OpenRouter provider payload model list failed: %s", _safe_log_text(exc))
 
     ollama_available = await is_available()
     ollama_models = []

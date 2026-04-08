@@ -17,6 +17,7 @@ _BASE_URL = "https://openrouter.ai/api/v1"
 _MODELS_CACHE: list[dict] = []
 _MODELS_CACHE_TS: float = 0.0
 _MODELS_CACHE_TTL = 300
+_LAST_MODELS_WARNING: tuple[str, float] = ("", 0.0)
 
 _DEFAULT_HTTP_REFERER = os.environ.get("OPENROUTER_HTTP_REFERER", "https://4tie.local").strip() or "https://4tie.local"
 _DEFAULT_APP_TITLE = os.environ.get("OPENROUTER_APP_TITLE", "4tie").strip() or "4tie"
@@ -51,13 +52,53 @@ def validate_free_model(model: str) -> None:
         )
 
 
-def _headers_for(api_key: str) -> dict:
-    return {
+def _headers_for(api_key: str, *, include_metadata: bool = True) -> dict:
+    headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
-        "HTTP-Referer": _DEFAULT_HTTP_REFERER,
-        "X-Title": _DEFAULT_APP_TITLE,
     }
+    if include_metadata:
+        referer = _ascii_header_value(_DEFAULT_HTTP_REFERER, "https://4tie.local")
+        title = _ascii_header_value(_DEFAULT_APP_TITLE, "4tie")
+        headers["HTTP-Referer"] = referer
+        headers["X-Title"] = title
+    return headers
+
+
+def _safe_log_text(value: object) -> str:
+    if isinstance(value, UnicodeEncodeError):
+        return "request encoding failed; retry with ASCII-safe OpenRouter headers"
+    text = str(value or "").strip()
+    if not text:
+        return "unknown error"
+    return text.encode("ascii", "backslashreplace").decode("ascii")
+
+
+def _ascii_header_value(value: object, fallback: str) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return fallback
+    try:
+        text.encode("ascii")
+        return text
+    except UnicodeEncodeError:
+        normalized = text.encode("ascii", "ignore").decode("ascii").strip()
+        return normalized or fallback
+
+
+def _warn_models_issue(message: str, detail: object, *, dedupe_window: float = 60.0) -> None:
+    global _LAST_MODELS_WARNING
+    if isinstance(detail, UnicodeEncodeError):
+        logger.debug("%s: %s", message, _safe_log_text(detail))
+        return
+    safe_detail = _safe_log_text(detail)
+    now = time.monotonic()
+    signature = f"{message}|{safe_detail}"
+    last_signature, last_ts = _LAST_MODELS_WARNING
+    if signature == last_signature and (now - last_ts) < dedupe_window:
+        return
+    _LAST_MODELS_WARNING = (signature, now)
+    logger.warning("%s: %s", message, safe_detail)
 
 
 def _extract_error_detail(resp: httpx.Response | None) -> str:
@@ -106,7 +147,10 @@ async def list_models() -> list[dict]:
         async with httpx.AsyncClient(timeout=10) as client:
             for key in keys:
                 try:
-                    resp = await client.get(f"{_BASE_URL}/models", headers=_headers_for(key))
+                    try:
+                        resp = await client.get(f"{_BASE_URL}/models", headers=_headers_for(key))
+                    except UnicodeEncodeError:
+                        resp = await client.get(f"{_BASE_URL}/models", headers=_headers_for(key, include_metadata=False))
                     resp.raise_for_status()
                     data = resp.json().get("data", [])
                     free = [
@@ -120,18 +164,18 @@ async def list_models() -> list[dict]:
                 except httpx.HTTPStatusError as exc:
                     status = exc.response.status_code if exc.response is not None else None
                     if status in (401, 403):
-                        logger.warning("OpenRouter model list auth failed for one key: %s", exc)
+                        _warn_models_issue("OpenRouter model list auth failed for one key", exc)
                         continue
                     if status == 429:
-                        logger.warning("OpenRouter model list rate-limited for one key: %s", exc)
+                        _warn_models_issue("OpenRouter model list rate-limited for one key", exc)
                         continue
-                    logger.warning("OpenRouter model list failed for one key: %s", exc)
+                    _warn_models_issue("OpenRouter model list failed for one key", exc)
                     continue
             _MODELS_CACHE = []
             _MODELS_CACHE_TS = 0.0
             return []
     except Exception as exc:
-        logger.warning("OpenRouter model list failed: %s", exc)
+        _warn_models_issue("OpenRouter model list failed", exc)
         return _MODELS_CACHE or []
 
 

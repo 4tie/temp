@@ -149,6 +149,23 @@ test.describe('Layout and shell integrity', () => {
     expect(sidebarBox.width).toBeLessThanOrEqual(64);
   });
 
+  test('legacy preset migrates into the mode-based theme contract', async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('4tie_theme_preset', 'sunset');
+      localStorage.removeItem('4tie_theme_mode');
+      localStorage.removeItem('4tie_theme_accent');
+    });
+
+    await gotoPage(page, 'dashboard', '#dash-stats');
+
+    const themeState = await page.evaluate(() => ({
+      mode: document.documentElement.getAttribute('data-theme'),
+      accent: document.documentElement.getAttribute('data-theme-accent'),
+    }));
+
+    expect(themeState).toEqual({ mode: 'light', accent: 'amber' });
+  });
+
   test('AI Diagnosis stays usable at compact desktop widths', async ({ page }) => {
     await page.setViewportSize({ width: 1100, height: 860 });
     await gotoPage(page, 'ai-diagnosis', '#ai-layout');

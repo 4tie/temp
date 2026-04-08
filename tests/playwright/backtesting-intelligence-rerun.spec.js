@@ -65,6 +65,14 @@ function buildCompletedRunPayload() {
             explanation: 'Entries are poorly timed.',
             severity: 'critical',
             evidence: 'Win rate is below breakeven threshold.',
+            confidence: 'high',
+            confidence_note: 'Based on 40 trade(s) — high statistical confidence',
+            metric_snapshot: {
+              total_trades: 40,
+              win_rate_pct: 42.5,
+              profit_factor: 0.92,
+              total_profit_pct: -8,
+            },
           },
           issues: [
             {
@@ -306,6 +314,26 @@ test.describe('Backtesting Strategy Intelligence rerun', () => {
     await expect(chips).toHaveCount(2);
     await expect(chips.nth(0)).toHaveText('2 quick actions');
     await expect(chips.nth(1)).toHaveText('1 manual item');
+    await expect(panel.locator('[data-intelligence-primary]')).toBeVisible();
+    await expect(panel.locator('[data-intelligence-stats] [data-intelligence-stat]')).toHaveCount(4);
+    await expect(panel.locator('[data-intelligence-confidence-note]')).toContainText('high statistical confidence');
+    await expect(panel.locator('[data-intelligence-action-group="quick"] [data-intelligence-action-card="quick"]')).toHaveCount(2);
+    await expect(panel.locator('[data-intelligence-action-group="manual"] [data-intelligence-action-card="manual"]')).toHaveCount(1);
+  });
+
+  test('Result explorer intelligence tab uses guided summary layout', async ({ page }) => {
+    await installBacktestingMocks(page);
+
+    await page.goto('/#backtesting');
+    await page.click('[data-intelligence-action="explore"]');
+    await page.click('[data-tab="intelligence"]');
+
+    const modal = page.locator('#result-explorer-modal');
+    await expect(modal.locator('[data-intelligence-primary]')).toBeVisible();
+    await expect(modal.locator('[data-intelligence-stats] [data-intelligence-stat]')).toHaveCount(4);
+    await expect(modal.locator('[data-intelligence-confidence-note]')).toContainText('high statistical confidence');
+    await expect(modal.locator('[data-intelligence-action-group="quick"] [data-intelligence-action-card="quick"]')).toHaveCount(2);
+    await expect(modal.locator('[data-intelligence-action-group="manual"] [data-intelligence-action-card="manual"]')).toHaveCount(1);
   });
 
   test('Improve & Run still prepares review when quick params are still loading', async ({ page }) => {

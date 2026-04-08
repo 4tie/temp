@@ -277,6 +277,10 @@
   min-width: 0;
 }
 
+.bt-intelligence__panel:first-child {
+  grid-column: 1 / -1;
+}
+
 .bt-intelligence__panel--comparison {
   grid-column: 1 / -1;
 }
@@ -341,6 +345,10 @@
   font-size: var(--text-md);
   font-weight: var(--font-semibold);
   color: var(--text-primary);
+}
+
+.bt-intelligence [data-intelligence-primary] {
+  min-width: 0;
 }
 
 [data-intelligence-action="rerun"][data-state="preparing"],
@@ -709,4 +717,24 @@
   .page-view[data-view="backtesting"] .split-layout {
     grid-template-columns: 1fr;
   }
+}
+
+/* Minimal SaaS overrides */
+.page-view[data-view="backtesting"] .split-layout {
+  gap: 18px;
+}
+
+.bt-config-card,
+#bt-status-card,
+#bt-results-card,
+#bt-quick-params-card {
+  box-shadow: var(--shadow-sm);
+}
+
+.bt-summary-card,
+.quick-params__field,
+.bt-intelligence__item,
+.bt-intelligence__compare-item,
+.bt-results-tech {
+  background: var(--surface-2);
 }

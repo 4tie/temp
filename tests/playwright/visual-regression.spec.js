@@ -227,4 +227,14 @@ test.describe('Visual regression', () => {
     await gotoPage(page, 'jobs', '#jobs-table-wrap');
     await expect(page.locator('[data-app-shell]')).toHaveScreenshot('jobs-mobile.png', screenshotOptions(page));
   });
+
+  test('dashboard light theme stays visually stable', async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('4tie_theme_mode', 'light');
+      localStorage.setItem('4tie_theme_accent', 'indigo');
+    });
+    await page.setViewportSize({ width: 1440, height: 980 });
+    await gotoPage(page, 'dashboard', '#dash-stats');
+    await expect(page.locator('[data-app-shell]')).toHaveScreenshot('dashboard-light-desktop.png', screenshotOptions(page));
+  });
 });

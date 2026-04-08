@@ -51,3 +51,21 @@
     min-height: 280px;
   }
 }
+
+/* Minimal SaaS overrides */
+.dashboard-hero .stat-card {
+  min-height: 148px;
+  justify-content: space-between;
+}
+
+.dashboard-grid {
+  gap: 18px;
+}
+
+.dashboard-panel {
+  min-height: 390px;
+}
+
+.dashboard-panel .card__meta {
+  padding-top: 14px;
+}

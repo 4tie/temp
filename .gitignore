@@ -37,6 +37,7 @@ Thumbs.db
 node_modules/
 playwright-report/
 test-results/
+output/
 
 # FreqTrade runtime data (large / generated)
 user_data/data/
@@ -47,6 +48,10 @@ user_data/ai_evolution/
 user_data/ai_pipeline_logs/
 user_data/logs/
 user_data/runtime/server.log
+user_data/runtime/app_events.jsonl
+user_data/last_config.json
+user_data/ai_loop_state/sessions.json
+user_data/backtest_results/.last_result.json
 
 # Keep strategy files and config template
 !user_data/strategies/

@@ -3,13 +3,14 @@
    ============================================================ */
 
 .page-view[data-view="hyperopt"] .split-layout {
-  grid-template-columns: minmax(300px, 0.96fr) minmax(360px, 1.1fr);
+  grid-template-columns: minmax(320px, 0.92fr) minmax(0, 1.18fr);
+  gap: 18px;
 }
 
 .hyperopt-page {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
+  display: grid;
+  gap: 18px;
+  min-height: 0;
 }
 
 .hyperopt-layout {
@@ -17,41 +18,35 @@
 }
 
 .hyperopt-card {
-  border: 0;
-  box-shadow: none;
-  background: transparent;
-  border-top: 1px solid var(--border-subtle);
-  border-radius: 0;
+  min-width: 0;
+  min-height: 0;
+  box-shadow: var(--shadow-sm);
+}
+
+.hyperopt-card .card__meta {
+  padding-top: 14px;
 }
 
 .hyperopt-card .card__header {
-  min-height: 46px;
-  border-bottom: 1px solid var(--border-subtle);
-  padding-inline: 0;
-  background: transparent;
+  align-items: baseline;
 }
 
 .hyperopt-card .card__body {
   overflow: visible;
-  padding-inline: 0;
-  background: transparent;
 }
 
 .hyperopt-pairs-hint {
-  margin-top: 4px;
+  margin-top: 6px;
   font-size: var(--text-xs);
 }
 
-.hyperopt-download-panel {
-  margin-top: var(--space-3);
-}
-
+.hyperopt-download-panel,
 .hyperopt-download-log-wrap {
   margin-top: var(--space-3);
 }
 
 .hyperopt-download-logs {
-  max-height: 160px;
+  max-height: 180px;
 }
 
 .page-view[data-view="hyperopt"] .split-layout__output {
@@ -62,19 +57,16 @@
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-gutter: stable;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border) transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
 }
 
 #ho-status-card .card__body,
 #ho-results-card .card__body,
 .hyperopt-card--history .card__body {
-  max-height: 400px;
+  max-height: 420px;
   overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border) transparent;
 }
 
 .hyperopt-progress {
@@ -84,23 +76,24 @@
 .hyperopt-progress .progress-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
+  gap: 10px;
   color: var(--text-muted);
   font-size: var(--text-xs);
 }
 
 .hyperopt-logs {
-  max-height: 280px;
+  max-height: 320px;
 }
 
 .hyperopt-results-overview {
   margin-bottom: var(--space-4);
 }
 
-.hyperopt-card--results .metric-item {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.016), transparent 72%),
-    var(--surface-2);
+.hyperopt-card--results .metric-item,
+.hyperopt-card--history .data-table,
+.hyperopt-card--form .pairs-picker,
+.hyperopt-card--form .cmd-block {
+  background: var(--surface-2);
 }
 
 .hyperopt-card--results .data-table {
@@ -127,15 +120,6 @@
 }
 
 @media (max-width: 1080px) {
-  .page-view[data-view="hyperopt"] .split-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .page-view[data-view="hyperopt"] .split-layout__output {
-    max-height: none;
-    overflow: visible;
-  }
-
   #ho-status-card .card__body,
   #ho-results-card .card__body,
   .hyperopt-card--history .card__body {
@@ -144,14 +128,6 @@
 }
 
 @media (max-width: 720px) {
-  .hyperopt-card .card__header {
-    padding-inline: var(--space-3);
-  }
-
-  .hyperopt-card .card__body {
-    padding-inline: var(--space-3);
-  }
-
   .hyperopt-progress .progress-meta {
     flex-direction: column;
     align-items: flex-start;
@@ -161,17 +137,4 @@
   .hyperopt-card--results .data-table {
     min-width: 100%;
   }
-
-  .hyperopt-layout {
-    gap: var(--space-4);
-  }
-}
-
-/* Compact-pro refresh overrides */
-.hyperopt-card {
-  border-radius: var(--radius-lg);
-}
-
-.hyperopt-card .card__header {
-  min-height: 50px;
 }

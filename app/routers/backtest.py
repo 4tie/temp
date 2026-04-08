@@ -8,7 +8,7 @@ from pathlib import Path as SysPath
 
 from fastapi import APIRouter, HTTPException, Path, Query
 
-from app.schemas.backtest import BacktestRequest, DownloadDataRequest, DataCoverageRequest, ConfigPatchRequest
+from app.schemas.backtest import BacktestRequest, DownloadDataRequest, DataCoverageRequest, ConfigPatchRequest, ApplyStrategySuggestionRequest
 from app.services.runner import start_backtest, start_download
 from app.services.execution_context_service import (
     build_timerange_context,
@@ -247,6 +247,15 @@ async def get_run_raw(run_id: str):
     }
 
 
+
+@router.post("/runs/{run_id}/apply-suggestion")
+async def apply_strategy_suggestion(run_id: str, req: ApplyStrategySuggestionRequest):
+    _checked_id(run_id)
+    return await apply_strategy_intelligence_suggestion(
+        run_id=run_id,
+        suggestion_id=req.suggestion_id,
+        provider=req.provider,
+    )
 @router.post("/runs/{run_id}/apply-config")
 async def apply_run_config(run_id: str):
     _checked_id(run_id)
@@ -492,3 +501,4 @@ async def get_indicators(
         raise HTTPException(status_code=400, detail="Too many indicators")
     result = calculate_indicators(pair, timeframe, exchange, indicator_list, timerange)
     return result
+

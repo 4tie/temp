@@ -636,6 +636,42 @@ window.ResultExplorer = (() => {
     return parts.join(' · ');
   }
 
+  function _intelligenceComparisonRows(comparison) {
+    return window.StrategyIntelligenceUI?.comparisonRows?.(comparison) || [];
+  }
+
+  function _intelligenceSuggestionGroups(intelligence) {
+    return window.StrategyIntelligenceUI?.suggestionGroups?.(intelligence) || { quickParams: [], manualGuidance: [] };
+  }
+
+  function _visibleIntelligenceIssues(diagnosis) {
+    return window.StrategyIntelligenceUI?.visibleIssues?.(diagnosis) || [];
+  }
+
+  function _metricSnapshotText(snapshot) {
+    return window.StrategyIntelligenceUI?.metricSnapshotText?.(snapshot) || '';
+  }
+
+  function _intelligenceStatPill(item) {
+    return `
+      <div class="si-stat-pill" data-intelligence-stat="${_esc(item.label || '')}">
+        <span class="si-stat-pill__label">${_esc(item.label || '')}</span>
+        <span class="si-stat-pill__value text-${_esc(item.tone || 'muted')}">${_esc(item.value || '—')}</span>
+      </div>
+    `;
+  }
+
+  function _intelligenceActionCard(card, kind) {
+    return `
+      <article class="si-action-card si-action-card--${_esc(kind)}" data-intelligence-action-card="${_esc(kind)}">
+        <div class="si-action-card__title">${_esc(card.title || 'Suggestion')}</div>
+        <div class="si-action-card__body">${_esc(card.description || '')}</div>
+        ${card.meta ? `<div class="si-action-card__meta">${_esc(card.meta)}</div>` : ''}
+        ${card.evidence ? `<div class="si-action-card__evidence">${_esc(card.evidence)}</div>` : ''}
+      </article>
+    `;
+  }
+
   function _renderIntelligenceTab(detail) {
     const results = detail.results || {};
     const intelligence = results.strategy_intelligence || {};
@@ -718,6 +754,125 @@ window.ResultExplorer = (() => {
             </article>
           `).join('') : '<div class="empty-state">No manual follow-up guidance was generated for this run.</div>'}
         </div>
+      </div>
+      ${comparisonRows.length ? `
+        <div class="result-explorer__section">
+          <div class="section-heading">Compared To Parent Run</div>
+          <div class="detail-grid">
+            ${comparisonRows.map((row) => _detailItem(
+              row.label,
+              row.diff == null
+                ? '—'
+                : (row.format === 'currency'
+                  ? FMT.currency(row.diff)
+                  : row.format === 'integer'
+                    ? `${row.diff > 0 ? '+' : ''}${FMT.integer(row.diff)}`
+                    : row.format === 'ratio'
+                      ? `${row.diff > 0 ? '+' : ''}${FMT.number(row.diff, 2)}`
+                      : FMT.pct(row.diff, 1, true)),
+              row.diff == null ? '' : (row.higher_is_better === false ? _toneFromNumber(-row.diff) : _toneFromNumber(row.diff))
+            )).join('')}
+          </div>
+        </div>
+      ` : ''}
+      ${(iterationMemory.improvement_applied?.length || iterationMemory.improvement_skipped?.length || iterationMemory.improvement_brief) ? `
+        <div class="result-explorer__section">
+          <div class="section-heading">Last Rerun Intent</div>
+          <div class="result-explorer__stack">
+            ${iterationMemory.improvement_brief ? `
+              <article class="result-explorer__insight-card">
+                <div class="result-explorer__insight-body">${_esc(iterationMemory.improvement_brief)}</div>
+              </article>
+            ` : ''}
+            ${iterationMemory.improvement_applied?.length ? `
+              <article class="result-explorer__insight-card">
+                <div class="result-explorer__insight-title">Applied</div>
+                <div class="result-explorer__insight-body">${_esc(iterationMemory.improvement_applied.join(', '))}</div>
+              </article>
+            ` : ''}
+            ${iterationMemory.improvement_skipped?.length ? `
+              <article class="result-explorer__insight-card">
+                <div class="result-explorer__insight-title">Skipped</div>
+                <div class="result-explorer__insight-body">${_esc(iterationMemory.improvement_skipped.join(', '))}</div>
+              </article>
+            ` : ''}
+          </div>
+        </div>
+      ` : ''}
+    `;
+  }
+
+  function _renderIntelligenceTab(detail) {
+    const results = detail.results || {};
+    const intelligence = results.strategy_intelligence || {};
+    const vm = window.StrategyIntelligenceUI?.build?.(intelligence) || {};
+    const primary = vm.primaryCard || {};
+    const issues = Array.isArray(vm.issueCards) ? vm.issueCards : [];
+    const quickParams = Array.isArray(vm.quickActionCards) ? vm.quickActionCards : [];
+    const manualGuidance = Array.isArray(vm.manualGuidanceCards) ? vm.manualGuidanceCards : [];
+    const summaryChips = Array.isArray(vm.summaryChips) ? vm.summaryChips : [];
+    const primaryStats = Array.isArray(vm.primaryStats) ? vm.primaryStats : [];
+    const comparison = intelligence.comparison_to_parent || {};
+    const iterationMemory = intelligence.iteration_memory || {};
+    const comparisonRows = _intelligenceComparisonRows(comparison);
+
+    if (!issues.length && !quickParams.length && !manualGuidance.length && !primary.title) {
+      return '<div class="empty-state">No strategy intelligence is available for this run yet.</div>';
+    }
+
+    return `
+      <div class="result-explorer__section">
+        <div class="section-heading">Primary Diagnosis</div>
+        <div class="si-hero si-hero--${_severityTone(primary.severity)}" data-intelligence-primary>
+          <div class="si-hero__head">
+            <div>
+              <div class="si-hero__eyebrow">Primary diagnosis</div>
+              <div class="si-hero__title">${_esc(primary.title || '—')}</div>
+            </div>
+            <div class="si-chip-row">
+              ${primary.severity ? `<span class="si-chip si-chip--tone-${_severityTone(primary.severity)}">${_esc(primary.severity)}</span>` : ''}
+              ${primary.confidence ? `<span class="si-chip">Confidence: ${_esc(primary.confidence)}</span>` : ''}
+            </div>
+          </div>
+          <div class="si-hero__body">${_esc(primary.explanation || '—')}</div>
+          <div class="si-hero__evidence" data-intelligence-evidence>${_esc(primary.evidence || 'No metric-backed evidence was captured.')}</div>
+          ${primaryStats.length ? `<div class="si-stat-row" data-intelligence-stats>${primaryStats.map(_intelligenceStatPill).join('')}</div>` : ''}
+          ${primary.confidenceNote ? `<div class="si-hero__confidence" data-intelligence-confidence-note>${_esc(primary.confidenceNote)}</div>` : ''}
+        </div>
+      </div>
+      <div class="result-explorer__section">
+        <div class="section-heading">Detected Issues</div>
+        <div class="result-explorer__stack si-issue-list">
+          ${issues.length ? issues.map((issue) => `
+            <article class="si-issue-card si-issue-card--${_esc(issue.tone || 'muted')}" data-intelligence-issue-card>
+              <div class="si-issue-card__title">${_esc(issue.title || 'Issue')}</div>
+              <div class="si-issue-card__body">${_esc(issue.description || '')}</div>
+              ${issue.evidence ? `<div class="si-issue-card__evidence">${_esc(issue.evidence)}</div>` : ''}
+            </article>
+          `).join('') : '<div class="empty-state">No secondary issues were detected beyond the primary diagnosis.</div>'}
+        </div>
+      </div>
+      <div class="result-explorer__section">
+        <div class="section-heading">Next Moves</div>
+        <div class="result-explorer__meta-chips">
+          ${summaryChips.map((chip) => `<span class="result-explorer__meta-chip">${_esc(chip.label || '')}</span>`).join('')}
+        </div>
+        ${quickParams.length ? `
+          <div class="si-action-group" data-intelligence-action-group="quick">
+            <div class="result-explorer__subheading">Quick Parameter Actions</div>
+            <div class="result-explorer__stack">
+              ${quickParams.map((item) => _intelligenceActionCard(item, 'quick')).join('')}
+            </div>
+          </div>
+        ` : '<div class="empty-state">No direct quick-parameter changes were identified for this run.</div>'}
+        ${manualGuidance.length ? `
+          <div class="si-action-group si-action-group--manual" data-intelligence-action-group="manual">
+            <div class="result-explorer__subheading result-explorer__subheading--spaced">Manual Guidance</div>
+            <div class="result-explorer__stack">
+              ${manualGuidance.map((item) => _intelligenceActionCard(item, 'manual')).join('')}
+            </div>
+          </div>
+        ` : '<div class="empty-state">No manual follow-up guidance was generated for this run.</div>'}
       </div>
       ${comparisonRows.length ? `
         <div class="result-explorer__section">

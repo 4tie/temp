@@ -6,7 +6,10 @@
 window.SettingsPage = (() => {
   let _el = null;
   let _presets = [];
-  let _selectedThemePreset = 'ocean';
+  let _themeModes = [];
+  let _themeAccents = [];
+  let _selectedThemeMode = 'dark';
+  let _selectedThemeAccent = 'indigo';
 
   /* ── Helpers ─────────────────────────────────────────────── */
   function _esc(str) {
@@ -24,8 +27,12 @@ window.SettingsPage = (() => {
     if (el && v != null) el.value = v;
   }
 
-  function _getThemePresets() {
-    return window.ThemeManager?.getPresets?.() || [];
+  function _getThemeModes() {
+    return window.ThemeManager?.getModes?.() || [];
+  }
+
+  function _getThemeAccents() {
+    return window.ThemeManager?.getAccents?.() || [];
   }
 
   function _splitApiKeys(raw) {
@@ -321,14 +328,24 @@ window.SettingsPage = (() => {
             <span class="settings-hint">Saved to browser storage</span>
           </div>
           <div class="card__body">
-            <div class="settings-section-label">Theme Presets</div>
+            <div class="settings-section-label">Theme Mode</div>
             <div class="settings-input-panel">
               <div class="settings-input-panel__toolbar">
-                <span class="settings-api-count">Accent &amp; Surface Colors</span>
+                <span class="settings-api-count">Dark and light are both first-class modes</span>
               </div>
               <div class="settings-input-panel__body">
-                <div id="theme-preset-grid" class="theme-preset-grid"></div>
-                <span class="form-hint">Pick a preset to update the full app theme immediately.</span>
+                <div id="theme-mode-grid" class="theme-mode-grid"></div>
+                <span class="form-hint">Mode updates the full shell, panels, tables, and workspace surfaces immediately.</span>
+              </div>
+            </div>
+            <div class="settings-section-label" style="margin-top:var(--space-4)">Accent</div>
+            <div class="settings-input-panel">
+              <div class="settings-input-panel__toolbar">
+                <span class="settings-api-count">One controlled accent for actions, focus, and state</span>
+              </div>
+              <div class="settings-input-panel__body">
+                <div id="theme-accent-grid" class="theme-preset-grid"></div>
+                <span class="form-hint">Accent changes remain optional and are layered on top of the selected mode.</span>
               </div>
             </div>
           </div>
@@ -392,8 +409,12 @@ window.SettingsPage = (() => {
       _set('s-wallet',     cfg.dry_run_wallet  || 1000);
       _set('s-max-trades', cfg.max_open_trades || 3);
       _set('s-stake',      cfg.stake_amount    || 'unlimited');
-      _selectedThemePreset = window.ThemeManager?.getStoredPreset?.() || 'ocean';
-      _renderThemePresets();
+      _themeModes = _getThemeModes();
+      _themeAccents = _getThemeAccents();
+      _selectedThemeMode = window.ThemeManager?.getStoredMode?.() || 'dark';
+      _selectedThemeAccent = window.ThemeManager?.getStoredAccent?.() || 'indigo';
+      _renderThemeModes();
+      _renderThemeAccents();
 
       _presets = presetsData.presets || {};
       _renderPresets();
@@ -500,36 +521,76 @@ window.SettingsPage = (() => {
     );
   }
 
-  function _renderThemePresets() {
-    const el = DOM.$('#theme-preset-grid', _el);
+  function _renderThemeModes() {
+    const el = DOM.$('#theme-mode-grid', _el);
     if (!el) return;
-    const presets = _getThemePresets();
-    el.innerHTML = presets.map(preset => `
+    const modes = _themeModes.length ? _themeModes : _getThemeModes();
+    el.innerHTML = modes.map(mode => `
       <button
         type="button"
-        class="theme-preset-card ${preset.id === _selectedThemePreset ? 'is-active' : ''}"
-        data-theme-preset="${_esc(preset.id)}"
-        aria-pressed="${preset.id === _selectedThemePreset ? 'true' : 'false'}"
+        class="theme-preset-card theme-preset-card--mode ${mode.id === _selectedThemeMode ? 'is-active' : ''}"
+        data-theme-mode="${_esc(mode.id)}"
+        aria-pressed="${mode.id === _selectedThemeMode ? 'true' : 'false'}"
       >
-        <div class="theme-preset-card__swatches">
-          ${preset.swatches.map(color => `<span class="theme-preset-card__swatch" style="background:${_esc(color)}"></span>`).join('')}
-          ${preset.background ? `<span class="theme-preset-card__background" title="Background color" style="background:${_esc(preset.background)}"></span>` : ''}
+        <div class="theme-preset-card__preview theme-preset-card__preview--${_esc(mode.id)}">
+          <span class="theme-preset-card__preview-top"></span>
+          <span class="theme-preset-card__preview-main"></span>
+          <span class="theme-preset-card__preview-rail"></span>
         </div>
         <div class="theme-preset-card__meta">
           <div>
-            <div class="theme-preset-card__title">${_esc(preset.name)}</div>
-            <div class="theme-preset-card__desc">${_esc(preset.description)}</div>
+            <div class="theme-preset-card__title">${_esc(mode.name)}</div>
+            <div class="theme-preset-card__desc">${_esc(mode.description)}</div>
           </div>
-          ${preset.id === _selectedThemePreset ? '<span class="theme-preset-card__badge">Active</span>' : ''}
+          ${mode.id === _selectedThemeMode ? '<span class="theme-preset-card__badge">Active</span>' : ''}
         </div>
       </button>
     `).join('');
 
-    el.querySelectorAll('[data-theme-preset]').forEach(btn => {
+    el.querySelectorAll('[data-theme-mode]').forEach(btn => {
       DOM.on(btn, 'click', () => {
-        _selectedThemePreset = btn.dataset.themePreset || 'ocean';
-        window.ThemeManager?.applyPreset?.(_selectedThemePreset);
-        _renderThemePresets();
+        _selectedThemeMode = btn.dataset.themeMode || 'dark';
+        window.ThemeManager?.applyTheme?.({
+          mode: _selectedThemeMode,
+          accent: _selectedThemeAccent,
+        });
+        _renderThemeModes();
+      });
+    });
+  }
+
+  function _renderThemeAccents() {
+    const el = DOM.$('#theme-accent-grid', _el);
+    if (!el) return;
+    const accents = _themeAccents.length ? _themeAccents : _getThemeAccents();
+    el.innerHTML = accents.map(accent => `
+      <button
+        type="button"
+        class="theme-preset-card ${accent.id === _selectedThemeAccent ? 'is-active' : ''}"
+        data-theme-accent="${_esc(accent.id)}"
+        aria-pressed="${accent.id === _selectedThemeAccent ? 'true' : 'false'}"
+      >
+        <div class="theme-preset-card__swatches">
+          ${accent.swatches.map(color => `<span class="theme-preset-card__swatch" style="background:${_esc(color)}"></span>`).join('')}
+        </div>
+        <div class="theme-preset-card__meta">
+          <div>
+            <div class="theme-preset-card__title">${_esc(accent.name)}</div>
+            <div class="theme-preset-card__desc">${_esc(accent.description)}</div>
+          </div>
+          ${accent.id === _selectedThemeAccent ? '<span class="theme-preset-card__badge">Active</span>' : ''}
+        </div>
+      </button>
+    `).join('');
+
+    el.querySelectorAll('[data-theme-accent]').forEach(btn => {
+      DOM.on(btn, 'click', () => {
+        _selectedThemeAccent = btn.dataset.themeAccent || 'indigo';
+        window.ThemeManager?.applyTheme?.({
+          mode: _selectedThemeMode,
+          accent: _selectedThemeAccent,
+        });
+        _renderThemeAccents();
       });
     });
   }
@@ -620,8 +681,10 @@ window.SettingsPage = (() => {
       };
       localStorage.setItem('4tie_settings', JSON.stringify(localVals));
 
-      // Apply current theme (already saved by ThemeManager when selected)
-      window.ThemeManager?.applyPreset?.(_selectedThemePreset || 'ocean');
+      window.ThemeManager?.applyTheme?.({
+        mode: _selectedThemeMode || 'dark',
+        accent: _selectedThemeAccent || 'indigo',
+      });
 
       if (status) {
         status.textContent = '✓ All settings saved';

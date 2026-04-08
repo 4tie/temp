@@ -2037,11 +2037,7 @@ window.BacktestPage = (() => {
   }
 
   function _issueTone(severity) {
-    const value = String(severity || '').toLowerCase();
-    if (value === 'critical' || value === 'high') return 'red';
-    if (value === 'warning' || value === 'medium') return 'amber';
-    if (value === 'ok' || value === 'low') return 'green';
-    return 'muted';
+    return window.StrategyIntelligenceUI?.issueTone?.(severity) || 'muted';
   }
 
   function _comparisonDeltaValue(row) {
@@ -2059,36 +2055,15 @@ window.BacktestPage = (() => {
   }
 
   function _intelligenceComparisonRows(comparison) {
-    if (Array.isArray(comparison?.highlights) && comparison.highlights.length) {
-      return comparison.highlights;
-    }
-    if (!comparison?.metrics) return [];
-    return ['profit_percent', 'win_rate', 'profit_factor', 'max_drawdown']
-      .map((key) => comparison.metrics[key])
-      .filter(Boolean);
+    return window.StrategyIntelligenceUI?.comparisonRows?.(comparison) || [];
   }
 
   function _intelligenceSuggestionGroups(intelligence) {
-    const groups = intelligence?.suggestion_groups || {};
-    const suggestions = Array.isArray(intelligence?.suggestions) ? intelligence.suggestions : [];
-    const quickParams = Array.isArray(groups.quick_params)
-      ? groups.quick_params
-      : suggestions.filter((item) => item?.auto_applicable);
-    const manualGuidance = Array.isArray(groups.manual_guidance)
-      ? groups.manual_guidance
-      : suggestions.filter((item) => !item?.auto_applicable);
-    return { quickParams, manualGuidance };
+    return window.StrategyIntelligenceUI?.suggestionGroups?.(intelligence) || { quickParams: [], manualGuidance: [] };
   }
 
   function _intelligenceVisibleIssues(diagnosis) {
-    const primary = diagnosis?.primary || {};
-    const issues = Array.isArray(diagnosis?.issues) ? diagnosis.issues : [];
-    return issues.filter((issue) => {
-      if (!issue) return false;
-      const sameId = primary.id && issue.id && String(issue.id) === String(primary.id);
-      const sameTitle = primary.title && issue.title && String(issue.title) === String(primary.title);
-      return !sameId && !sameTitle;
-    });
+    return window.StrategyIntelligenceUI?.visibleIssues?.(diagnosis) || [];
   }
 
   function _intelligenceMetricSnapshotText(snapshot) {
@@ -2100,6 +2075,30 @@ window.BacktestPage = (() => {
     if (FMT.toNumber(snapshot.total_profit_pct) != null) parts.push(`${FMT.pct(snapshot.total_profit_pct)} return`);
     if (FMT.toNumber(snapshot.max_drawdown_pct) != null) parts.push(`${FMT.pct(snapshot.max_drawdown_pct, 1, false)} max drawdown`);
     return parts.join(' · ');
+  }
+
+  function _intelligenceMetricSnapshotText(snapshot) {
+    return window.StrategyIntelligenceUI?.metricSnapshotText?.(snapshot) || '';
+  }
+
+  function _intelligenceStatPill(item) {
+    return `
+      <div class="si-stat-pill" data-intelligence-stat="${_esc(item.label || '')}">
+        <span class="si-stat-pill__label">${_esc(item.label || '')}</span>
+        <span class="si-stat-pill__value text-${_esc(item.tone || 'muted')}">${_esc(item.value || '—')}</span>
+      </div>
+    `;
+  }
+
+  function _intelligenceActionCard(card, kind) {
+    return `
+      <article class="si-action-card si-action-card--${_esc(kind)}" data-intelligence-action-card="${_esc(kind)}">
+        <div class="si-action-card__title">${_esc(card.title || 'Suggestion')}</div>
+        <div class="si-action-card__body">${_esc(card.description || '')}</div>
+        ${card.meta ? `<div class="si-action-card__meta">${_esc(card.meta)}</div>` : ''}
+        ${card.evidence ? `<div class="si-action-card__evidence">${_esc(card.evidence)}</div>` : ''}
+      </article>
+    `;
   }
 
   function _reviewPayloadSummaryHtml() {
@@ -2274,17 +2273,18 @@ window.BacktestPage = (() => {
 
   function _renderIntelligenceSummary(results) {
     const intelligence = results.strategy_intelligence || {};
-    const diagnosis = intelligence.diagnosis || {};
-    const primary = diagnosis.primary || {};
-    const issues = _intelligenceVisibleIssues(diagnosis);
-    const { quickParams, manualGuidance } = _intelligenceSuggestionGroups(intelligence);
+    const vm = window.StrategyIntelligenceUI?.build?.(intelligence) || {};
+    const primary = vm.primaryCard || {};
+    const issues = Array.isArray(vm.issueCards) ? vm.issueCards : [];
+    const quickParams = Array.isArray(vm.quickActionCards) ? vm.quickActionCards : [];
+    const manualGuidance = Array.isArray(vm.manualGuidanceCards) ? vm.manualGuidanceCards : [];
+    const summaryChips = Array.isArray(vm.summaryChips) ? vm.summaryChips : [];
+    const primaryStats = Array.isArray(vm.primaryStats) ? vm.primaryStats : [];
     const comparison = intelligence.comparison_to_parent || null;
     const iterationMemory = intelligence.iteration_memory || {};
     if (!issues.length && !quickParams.length && !manualGuidance.length && !primary.title) return '';
 
     const comparisonRows = _intelligenceComparisonRows(comparison);
-    const primaryEvidence = primary.evidence || 'No metric-backed evidence was captured.';
-    const primaryMetrics = _intelligenceMetricSnapshotText(primary.metric_snapshot);
 
     return `
       <section class="bt-intelligence">
@@ -2292,10 +2292,9 @@ window.BacktestPage = (() => {
           <div class="bt-intelligence__copy">
             <div class="bt-intelligence__eyebrow">Strategy Intelligence</div>
             <div class="bt-intelligence__title">Diagnosis and next moves</div>
-            <div class="bt-intelligence__subtitle">Review the primary diagnosis, quick-parameter actions, and manual guidance before rerunning.</div>
+            <div class="bt-intelligence__subtitle">Review the diagnosis, evidence, and recommended next moves before rerunning.</div>
             <div class="bt-intelligence__meta">
-              <span class="bt-intelligence__meta-chip">${_esc(`${quickParams.length} quick action${quickParams.length === 1 ? '' : 's'}`)}</span>
-              <span class="bt-intelligence__meta-chip">${_esc(`${manualGuidance.length} manual item${manualGuidance.length === 1 ? '' : 's'}`)}</span>
+              ${summaryChips.map((chip) => `<span class="bt-intelligence__meta-chip">${_esc(chip.label || '')}</span>`).join('')}
             </div>
           </div>
           <div class="bt-intelligence__actions">
@@ -2306,25 +2305,32 @@ window.BacktestPage = (() => {
         <div class="bt-intelligence__grid">
           <article class="bt-intelligence__panel">
             <div class="bt-intelligence__panel-title">Primary Diagnosis</div>
-            <div class="bt-intelligence__list">
-              <div class="bt-intelligence__item bt-intelligence__item--${_issueTone(primary.severity)}">
-                <div class="bt-intelligence__item-title">${_esc(primary.title || 'Run diagnosis')}</div>
-                <div class="bt-intelligence__item-body">${_esc(primary.explanation || 'Review the issues and suggested next moves before rerunning.')}</div>
-                <div class="bt-intelligence__item-evidence">${_esc(primaryEvidence)}</div>
-                ${primaryMetrics ? `<div class="bt-intelligence__item-evidence">${_esc(primaryMetrics)}</div>` : ''}
-                ${primary.confidence_note ? `<div class="bt-intelligence__item-evidence">${_esc(primary.confidence_note)}</div>` : ''}
+            <div class="si-hero si-hero--${_issueTone(primary.severity)}" data-intelligence-primary>
+              <div class="si-hero__head">
+                <div>
+                  <div class="si-hero__eyebrow">Primary diagnosis</div>
+                  <div class="si-hero__title">${_esc(primary.title || 'Run diagnosis')}</div>
+                </div>
+                <div class="si-chip-row">
+                  ${primary.severity ? `<span class="si-chip si-chip--tone-${_issueTone(primary.severity)}">${_esc(primary.severity)}</span>` : ''}
+                  ${primary.confidence ? `<span class="si-chip">Confidence: ${_esc(primary.confidence)}</span>` : ''}
+                </div>
               </div>
+              <div class="si-hero__body">${_esc(primary.explanation || 'Review the issues and suggested next moves before rerunning.')}</div>
+              <div class="si-hero__evidence" data-intelligence-evidence>${_esc(primary.evidence || 'No metric-backed evidence was captured.')}</div>
+              ${primaryStats.length ? `<div class="si-stat-row" data-intelligence-stats>${primaryStats.map(_intelligenceStatPill).join('')}</div>` : ''}
+              ${primary.confidenceNote ? `<div class="si-hero__confidence" data-intelligence-confidence-note>${_esc(primary.confidenceNote)}</div>` : ''}
             </div>
           </article>
           <article class="bt-intelligence__panel">
             <div class="bt-intelligence__panel-title">Detected Issues</div>
-            <div class="bt-intelligence__list">
+            <div class="bt-intelligence__list si-issue-list">
               ${issues.length ? issues.slice(0, 3).map((issue) => `
-                <div class="bt-intelligence__item bt-intelligence__item--${_issueTone(issue.severity)}">
-                  <div class="bt-intelligence__item-title">${_esc(issue.title || 'Issue')}</div>
-                  <div class="bt-intelligence__item-body">${_esc(issue.explanation || issue.evidence || '')}</div>
-                  ${issue.evidence ? `<div class="bt-intelligence__item-evidence">${_esc(issue.evidence)}</div>` : ''}
-                </div>
+                <article class="si-issue-card si-issue-card--${_esc(issue.tone || 'muted')}" data-intelligence-issue-card>
+                  <div class="si-issue-card__title">${_esc(issue.title || 'Issue')}</div>
+                  <div class="si-issue-card__body">${_esc(issue.description || '')}</div>
+                  ${issue.evidence ? `<div class="si-issue-card__evidence">${_esc(issue.evidence)}</div>` : ''}
+                </article>
               `).join('') : ''}
               ${!issues.length ? `<div class="bt-intelligence__item"><div class="bt-intelligence__item-body">No secondary issues were detected beyond the primary diagnosis.</div></div>` : ''}
             </div>
@@ -2332,24 +2338,22 @@ window.BacktestPage = (() => {
           <article class="bt-intelligence__panel">
             <div class="bt-intelligence__panel-title">Next Moves</div>
             <div class="bt-intelligence__list">
-              ${quickParams.length ? `<div class="bt-intelligence__item-title">Quick Parameter Actions</div>` : ''}
-              ${quickParams.slice(0, 3).map((suggestion) => `
-                <div class="bt-intelligence__item">
-                  <div class="bt-intelligence__item-title">${_esc(suggestion.title || 'Suggestion')}</div>
-                  <div class="bt-intelligence__item-body">${_esc(suggestion.description || '')}</div>
-                  <div class="bt-intelligence__item-evidence">${_esc(`Quick Params can apply ${suggestion.parameter} = ${suggestion.suggested_value}`)}</div>
-                  ${suggestion.evidence ? `<div class="bt-intelligence__item-evidence">${_esc(suggestion.evidence)}</div>` : ''}
+              ${quickParams.length ? `
+                <div class="si-action-group" data-intelligence-action-group="quick">
+                  <div class="si-action-group__title">Quick Parameter Actions</div>
+                  <div class="si-action-group__list">
+                    ${quickParams.slice(0, 3).map((suggestion) => _intelligenceActionCard(suggestion, 'quick')).join('')}
+                  </div>
                 </div>
-              `).join('')}
-              ${manualGuidance.length ? `<div class="bt-intelligence__item-title bt-intelligence__item-title--subsection">Manual Guidance</div>` : ''}
-              ${manualGuidance.slice(0, 3).map((suggestion) => `
-                <div class="bt-intelligence__item">
-                  <div class="bt-intelligence__item-title">${_esc(suggestion.title || 'Suggestion')}</div>
-                  <div class="bt-intelligence__item-body">${_esc(suggestion.description || '')}</div>
-                  <div class="bt-intelligence__item-evidence">${_esc('Manual guidance only. No strategy code will be changed automatically.')}</div>
-                  ${suggestion.evidence ? `<div class="bt-intelligence__item-evidence">${_esc(suggestion.evidence)}</div>` : ''}
+              ` : ''}
+              ${manualGuidance.length ? `
+                <div class="si-action-group si-action-group--manual" data-intelligence-action-group="manual">
+                  <div class="si-action-group__title">Manual Guidance</div>
+                  <div class="si-action-group__list">
+                    ${manualGuidance.slice(0, 3).map((suggestion) => _intelligenceActionCard(suggestion, 'manual')).join('')}
+                  </div>
                 </div>
-              `).join('')}
+              ` : ''}
               ${!quickParams.length && !manualGuidance.length ? `<div class="bt-intelligence__item"><div class="bt-intelligence__item-body">No suggested follow-up actions were generated for this run.</div></div>` : ''}
             </div>
           </article>

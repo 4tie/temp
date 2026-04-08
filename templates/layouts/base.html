@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="dark" data-theme-accent="indigo">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,10 +8,27 @@
   <script>
     (() => {
       try {
-        const preset = localStorage.getItem('4tie_theme_preset') || 'ocean';
-        document.documentElement.setAttribute('data-theme-preset', preset);
+        const legacyPreset = localStorage.getItem('4tie_theme_preset') || '';
+        const presetMap = {
+          ocean:   { mode: 'dark', accent: 'teal' },
+          ember:   { mode: 'dark', accent: 'amber' },
+          aurora:  { mode: 'dark', accent: 'emerald' },
+          cobalt:  { mode: 'dark', accent: 'indigo' },
+          ruby:    { mode: 'dark', accent: 'rose' },
+          amethyst:{ mode: 'dark', accent: 'indigo' },
+          sunset:  { mode: 'light', accent: 'amber' },
+          forest:  { mode: 'dark', accent: 'emerald' },
+          sakura:  { mode: 'light', accent: 'rose' },
+          midnight:{ mode: 'dark', accent: 'slate' },
+        };
+        const migrated = presetMap[legacyPreset] || { mode: 'dark', accent: 'indigo' };
+        const mode = localStorage.getItem('4tie_theme_mode') || migrated.mode;
+        const accent = localStorage.getItem('4tie_theme_accent') || migrated.accent;
+        document.documentElement.setAttribute('data-theme', mode);
+        document.documentElement.setAttribute('data-theme-accent', accent);
       } catch {
-        document.documentElement.setAttribute('data-theme-preset', 'ocean');
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.documentElement.setAttribute('data-theme-accent', 'indigo');
       }
     })();
   </script>
@@ -20,9 +37,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-  <!-- Manrope + JetBrains Mono -->
+  <!-- Plus Jakarta Sans + JetBrains Mono -->
   <link
-    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
     rel="stylesheet"
   >
 
@@ -120,6 +137,7 @@
 <!-- Utilities -->
 <script src="/static/js/utils/format.js" defer></script>
 <script src="/static/js/utils/state.js" defer></script>
+<script src="/static/js/utils/strategy-intelligence.js" defer></script>
 
 <!-- Core -->
 <script src="/static/js/core/dom.js" defer></script>

@@ -89,6 +89,11 @@ class ApplyParamsRequest(BaseModel):
     spaces: Optional[list[str]] = None
 
 
+class ApplyStrategySuggestionRequest(BaseModel):
+    suggestion_id: str
+    provider: str = "openrouter"
+
+
 class DataCoverageRequest(BaseModel):
     pairs: list[str]
     timeframe: str = "5m"

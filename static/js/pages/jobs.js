@@ -23,18 +23,18 @@ window.JobsPage = (() => {
 
   function _render() {
     DOM.setHTML(_el, `
-      <div class="jobs-page" id="jobs-page">
+      <div class="jobs-page page-frame page-frame--compact" id="jobs-page">
         <div class="page-header">
           <h1 class="page-header__title">Jobs</h1>
-          <p class="page-header__subtitle">All active jobs plus a unified activity log for background events.</p>
+          <p class="page-header__subtitle">Monitor backtests, hyperopts, and background system activity from one operations surface.</p>
           <div class="page-header__meta" id="jobs-meta">Waiting for job data…</div>
         </div>
-        <div class="jobs-toolbar">
+        <div class="jobs-hero">
           <div class="jobs-summary" id="jobs-summary">
             <div class="empty-state">Loading…</div>
           </div>
-          <div class="toolbar jobs-toolbar__actions">
-            <button class="btn btn--secondary btn--sm" id="jobs-refresh-btn">
+          <div class="jobs-hero__controls">
+            <button class="btn btn--secondary" id="jobs-refresh-btn">
               <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                 <path d="M13.5 2.5A6.5 6.5 0 0 0 2 8"/>
                 <path d="M2.5 13.5A6.5 6.5 0 0 0 14 8"/>
@@ -45,19 +45,29 @@ window.JobsPage = (() => {
             </button>
           </div>
         </div>
-        <div class="card jobs-table-card">
-          <div class="card__header">
-            <span class="card__title">Run Monitor</span>
-            <span class="badge badge--muted" id="jobs-total-badge">0 jobs</span>
-          </div>
-          <div class="card__body card__body--flush" id="jobs-table-wrap"><div class="empty-state">Loading…</div></div>
-        </div>
-        <div class="card jobs-activity-card">
-          <div class="card__header">
-            <span class="card__title">Activity Timeline</span>
-            <span class="badge badge--muted" id="jobs-activity-badge">0 events</span>
-          </div>
-          <div class="card__body" id="jobs-activity-wrap"><div class="empty-state">Loading…</div></div>
+        <div class="jobs-shell">
+          <section class="card card--table jobs-table-card">
+            <div class="card__meta">
+              <span>Run Monitor</span>
+              <span id="jobs-total-badge">0 jobs</span>
+            </div>
+            <div class="card__header">
+              <span class="card__title">Operational Queue</span>
+              <span class="jobs-shell__hint">Live job state by type, strategy, and start time</span>
+            </div>
+            <div class="card__body card__body--flush" id="jobs-table-wrap"><div class="empty-state">Loading…</div></div>
+          </section>
+          <aside class="card card--panel jobs-activity-card">
+            <div class="card__meta">
+              <span>Activity</span>
+              <span id="jobs-activity-badge">0 events</span>
+            </div>
+            <div class="card__header">
+              <span class="card__title">Timeline</span>
+              <span class="jobs-shell__hint">Recent system activity and background workflow signals</span>
+            </div>
+            <div class="card__body" id="jobs-activity-wrap"><div class="empty-state">Loading…</div></div>
+          </aside>
         </div>
       </div>
     `);
@@ -126,22 +136,20 @@ window.JobsPage = (() => {
     };
 
     summary.innerHTML = `
-      <div class="stat-card stat-card--muted jobs-stat-card">
-        <span class="stat-card__value">${counts.total}</span>
-        <span class="stat-card__label">Total</span>
-      </div>
-      <div class="stat-card stat-card--violet jobs-stat-card">
-        <span class="stat-card__value">${counts.running}</span>
-        <span class="stat-card__label">Running</span>
-      </div>
-      <div class="stat-card stat-card--green jobs-stat-card">
-        <span class="stat-card__value">${counts.completed}</span>
-        <span class="stat-card__label">Completed</span>
-      </div>
-      <div class="stat-card stat-card--red jobs-stat-card">
-        <span class="stat-card__value">${counts.failed}</span>
-        <span class="stat-card__label">Failed</span>
-      </div>
+      ${_heroMetric('Total Jobs', counts.total, 'Full run ledger across tracked engines', 'muted')}
+      ${_heroMetric('Running Now', counts.running, 'Actively polling live jobs and streams', 'violet')}
+      ${_heroMetric('Completed', counts.completed, 'Finished jobs available for result inspection', 'green')}
+      ${_heroMetric('Failed', counts.failed, 'Jobs that need review or rerun', 'red')}
+    `;
+  }
+
+  function _heroMetric(label, value, meta, tone) {
+    return `
+      <article class="jobs-hero-metric jobs-hero-metric--${tone}">
+        <span class="jobs-hero-metric__label">${_esc(label)}</span>
+        <span class="jobs-hero-metric__value">${_esc(value)}</span>
+        <span class="jobs-hero-metric__meta">${_esc(meta)}</span>
+      </article>
     `;
   }
 
@@ -153,7 +161,7 @@ window.JobsPage = (() => {
       return;
     }
     DOM.setHTML(wrap, `
-      <table class="data-table">
+      <table class="data-table jobs-table">
         <thead><tr>
           <th>Run ID</th><th>Type</th><th>Strategy</th>
           <th>Status</th><th>Started</th>
@@ -161,9 +169,9 @@ window.JobsPage = (() => {
         <tbody>
           ${rows.map(r => `
             <tr>
-              <td class="font-mono text-sm">${FMT.truncate(r.run_id || r.id || '—', 22)}</td>
+              <td class="font-mono text-sm jobs-table__run">${FMT.truncate(r.run_id || r.id || '—', 22)}</td>
               <td><span class="badge jobs-type-pill">${r.type}</span></td>
-              <td>${r.strategy || '—'}</td>
+              <td class="jobs-table__strategy">${r.strategy || '—'}</td>
               <td><span class="badge badge--${FMT.statusColor(r.status)}">${FMT.statusLabel(r.status)}</span></td>
               <td class="text-muted text-sm">${FMT.ts(r.started_at)}</td>
             </tr>`).join('')}
@@ -188,7 +196,7 @@ window.JobsPage = (() => {
                 <span class="badge badge--muted">${_esc(_categoryLabel(event.category))}</span>
                 <span class="badge badge--${_statusTone(event.status)}">${_esc(_formatAction(event.action))}</span>
               </div>
-              <span class="text-muted text-sm">${_esc(FMT.ts(event.timestamp))}</span>
+              <span class="jobs-activity-item__time">${_esc(FMT.ts(event.timestamp))}</span>
             </div>
             <div class="jobs-activity-item__message">${_esc(event.message || _defaultMessage(event))}</div>
             <div class="jobs-activity-item__detail text-muted text-sm">${_esc(_detailLine(event))}</div>

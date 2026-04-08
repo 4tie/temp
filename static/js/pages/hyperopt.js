@@ -247,15 +247,19 @@ window.HyperoptPage = (() => {
 
   function _render() {
     DOM.setHTML(_el, `
-      <div class="hyperopt-page" id="hyperopt-page">
+      <div class="hyperopt-page page-frame page-frame--compact" id="hyperopt-page">
       <div class="page-header">
         <h1 class="page-header__title">Hyperopt</h1>
-        <p class="page-header__subtitle">Optimize strategy parameters using hyperparameter search.</p>
+        <p class="page-header__subtitle">Run parameter search with a cleaner optimization workspace for config, progress, and result review.</p>
         <div class="page-header__meta">Search, validate market coverage, and apply the best parameter set without leaving the run view.</div>
       </div>
       <div class="split-layout hyperopt-layout">
         <div class="split-layout__form">
-          <div class="card hyperopt-card hyperopt-card--form">
+          <div class="card card--panel hyperopt-card hyperopt-card--form">
+            <div class="card__meta">
+              <span>Optimization Setup</span>
+              <span>Strategy, market scope, spaces, and epochs</span>
+            </div>
             <div class="card__header"><span class="card__title">Configuration</span></div>
             <div class="card__body">
               <form id="ho-form" class="form">
@@ -358,7 +362,11 @@ window.HyperoptPage = (() => {
           </div>
         </div>
         <div class="split-layout__output">
-          <div class="card hyperopt-card hyperopt-card--status" id="ho-status-card" style="display:none">
+          <div class="card card--panel hyperopt-card hyperopt-card--status" id="ho-status-card" style="display:none">
+            <div class="card__meta">
+              <span>Live Run</span>
+              <span>Current command, progress, and stream logs</span>
+            </div>
             <div class="card__header">
               <span class="card__title">Progress</span>
               <span class="badge" id="ho-status-badge">—</span>
@@ -369,14 +377,22 @@ window.HyperoptPage = (() => {
               <div class="log-panel hyperopt-logs" id="ho-logs"></div>
             </div>
           </div>
-          <div class="card hyperopt-card hyperopt-card--results" id="ho-results-card" style="display:none">
+          <div class="card card--hero hyperopt-card hyperopt-card--results" id="ho-results-card" style="display:none">
+            <div class="card__meta">
+              <span>Best Candidate</span>
+              <span>Top metrics and ready-to-apply parameters</span>
+            </div>
             <div class="card__header">
               <span class="card__title">Best Results</span>
               <button class="btn btn--secondary btn--sm" id="ho-apply-btn" style="display:none">Apply Params</button>
             </div>
             <div class="card__body" id="ho-results-body"></div>
           </div>
-          <div class="card hyperopt-card hyperopt-card--history">
+          <div class="card card--table hyperopt-card hyperopt-card--history">
+            <div class="card__meta">
+              <span>History</span>
+              <span>Previous searches, recent winners, and failures</span>
+            </div>
             <div class="card__header"><span class="card__title">Previous Runs</span></div>
             <div class="card__body" id="ho-history"></div>
           </div>

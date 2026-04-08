@@ -31,15 +31,19 @@ window.StrategyLabPage = (() => {
 
   function _render() {
     DOM.setHTML(_el, `
-      <div class="strategy-lab-page" id="strategy-lab-page">
+      <div class="strategy-lab-page page-frame page-frame--compact" id="strategy-lab-page">
       <div class="page-header">
         <h1 class="page-header__title">Strategy Lab</h1>
-        <p class="page-header__subtitle">Browse, inspect, and analyze your FreqTrade strategy files.</p>
+        <p class="page-header__subtitle">Inspect strategy parameters and source in a dedicated editor workspace.</p>
         <div class="page-header__meta" id="sl-meta">Source .py, runtime sidecar values, and extracted parameter metadata stay aligned in one editor flow.</div>
       </div>
       <div class="split-layout split-layout--lab sl-layout">
         <div class="split-layout__sidebar">
-          <div class="card card--fill sl-sidebar-card">
+          <div class="card card--fill card--panel sl-sidebar-card">
+            <div class="card__meta">
+              <span>Navigator</span>
+              <span>Select a strategy to inspect and edit</span>
+            </div>
             <div class="card__header">
               <span class="card__title">Strategies</span>
               <span class="badge badge--muted" id="sl-count">0</span>
@@ -55,7 +59,7 @@ window.StrategyLabPage = (() => {
           </div>
         </div>
         <div class="split-layout__main">
-          <div class="card card--fill" id="sl-detail">
+          <div class="card card--fill card--hero" id="sl-detail">
             <div class="card__body">
               <div class="empty-state">
                 <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-disabled);margin-bottom:var(--space-3)">
@@ -148,8 +152,28 @@ window.StrategyLabPage = (() => {
         </div>
       </div>
       <div class="card__body sl-detail-body">
+        <section class="sl-inspector-strip">
+          <article class="sl-inspector-metric">
+            <span class="sl-inspector-metric__label">Parameters</span>
+            <span class="sl-inspector-metric__value">${params.length}</span>
+          </article>
+          <article class="sl-inspector-metric">
+            <span class="sl-inspector-metric__label">Editor Mode</span>
+            <span class="sl-inspector-metric__value" id="sl-editor-mode-metric">${_diffVisible ? 'Diff' : 'Source'}</span>
+          </article>
+          <article class="sl-inspector-metric">
+            <span class="sl-inspector-metric__label">Source Lines</span>
+            <span class="sl-inspector-metric__value">${String(source.split('\n').length)}</span>
+          </article>
+        </section>
+
         ${params.length ? `
-          <div class="sl-params-table-wrap">
+          <section class="sl-panel">
+            <div class="sl-panel__head">
+              <h3 class="section-heading sl-panel__title">Parameter Inspector</h3>
+              <span class="sl-panel__meta">Defaults and extracted metadata</span>
+            </div>
+            <div class="sl-params-table-wrap">
             <table class="data-table">
               <thead><tr><th>Parameter</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
               <tbody>
@@ -162,7 +186,8 @@ window.StrategyLabPage = (() => {
                   </tr>`).join('')}
               </tbody>
             </table>
-          </div>` : '<div class="empty-state">No configurable parameters found.</div>'}
+            </div>
+          </section>` : '<div class="empty-state">No configurable parameters found.</div>'}
 
         <section class="sl-source-card">
           <div class="sl-source-toolbar">
@@ -355,6 +380,7 @@ window.StrategyLabPage = (() => {
 
     const badge = DOM.$('#sl-dirty-badge', detail);
     const editorMode = DOM.$('#sl-editor-mode', detail);
+    const editorModeMetric = DOM.$('#sl-editor-mode-metric', detail);
     const toggleEditorBtn = DOM.$('#sl-toggle-editor-btn', detail);
     const toggleDiffBtn = DOM.$('#sl-toggle-diff-btn', detail);
     const resetBtn = DOM.$('#sl-reset-source-btn', detail);
@@ -370,6 +396,9 @@ window.StrategyLabPage = (() => {
 
     if (editorMode) {
       editorMode.textContent = _diffVisible ? 'Diff' : 'Editor';
+    }
+    if (editorModeMetric) {
+      editorModeMetric.textContent = _diffVisible ? 'Diff' : 'Source';
     }
 
     if (toggleEditorBtn) toggleEditorBtn.textContent = _editorVisible ? 'Hide Editor' : 'Show Editor';

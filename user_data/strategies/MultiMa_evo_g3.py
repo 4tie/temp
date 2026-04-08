@@ -5,7 +5,7 @@ import talib.abstract as ta
 from functools import reduce
 
 
-class MultiMa(IStrategy):
+class MultiMa_evo_g3(IStrategy):
     INTERFACE_VERSION: int = 3
 
     buy_params = {

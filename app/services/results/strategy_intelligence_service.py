@@ -37,7 +37,7 @@ def build_strategy_intelligence(
     editable_param_lookup = _editable_param_lookup(meta)
 
     diagnosis_items = _build_diagnosis_items(root, weaknesses, analysis)
-    suggestions, rerun_plan = _build_suggestions(root, parameter_recommendations, editable_param_lookup)
+    suggestions, rerun_plan = _build_suggestions(`r`n        run_id=run_id,`r`n        root=root,`r`n        parameter_recommendations=parameter_recommendations,`r`n        editable_param_lookup=editable_param_lookup,`r`n        meta=meta,`r`n    )
     summary_card = _build_summary(summary, normalized_result)
     comparison = _build_parent_comparison(
         current_result=normalized_result,
@@ -199,13 +199,32 @@ def _build_diagnosis_items(
 
 
 def _build_suggestions(
+    *,
+    run_id: str,
     root: Mapping[str, Any],
     parameter_recommendations: list[dict[str, Any]],
     editable_param_lookup: Mapping[str, str],
+    meta: Mapping[str, Any] | None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     suggestions: list[dict[str, Any]] = []
     auto_param_changes: list[dict[str, Any]] = []
     unsupported_items: list[dict[str, Any]] = []
+
+    strategy_name = str(
+        (meta or {}).get("strategy_class")
+        or (meta or {}).get("base_strategy")
+        or (meta or {}).get("strategy")
+        or ""
+    ).strip()
+    run_context = {
+        "run_id": run_id,
+        "strategy_name": strategy_name,
+        "timeframe": (meta or {}).get("timeframe"),
+        "exchange": (meta or {}).get("exchange"),
+        "timerange": (meta or {}).get("timerange"),
+    }
+    primary_title = str(root.get("primary_failure_label") or root.get("primary_failure_mode") or "Run diagnosis")
+    primary_evidence = _primary_evidence(root)
 
     for idx, item in enumerate(parameter_recommendations[:4], start=1):
         parameter = str(item.get("parameter") or "").strip()
@@ -214,9 +233,10 @@ def _build_suggestions(
         auto_param = _normalize_auto_param_change(parameter, suggestion_value, editable_param_lookup)
         auto_applicable = auto_param is not None
         evidence = str(item.get("evidence") or "").strip()
+        suggestion_id = f"param-{idx}"
         suggestions.append(
             {
-                "id": f"param-{idx}",
+                "id": suggestion_id,
                 "title": title,
                 "description": str(item.get("reason") or item.get("suggestion") or ""),
                 "priority": item.get("confidence") or "medium",
@@ -226,6 +246,26 @@ def _build_suggestions(
                 "evidence": evidence,
                 "action_type": "quick_param" if auto_applicable else "manual_guidance",
                 "source": "parameter_recommendation",
+                "apply_action": {
+                    "enabled": True,
+                    "type": "apply_suggestion",
+                    "suggestion_id": suggestion_id,
+                    "action_type": "quick_param" if auto_applicable else "manual_guidance",
+                    "label": "Apply",
+                    "supports_retest": True,
+                    "target": {
+                        "parameter": auto_param["name"] if auto_param else parameter,
+                        "value": auto_param["value"] if auto_param else suggestion_value,
+                    } if auto_applicable else None,
+                    "ai_apply_payload": {
+                        "title": title,
+                        "description": str(item.get("reason") or item.get("suggestion") or ""),
+                        "evidence": evidence,
+                        "diagnosis_title": primary_title,
+                        "diagnosis_evidence": primary_evidence,
+                        "run_context": run_context,
+                    } if not auto_applicable else None,
+                },
             }
         )
         if auto_param:
@@ -249,9 +289,10 @@ def _build_suggestions(
             )
 
     for idx, text in enumerate(root.get("fix_priority") or [], start=1):
+        suggestion_id = f"fix-{idx}"
         suggestions.append(
             {
-                "id": f"fix-{idx}",
+                "id": suggestion_id,
                 "title": str(text),
                 "description": str(text),
                 "priority": "high" if idx == 1 else "medium",
@@ -261,6 +302,23 @@ def _build_suggestions(
                 "evidence": "",
                 "action_type": "manual_guidance",
                 "source": "fix_priority",
+                "apply_action": {
+                    "enabled": True,
+                    "type": "apply_suggestion",
+                    "suggestion_id": suggestion_id,
+                    "action_type": "manual_guidance",
+                    "label": "Apply",
+                    "supports_retest": True,
+                    "target": None,
+                    "ai_apply_payload": {
+                        "title": str(text),
+                        "description": str(text),
+                        "evidence": "",
+                        "diagnosis_title": primary_title,
+                        "diagnosis_evidence": primary_evidence,
+                        "run_context": run_context,
+                    },
+                },
             }
         )
 
@@ -438,3 +496,4 @@ def _coalesce(*values: Any) -> Any:
         if value is not None and value != "":
             return value
     return None
+
