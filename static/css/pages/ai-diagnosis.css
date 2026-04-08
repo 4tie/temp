@@ -274,3 +274,15 @@
 .ai-diagnosis-stage__mount {
   box-shadow: var(--shadow-md);
 }
+/* ============================================================
+   RESULTS THEME UNIFICATION OVERRIDES
+   ============================================================ */
+
+.ai-diagnosis-stage__header,
+.ai-diagnosis-card,
+.ai-diagnosis-stage__mount,
+.ai-diagnosis-metric {
+  background: transparent;
+  border-color: var(--border-subtle);
+  box-shadow: none;
+}

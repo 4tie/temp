@@ -1729,3 +1729,187 @@ html[data-theme="light"] .results-table__row:hover {
     flex: 1 1 calc(50% - 8px);
   }
 }
+/* ============================================================
+   RESULTS THEME UNIFICATION OVERRIDES
+   ============================================================ */
+
+.card,
+.card--panel,
+.card--hero,
+.card--table,
+.card--utility,
+.stat-card,
+.metric-item,
+.detail-item,
+.cmd-block,
+.pairs-picker,
+.result-explorer__chart-card,
+.result-explorer__table-wrap,
+.log-panel {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: none;
+}
+
+.card:hover,
+.stat-card:hover {
+  border-color: var(--border);
+}
+
+.card__header,
+.card__meta,
+.card__footer {
+  background: transparent;
+}
+
+.card__header {
+  min-height: 48px;
+  padding: var(--space-3) 0;
+}
+
+.card__body {
+  padding: var(--space-3) 0 0;
+}
+
+.card__meta,
+.card__footer {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.card__meta {
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.card__footer {
+  border-top: 1px solid var(--border-subtle);
+}
+
+.btn {
+  border-radius: var(--radius);
+}
+
+.btn--primary,
+.ai-new-chat-btn,
+.ai-send-btn {
+  background: var(--accent);
+  color: #f8fafc;
+  box-shadow: none;
+}
+
+.btn--primary:hover:not(:disabled),
+.ai-new-chat-btn:hover,
+.ai-send-btn:hover {
+  background: var(--accent-light);
+}
+
+.btn--secondary,
+.btn--ghost:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.form-input,
+.form-select,
+.modal__input,
+.modal__textarea {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: var(--border-subtle);
+  border-radius: var(--radius);
+}
+
+.form-input:focus,
+.form-select:focus,
+.modal__input:focus,
+.modal__textarea:focus {
+  background: rgba(255, 255, 255, 0.045);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.data-table th,
+.results-table thead {
+  background: var(--surface-2);
+  backdrop-filter: none;
+}
+
+.data-table tbody tr:hover td,
+.data-table--hoverable tbody tr:hover td,
+.results-table__row:hover,
+.strategy-item:hover,
+.ai-conv-item:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.data-table--hoverable tbody tr:hover td {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.badge,
+.status-pill,
+.bt-intelligence__meta-chip,
+.jobs-type-pill,
+.sl-count-badge {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: var(--border-subtle);
+  color: var(--text-secondary);
+}
+
+.modal__backdrop {
+  background: rgba(2, 6, 23, 0.68);
+}
+
+.modal__dialog,
+.toast {
+  background: var(--surface-panel-strong);
+  border-color: var(--border-subtle);
+  box-shadow: none;
+}
+
+.empty-state,
+.results-empty {
+  background: transparent;
+  border: 1px dashed var(--border-subtle);
+  box-shadow: none;
+}
+
+.progress-bar-wrap {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.progress-bar {
+  background: var(--accent);
+}
+
+.stat-card {
+  padding: var(--space-3);
+}
+
+.stat-card::before {
+  left: 0;
+  right: 0;
+  height: 1px;
+}
+
+.si-hero,
+.si-stat-pill,
+.si-issue-card,
+.si-action-card,
+.si-action-group--manual,
+.si-action-card__diff {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  box-shadow: none;
+}
+
+.si-hero::before,
+.si-issue-card::before,
+.si-action-card::before {
+  width: 2px;
+}
+
+.si-chip,
+.si-action-card__tag {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: var(--border-subtle);
+  color: var(--text-secondary);
+}

@@ -138,3 +138,14 @@
     min-width: 100%;
   }
 }
+/* ============================================================
+   RESULTS THEME UNIFICATION OVERRIDES
+   ============================================================ */
+
+.hyperopt-card,
+.hyperopt-card--results .metric-item,
+.hyperopt-card--history .data-table,
+.hyperopt-card--form .pairs-picker,
+.hyperopt-card--form .cmd-block {
+  box-shadow: none;
+}

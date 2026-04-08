@@ -2034,3 +2034,30 @@ html[data-theme="light"] .evo-summary-card,
 html[data-theme="light"] .evo-gen-card {
   background: var(--surface-2);
 }
+/* ============================================================
+   RESULTS THEME UNIFICATION OVERRIDES
+   ============================================================ */
+
+.ai-layout,
+.ai-sidebar,
+.ai-main,
+.ai-header,
+.ai-thread,
+.ai-composer,
+.evo-diff-modal,
+.evo-toast {
+  background: transparent;
+}
+
+.ai-sidebar,
+.ai-header,
+.ai-composer,
+.evo-diff-modal,
+.evo-toast {
+  border-color: var(--border-subtle);
+  box-shadow: none;
+}
+
+.ai-conv-item.active {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}

@@ -203,3 +203,15 @@
     align-items: flex-start;
   }
 }
+/* ============================================================
+   RESULTS THEME UNIFICATION OVERRIDES
+   ============================================================ */
+
+.jobs-hero-metric,
+.jobs-table-card,
+.jobs-activity-card,
+.jobs-activity-item {
+  background: transparent;
+  border-color: var(--border-subtle);
+  box-shadow: none;
+}

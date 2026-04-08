@@ -1325,3 +1325,39 @@
   }
 }
 
+/* ============================================================
+   RESULTS THEME UNIFICATION OVERRIDES
+   ============================================================ */
+
+.bt-results-tech,
+.bt-intelligence__shell,
+.bt-intelligence__item,
+.bt-intelligence__item--red,
+.bt-intelligence__item--amber,
+.bt-intelligence__panel--issues,
+.bt-intelligence__comparison,
+.bt-intelligence__memory,
+.bt-trade-list,
+.bt-summary-card,
+.bt-pill,
+.bt-memory-card,
+.bt-diagnosis-card {
+  background: transparent;
+  border-color: var(--border-subtle);
+  box-shadow: none;
+}
+
+.bt-intelligence__shell::after {
+  background: var(--border-subtle);
+}
+
+.bt-intelligence__panel--issues {
+  padding-left: var(--space-3);
+  border-left: 1px solid var(--border-subtle);
+}
+
+.bt-intelligence__meta-chip {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: var(--border-subtle);
+  color: var(--text-secondary);
+}

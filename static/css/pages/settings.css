@@ -554,3 +554,17 @@
   z-index: 2;
   box-shadow: var(--shadow-md);
 }
+/* ============================================================
+   RESULTS THEME UNIFICATION OVERRIDES
+   ============================================================ */
+
+.settings-api-box,
+.settings-input-panel,
+.settings-api-toolbar,
+.settings-input-panel__toolbar,
+.settings-table-wrap,
+.theme-preset-card {
+  background: transparent;
+  border-color: var(--border-subtle);
+  box-shadow: none;
+}

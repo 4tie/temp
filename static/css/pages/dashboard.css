@@ -69,3 +69,16 @@
 .dashboard-panel .card__meta {
   padding-top: 14px;
 }
+/* ============================================================
+   RESULTS THEME UNIFICATION OVERRIDES
+   ============================================================ */
+
+.dashboard-grid,
+.dashboard-page {
+  gap: var(--space-3);
+}
+
+.dashboard-hero .stat-card,
+.dashboard-panel {
+  min-height: auto;
+}
