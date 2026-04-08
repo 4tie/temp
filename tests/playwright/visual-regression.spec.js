@@ -197,7 +197,7 @@ function screenshotOptions(page) {
 
 test.describe('Visual regression', () => {
   test.beforeEach(async ({ page, baseURL }) => {
-    const appOrigin = new URL(baseURL || 'http://127.0.0.1:5000').origin;
+    const appOrigin = new URL(baseURL || 'http://127.0.0.1:8000').origin;
     await installApiMocks(page, appOrigin);
   });
 
@@ -238,3 +238,4 @@ test.describe('Visual regression', () => {
     await expect(page.locator('[data-app-shell]')).toHaveScreenshot('dashboard-light-desktop.png', screenshotOptions(page));
   });
 });
+

@@ -3,7 +3,9 @@ from freqtrade.strategy import IntParameter, IStrategy
 from pandas import DataFrame
 import talib.abstract as ta
 from functools import reduce
+import logging
 
+logger = logging.getLogger(__name__)
 
 class MultiMa_evo_g3(IStrategy):
     INTERFACE_VERSION: int = 3

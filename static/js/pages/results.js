@@ -4,10 +4,25 @@
    ================================================================= */
 
 window.ResultsPage = (() => {
+  const SORT_PRESETS = [
+    { id: 'newest', label: 'Newest', key: 'started_at', dir: -1 },
+    { id: 'profit', label: 'Profit %', metricCandidates: ['profit_percent', 'total_profit_pct'], dir: -1 },
+    { id: 'winrate', label: 'Win Rate', metricCandidates: ['win_rate'], dir: -1 },
+    { id: 'drawdown', label: 'Drawdown', metricCandidates: ['max_drawdown'], dir: 1 },
+  ];
+  const METRIC_PRESETS = [
+    { id: 'compact', label: 'Compact', count: 4 },
+    { id: 'extended', label: 'Extended', count: 6 },
+    { id: 'all', label: 'All', count: null },
+  ];
+
   let _el = null;
   let _runs = [];
   let _sortKey = 'started_at';
   let _sortDir = -1;
+  let _sortPreset = 'newest';
+  let _metricPreset = 'extended';
+  let _searchQuery = '';
   let _pollTimer = null;
   let _loading = false;
   let _lastLoadedAt = null;
@@ -19,9 +34,16 @@ window.ResultsPage = (() => {
   function init() {
     _el = DOM.$('[data-view="results"]');
     if (!_el) return;
+    _metricPreset = _defaultMetricPreset();
     _render();
     _bindActivePage();
     load();
+  }
+
+  function _defaultMetricPreset() {
+    if (window.innerWidth <= 860) return 'compact';
+    if (window.innerWidth <= 1280) return 'extended';
+    return 'extended';
   }
 
   function _render() {
@@ -38,14 +60,14 @@ window.ResultsPage = (() => {
                 <circle cx="12" cy="12" r="10"/>
                 <polyline points="12 6 12 12 16 14"/>
               </svg>
-              <span>Waiting for data…</span>
+              <span>Waiting for data...</span>
             </div>
           </div>
         </div>
         <div id="results-table-wrap" class="results-content">
           <div class="results-loading">
             <div class="results-loading__spinner"></div>
-            <div class="results-loading__text">Loading results…</div>
+            <div class="results-loading__text">Loading results...</div>
           </div>
         </div>
       </div>
@@ -72,7 +94,7 @@ window.ResultsPage = (() => {
     try {
       const wrap = DOM.$('#results-table-wrap', _el);
       if (!silent && wrap && !_runs.length) {
-        DOM.setHTML(wrap, '<div class="empty-state">Loading…</div>');
+        DOM.setHTML(wrap, '<div class="empty-state">Loading...</div>');
       }
       let data;
       if (!_resultsTableMetricKeys.length) {
@@ -85,7 +107,7 @@ window.ResultsPage = (() => {
       } else {
         data = await API.getRuns();
       }
-      _runs = (data.runs || []).filter(r => r.status === 'completed');
+      _runs = (data.runs || []).filter((run) => run.status === 'completed');
       _lastLoadedAt = new Date();
       _renderMeta();
       _renderTable();
@@ -101,8 +123,10 @@ window.ResultsPage = (() => {
 
   function _applyMetricRegistry(registry) {
     const metrics = registry?.metrics || [];
-    _metricDefs = Object.fromEntries(metrics.map(metric => [metric.key, metric]));
-    _resultsTableMetricKeys = registry?.groups?.results_table || [];
+    _metricDefs = Object.fromEntries(metrics.map((metric) => [metric.key, metric]));
+    _resultsTableMetricKeys = Array.isArray(registry?.groups?.results_table)
+      ? registry.groups.results_table
+      : [];
   }
 
   function _renderMeta() {
@@ -114,7 +138,7 @@ window.ResultsPage = (() => {
           <circle cx="12" cy="12" r="10"/>
           <polyline points="12 6 12 12 16 14"/>
         </svg>
-        <span>Waiting for data…</span>
+        <span>Waiting for data...</span>
       `);
       return;
     }
@@ -127,23 +151,128 @@ window.ResultsPage = (() => {
     `);
   }
 
-  function _flat(r) {
+  function _flat(run) {
     return {
-      ...r,
-      _metrics: r.result_metrics || {},
+      ...run,
+      _metrics: run.result_metrics || {},
     };
   }
 
   function _displayStrategy(run) {
-    const base = run.display_strategy || run.strategy || '—';
+    const base = run.display_strategy || run.strategy || '-';
     const version = run.display_version || run.version_id || run.strategy_version || null;
-    return version ? `${base} · ${version}` : base;
+    return version ? `${base} | ${version}` : base;
+  }
+
+  function _strategySearchText(run) {
+    return [
+      run.run_id,
+      _displayStrategy(run),
+      run.display_strategy,
+      run.strategy,
+      run.strategy_class,
+      run.base_strategy,
+    ].filter(Boolean).join(' ').toLowerCase();
+  }
+
+  function _resolveMetricKey(candidates = []) {
+    for (const key of candidates) {
+      if (_metricDefs[key]) return key;
+      if (_resultsTableMetricKeys.includes(key)) return key;
+    }
+    return null;
+  }
+
+  function _visibleMetricDefs() {
+    const defs = _resultsTableMetricKeys
+      .map((key) => _metricDefs[key])
+      .filter(Boolean);
+    const preset = METRIC_PRESETS.find((item) => item.id === _metricPreset) || METRIC_PRESETS[1];
+    if (!preset.count) return defs;
+    return defs.slice(0, preset.count);
+  }
+
+  function _filteredRuns(flatRuns) {
+    const query = _searchQuery.trim().toLowerCase();
+    if (!query) return flatRuns;
+    return flatRuns.filter((run) => _strategySearchText(run).includes(query));
+  }
+
+  function _sortedRuns(flatRuns) {
+    return [...flatRuns].sort((a, b) => {
+      const va = _sortValue(a, _sortKey);
+      const vb = _sortValue(b, _sortKey);
+      if (va === null && vb === null) return 0;
+      if (va === null) return _sortDir;
+      if (vb === null) return -_sortDir;
+      return typeof va === 'number'
+        ? (va - vb) * _sortDir
+        : String(va).localeCompare(String(vb)) * _sortDir;
+    });
+  }
+
+  function _resolveSortPreset(id) {
+    const preset = SORT_PRESETS.find((item) => item.id === id);
+    if (!preset) return null;
+    if (preset.key) return preset;
+    const metricKey = _resolveMetricKey(preset.metricCandidates);
+    if (!metricKey) return null;
+    return { ...preset, key: `metric:${metricKey}` };
+  }
+
+  function _syncSortPresetFromState() {
+    const match = SORT_PRESETS.find((preset) => {
+      const resolved = _resolveSortPreset(preset.id);
+      return resolved && resolved.key === _sortKey && resolved.dir === _sortDir;
+    });
+    _sortPreset = match ? match.id : 'custom';
+  }
+
+  function _applySortPreset(id) {
+    const preset = _resolveSortPreset(id);
+    if (!preset) return;
+    _sortKey = preset.key;
+    _sortDir = preset.dir;
+    _sortPreset = preset.id;
+    _renderTable();
   }
 
   function _sort(key) {
     if (_sortKey === key) _sortDir *= -1;
-    else { _sortKey = key; _sortDir = -1; }
+    else {
+      _sortKey = key;
+      _sortDir = -1;
+    }
+    _syncSortPresetFromState();
     _renderTable();
+  }
+
+  function _tableMetricExtremes(metricDefs, runs) {
+    const extremes = {};
+    metricDefs.forEach((metric) => {
+      const values = runs
+        .map((run) => FMT.toNumber ? FMT.toNumber(run._metrics?.[metric.key]) : Number(run._metrics?.[metric.key]))
+        .filter((value) => value !== null && value !== undefined && Number.isFinite(value));
+      if (!values.length) return;
+      const higherIsBetter = _metricHigherIsBetter(metric);
+      extremes[metric.key] = {
+        best: higherIsBetter ? Math.max(...values) : Math.min(...values),
+        worst: higherIsBetter ? Math.min(...values) : Math.max(...values),
+      };
+    });
+    return extremes;
+  }
+
+  function _metricHigherIsBetter(metric) {
+    if (typeof metric?.higher_is_better === 'boolean') return metric.higher_is_better;
+    return metric?.key !== 'max_drawdown';
+  }
+
+  function _latestRunSummary(runId) {
+    if (!runId) return 'No completed runs';
+    const run = _runs.find((item) => item.run_id === runId);
+    if (!run) return runId;
+    return `${_displayStrategy(run)} | ${FMT.tsShort(run.started_at || run.completed_at || run.created_at)}`;
   }
 
   function _renderTable() {
@@ -165,98 +294,160 @@ window.ResultsPage = (() => {
     }
 
     const flat = _runs.map(_flat);
-    const metricDefs = _resultsTableMetricKeys
-      .map(key => _metricDefs[key])
-      .filter(Boolean);
-    const sorted = [...flat].sort((a, b) => {
-      const va = _sortValue(a, _sortKey);
-      const vb = _sortValue(b, _sortKey);
-      if (va === null && vb === null) return 0;
-      if (va === null) return _sortDir;
-      if (vb === null) return -_sortDir;
-      return typeof va === 'number'
-        ? (va - vb) * _sortDir
-        : String(va).localeCompare(String(vb)) * _sortDir;
-    });
-
-    const th = (key, label) => `<th class="sortable ${_sortKey === key ? 'sorted' : ''}" data-sort="${key}">${label}${_sortKey === key ? (_sortDir === 1 ? ' ▲' : ' ▼') : ''}</th>`;
+    const visibleMetricDefs = _visibleMetricDefs();
+    const filtered = _filteredRuns(flat);
+    const sorted = _sortedRuns(filtered);
+    const latestRunId = _latestCompletedRunId();
+    const metricExtremes = _tableMetricExtremes(visibleMetricDefs, filtered);
+    const totalCount = flat.length;
+    const shownCount = sorted.length;
+    const latestSummary = _latestRunSummary(latestRunId);
+    const th = (key, label, extraClass = '') => {
+      const sortedLabel = _sortKey === key ? (_sortDir === 1 ? ' ^' : ' v') : '';
+      return `<th class="sortable ${_sortKey === key ? 'sorted' : ''} ${extraClass}" data-sort="${key}">${label}${sortedLabel}</th>`;
+    };
 
     DOM.setHTML(wrap, `
-      <div class="results-table-card">
+      <div class="results-table-card results-table-card--terminal">
         <div class="results-table-header">
           <div class="results-table-count">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M9 11l3 3L22 4"/>
               <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
             </svg>
-            <span>${sorted.length} ${sorted.length === 1 ? 'Result' : 'Results'}</span>
+            <span>${shownCount} of ${totalCount} ${totalCount === 1 ? 'result' : 'results'}</span>
+          </div>
+          <div class="results-table-header__latest">
+            <span class="results-table-header__label">Latest run</span>
+            <span class="results-table-header__value" data-results-latest-summary>${_esc(latestSummary)}</span>
+          </div>
+        </div>
+        <div class="results-toolbar" data-results-toolbar>
+          <label class="results-toolbar__search">
+            <span class="results-toolbar__label">Search</span>
+            <input class="form-input results-toolbar__input" type="search" value="${_esc(_searchQuery)}" placeholder="Run ID, strategy, or class" data-results-search>
+          </label>
+          <div class="results-toolbar__group">
+            <span class="results-toolbar__label">Quick sort</span>
+            <div class="results-toolbar__chips">
+              ${SORT_PRESETS.map((preset) => {
+                const resolved = _resolveSortPreset(preset.id);
+                const disabled = resolved ? '' : 'disabled';
+                const active = _sortPreset === preset.id ? ' is-active' : '';
+                return `<button type="button" class="results-toolbar__chip${active}" data-results-sort-preset="${preset.id}" ${disabled}>${_esc(preset.label)}</button>`;
+              }).join('')}
+            </div>
+          </div>
+          <div class="results-toolbar__group">
+            <span class="results-toolbar__label">Metrics</span>
+            <div class="results-toolbar__chips">
+              ${METRIC_PRESETS.map((preset) => {
+                const active = _metricPreset === preset.id ? ' is-active' : '';
+                return `<button type="button" class="results-toolbar__chip${active}" data-results-metric-preset="${preset.id}">${_esc(preset.label)}</button>`;
+              }).join('')}
+            </div>
           </div>
         </div>
         <div class="results-table-wrap">
-          <table class="results-table">
-            <thead><tr>
-              ${th('run_id', 'Run ID')}
-              ${th('strategy', 'Strategy')}
-              ${th('started_at', 'Date')}
-              ${metricDefs.map(metric => th(`metric:${metric.key}`, metric.label)).join('')}
-              <th class="results-table__actions">Actions</th>
-            </tr></thead>
+          <table class="results-table results-table--terminal">
+            <thead>
+              <tr>
+                ${th('run_id', 'Run ID', 'results-table__col--id')}
+                ${th('strategy', 'Strategy', 'results-table__col--strategy')}
+                ${th('started_at', 'Date', 'results-table__col--date')}
+                ${visibleMetricDefs.map((metric) => th(`metric:${metric.key}`, metric.label, 'results-table__col--metric')).join('')}
+                <th class="results-table__actions results-table__col--actions">Actions</th>
+              </tr>
+            </thead>
             <tbody>
-              ${sorted.map(r => {
-                const profitMetric = r._metrics?.profit_percent ?? r._metrics?.total_profit_pct;
-                const profitTone = _metricTone({ key: 'profit_percent' }, profitMetric);
-                return `
-                  <tr class="results-table__row" data-run-id="${r.run_id || ''}">
-                    <td class="results-table__id">
-                      <span class="results-table__id-text">${FMT.truncate(r.run_id || '—', 12)}</span>
-                    </td>
-                    <td class="results-table__strategy">
-                      <div class="results-table__strategy-name">${_esc(_displayStrategy(r))}</div>
-                      <div class="results-table__strategy-class">${_esc(r.strategy_class || r.base_strategy || r.strategy || '—')}</div>
-                    </td>
-                    <td class="results-table__date">${FMT.tsShort(r.started_at)}</td>
-                    ${metricDefs.map(metric => _renderMetricCell(metric, r._metrics?.[metric.key])).join('')}
-                    <td class="results-table__actions">
-                      <button class="results-table__btn results-table__btn--view" data-detail-btn data-run-id="${r.run_id || ''}" title="View Details">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                          <circle cx="12" cy="12" r="3"/>
-                        </svg>
-                        View
-                      </button>
-                      <button class="results-table__btn results-table__btn--apply" data-apply-btn data-run-id="${r.run_id || ''}" title="Apply Configuration">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <polyline points="20 6 9 17 4 12"/>
-                        </svg>
-                        Apply
-                      </button>
-                    </td>
-                  </tr>`;
-              }).join('')}
+              ${sorted.length ? sorted.map((run) => _renderRow(run, visibleMetricDefs, metricExtremes, latestRunId)).join('') : `
+                <tr>
+                  <td class="results-table__empty" colspan="${4 + visibleMetricDefs.length}">
+                    No runs match the current search.
+                  </td>
+                </tr>
+              `}
             </tbody>
           </table>
         </div>
       </div>
     `);
 
-    wrap.querySelectorAll('[data-sort]').forEach(th => {
-      DOM.on(th, 'click', () => _sort(th.dataset.sort));
-    });
-    wrap.querySelectorAll('[data-detail-btn]').forEach(btn => {
-      DOM.on(btn, 'click', e => {
-        e.stopPropagation();
-        _showDetail(btn.dataset.runId);
+    wrap.querySelectorAll('[data-results-search]').forEach((input) => {
+      DOM.on(input, 'input', () => {
+        _searchQuery = input.value || '';
+        _renderTable();
       });
     });
-    wrap.querySelectorAll('[data-apply-btn]').forEach(btn => {
-      DOM.on(btn, 'click', async (e) => {
-        e.stopPropagation();
-        await _applyConfig(btn.dataset.runId);
+    wrap.querySelectorAll('[data-results-sort-preset]').forEach((button) => {
+      DOM.on(button, 'click', () => _applySortPreset(button.dataset.resultsSortPreset || ''));
+    });
+    wrap.querySelectorAll('[data-results-metric-preset]').forEach((button) => {
+      DOM.on(button, 'click', () => {
+        _metricPreset = button.dataset.resultsMetricPreset || 'extended';
+        _renderTable();
       });
     });
-    wrap.querySelectorAll('tr[data-run-id]').forEach(row => {
+    wrap.querySelectorAll('[data-sort]').forEach((header) => {
+      DOM.on(header, 'click', () => _sort(header.dataset.sort));
+    });
+    wrap.querySelectorAll('[data-detail-btn]').forEach((button) => {
+      DOM.on(button, 'click', (event) => {
+        event.stopPropagation();
+        _showDetail(button.dataset.runId);
+      });
+    });
+    wrap.querySelectorAll('[data-apply-btn]').forEach((button) => {
+      DOM.on(button, 'click', async (event) => {
+        event.stopPropagation();
+        await _applyConfig(button.dataset.runId);
+      });
+    });
+    wrap.querySelectorAll('tr[data-run-id]').forEach((row) => {
       DOM.on(row, 'click', () => _showDetail(row.dataset.runId));
     });
+  }
+
+  function _renderRow(run, visibleMetricDefs, metricExtremes, latestRunId) {
+    const latest = run.run_id === latestRunId;
+    const strategyClass = run.strategy_class || run.base_strategy || run.strategy || '-';
+    const dateValue = FMT.tsShort(run.started_at || run.completed_at || run.created_at);
+    const latestNote = latest ? 'Latest completed run' : 'Completed run';
+    return `
+      <tr class="results-table__row${latest ? ' results-table__row--latest' : ''}" data-run-id="${run.run_id || ''}" data-row-latest="${latest ? 'true' : 'false'}">
+        <td class="results-table__id">
+          <div class="results-table__identity">
+            <span class="results-table__id-text">${FMT.truncate(run.run_id || '-', 16)}</span>
+            ${latest ? '<span class="results-table__badge results-table__badge--latest">Latest</span>' : ''}
+          </div>
+        </td>
+        <td class="results-table__strategy">
+          <div class="results-table__strategy-name">${_esc(_displayStrategy(run))}</div>
+          <div class="results-table__strategy-class">${_esc(strategyClass)}</div>
+        </td>
+        <td class="results-table__date">
+          <div class="results-table__date-main">${_esc(dateValue)}</div>
+          <div class="results-table__date-sub">${_esc(latestNote)}</div>
+        </td>
+        ${visibleMetricDefs.map((metric) => _renderMetricCell(metric, run._metrics?.[metric.key], metricExtremes[metric.key])).join('')}
+        <td class="results-table__actions">
+          <div class="results-table__action-group">
+            <button class="results-table__btn results-table__btn--view" data-detail-btn data-run-id="${run.run_id || ''}" title="View Details">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              View
+            </button>
+            <button class="results-table__btn results-table__btn--apply" data-apply-btn data-run-id="${run.run_id || ''}" title="Apply Configuration">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              Apply
+            </button>
+          </div>
+        </td>
+      </tr>`;
   }
 
   function _sortValue(row, key) {
@@ -264,18 +455,29 @@ window.ResultsPage = (() => {
     if (key.startsWith('metric:')) {
       return row._metrics?.[key.slice(7)] ?? null;
     }
+    if (key === 'strategy') return _displayStrategy(row);
     return row[key] ?? null;
   }
 
-  function _renderMetricCell(metric, value) {
+  function _renderMetricCell(metric, value, extremes) {
     const tone = _metricTone(metric, value);
     const rendered = _formatMetric(metric, value);
+    const numeric = FMT.toNumber ? FMT.toNumber(value) : Number(value);
+    const hasNumeric = numeric !== null && numeric !== undefined && Number.isFinite(numeric);
+    const isBest = hasNumeric && extremes && numeric === extremes.best;
+    const isWorst = hasNumeric && extremes && numeric === extremes.worst && extremes.best !== extremes.worst;
+    const stateClass = isBest ? ' results-table__metric-cell--best' : (isWorst ? ' results-table__metric-cell--worst' : '');
     const toneClass = tone ? ` results-table__metric--${tone}` : '';
-    return `<td class="results-table__metric${toneClass}">${rendered}</td>`;
+    const flag = isBest ? '<span class="results-table__metric-flag">Best</span>' : (isWorst ? '<span class="results-table__metric-flag">Lag</span>' : '');
+    return `
+      <td class="results-table__metric${toneClass}${stateClass}">
+        <div class="results-table__metric-value">${rendered}</div>
+        ${flag}
+      </td>`;
   }
 
   function _formatMetric(metric, value) {
-    if (value === null || value === undefined || value === '') return '—';
+    if (value === null || value === undefined || value === '') return '-';
     const decimals = metric?.decimals ?? 2;
     switch (metric?.format) {
       case 'percent':
@@ -297,6 +499,7 @@ window.ResultsPage = (() => {
     switch (metric?.key) {
       case 'profit_percent':
       case 'profit_total_abs':
+      case 'total_profit_pct':
         return FMT.toneProfit(value);
       case 'win_rate':
         return FMT.toneWinRate(value);
@@ -387,7 +590,9 @@ window.ResultsPage = (() => {
     }
   }
 
-  function refresh() { load({ silent: true }); }
+  function refresh() {
+    load({ silent: true });
+  }
 
   return { init, refresh };
 })();

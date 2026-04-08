@@ -89,7 +89,7 @@ async function readOverflowMetrics(page) {
 
 test.describe('Layout and shell integrity', () => {
   test.beforeEach(async ({ page, baseURL }) => {
-    const appOrigin = new URL(baseURL || 'http://127.0.0.1:5000').origin;
+    const appOrigin = new URL(baseURL || 'http://127.0.0.1:8000').origin;
     await installBasicApiMocks(page, appOrigin);
   });
 

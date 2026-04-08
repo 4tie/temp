@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 
-const APP_ORIGIN = 'http://127.0.0.1:5000';
+const APP_ORIGIN = 'http://127.0.0.1:8000';
 const LOADED_RUN_ID = 'run_prev_1';
 const RERUN_ID = 'run_rerun_1';
 
@@ -497,5 +497,4 @@ test.describe('Backtesting Strategy Intelligence rerun', () => {
     await page.waitForSelector('[data-intelligence-review-action="run"]');
   });
 });
-
 

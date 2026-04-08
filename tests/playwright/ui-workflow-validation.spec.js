@@ -546,7 +546,7 @@ function isLateExecutionControl(control) {
 test.describe('UI workflow validation matrix', () => {
   test.setTimeout(420000);
   test('all actionable controls trigger an observable workflow outcome', async ({ page, baseURL, browserName }) => {
-    const appOrigin = new URL(baseURL || 'http://127.0.0.1:5000').origin;
+    const appOrigin = new URL(baseURL || 'http://127.0.0.1:8000').origin;
     const requestLog = [];
     const evidence = [];
 
@@ -736,7 +736,7 @@ test.describe('UI workflow validation matrix', () => {
   });
 
   test('ai-diagnosis staged apply can be manually accepted via promotion_endpoint', async ({ page, baseURL }) => {
-    const appOrigin = new URL(baseURL || 'http://127.0.0.1:5000').origin;
+    const appOrigin = new URL(baseURL || 'http://127.0.0.1:8000').origin;
     const requestLog = [];
     const observed = [];
     page.on('request', (req) => {
@@ -820,7 +820,7 @@ test.describe('UI workflow validation matrix', () => {
   });
 
   test('evolution lifecycle stream renders running/results and accepts best version', async ({ page, baseURL }) => {
-    const appOrigin = new URL(baseURL || 'http://127.0.0.1:5000').origin;
+    const appOrigin = new URL(baseURL || 'http://127.0.0.1:8000').origin;
     const requestLog = [];
     const observed = [];
     page.on('request', (req) => {
@@ -906,3 +906,4 @@ test.describe('UI workflow validation matrix', () => {
     expect(observed).toContain('POST /strategies/MomentumPulse/versions/MomentumPulse_evo_g1/accept');
   });
 });
+
