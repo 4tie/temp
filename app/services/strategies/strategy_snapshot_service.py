@@ -160,6 +160,24 @@ def promote_staged_strategy_version(
 
     source = src_py.read_text(encoding="utf-8")
     validation = validate_python_source(name, source)
+
+    # Create snapshot before promoting staged version to live
+    try:
+        snapshot_result = create_snapshot(
+            strategy_name=name,
+            reason="promote_staged_strategy_version",
+            actor="system",
+            linked_run_id=None,
+            metadata={
+                "operation": "promote_staged",
+                "accepted_version": version,
+                "source_bytes": len(source.encode("utf-8"))
+            }
+        )
+    except Exception:
+        # Don't fail the promotion if snapshot creation fails, but log it
+        pass
+
     py_bytes = atomic_write_text(dst_py, source)
     if src_json.exists():
         json_bytes = atomic_write_text(dst_json, src_json.read_text(encoding="utf-8"))

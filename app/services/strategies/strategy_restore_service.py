@@ -211,6 +211,19 @@ def restore_snapshot(strategy_name: str, snapshot_id: str) -> dict[str, Any]:
     Returns:
         Restore operation result
     """
+    # Create snapshot of current state before restoring
+    try:
+        pre_restore_snapshot = create_snapshot(
+            strategy_name=strategy_name,
+            reason="pre_restore_snapshot",
+            actor="system",
+            linked_run_id=None,
+            metadata={"operation": "pre_restore", "target_snapshot_id": snapshot_id}
+        )
+    except Exception:
+        # Don't fail the restore if pre-snapshot creation fails
+        pass
+
     # Load the snapshot
     snapshot = load_snapshot(strategy_name, snapshot_id)
 
