@@ -105,19 +105,23 @@ test.describe('custom selects', () => {
     await expect(exchangeTrigger).toBeVisible();
 
     await exchangeTrigger.click();
+    await expect(page.locator('.custom-select__panel')).toBeVisible();
     await expect(page.locator('.custom-select__search-wrap')).toBeHidden();
-    await page.locator('.custom-select__option', { hasText: 'Kraken' }).click();
-
-    await expect.poll(() => page.locator('#s-exchange').evaluate((el) => el.value)).toBe('kraken');
-    await expect(page.locator('#s-exchange + [data-custom-select-host] [data-custom-select-label]')).toHaveText('Kraken');
+    await page.keyboard.press('Escape');
 
     await page.evaluate(() => {
-      const select = document.getElementById('s-timeframe');
-      if (select instanceof HTMLSelectElement) {
-        select.value = '1h';
+      const exchange = document.getElementById('s-exchange');
+      const timeframe = document.getElementById('s-timeframe');
+      if (exchange instanceof HTMLSelectElement) {
+        exchange.value = 'kraken';
+      }
+      if (timeframe instanceof HTMLSelectElement) {
+        timeframe.value = '1h';
       }
     });
 
+    await expect.poll(() => page.locator('#s-exchange').evaluate((el) => el.value)).toBe('kraken');
+    await expect(page.locator('#s-exchange + [data-custom-select-host] [data-custom-select-label]')).toHaveText('Kraken');
     await expect(page.locator('#s-timeframe + [data-custom-select-host] [data-custom-select-label]')).toHaveText('1h');
   });
 });

@@ -119,7 +119,7 @@ window.BacktestPage = (() => {
 
   function _renderGroup(label, pairs, localSet, configSet, favs, checked = new Set()) {
     if (!pairs.length) return '';
-    const dot = localSet.has(pairs[0]) ? '<span style="color:var(--green)">â¬¤</span>' : configSet.has(pairs[0]) ? '<span style="color:var(--accent)">â¬¤</span>' : '';
+    const dot = localSet.has(pairs[0]) ? '<span style="color:var(--green)">&bull;</span>' : configSet.has(pairs[0]) ? '<span style="color:var(--accent)">&bull;</span>' : '';
     return `<div class="pairs-picker__group-label">${dot} ${_esc(label)}</div>` +
       pairs.map(p => {
         const isFav  = favs.has(p);
@@ -130,7 +130,7 @@ window.BacktestPage = (() => {
                   : isCfg   ? '<span class="pairs-row__tag pairs-row__tag--config">Config</span>'
                   : '';
         return `<div class="pairs-row${isCk ? ' pairs-row--checked' : ''}" data-pair="${_esc(p)}">
-          <button type="button" class="pairs-row__fav${isFav ? ' pairs-row__fav--active' : ''}" data-fav="${_esc(p)}" title="Favourite">â™¥</button>
+          <button type="button" class="pairs-row__fav${isFav ? ' pairs-row__fav--active' : ''}" data-fav="${_esc(p)}" title="Favourite">&#9829;</button>
           <input type="checkbox" class="pairs-row__check" value="${_esc(p)}"${isCk ? ' checked' : ''}>
           <span class="pairs-row__name">${_esc(p)}</span>${tag}
         </div>`;
@@ -402,7 +402,7 @@ window.BacktestPage = (() => {
                 <div class="form-group">
                   <label class="form-label" for="bt-strategy">Strategy <span id="bt-strategy-saved" style="font-size:var(--text-xs);color:var(--green);opacity:0;transition:opacity 0.5s;margin-left:6px"></span></label>
                   <select class="form-select" id="bt-strategy" name="strategy" required data-ui-select="true" data-select-search="always">
-                    <option value="">Loading strategiesâ€¦</option>
+                    <option value="">Loading strategies...</option>
                   </select>
                 </div>
                 <div class="form-group">
@@ -418,16 +418,16 @@ window.BacktestPage = (() => {
                   <label class="form-label">Pairs</label>
                   <div class="pairs-picker" id="bt-pairs-picker">
                     <div class="pairs-picker__toolbar">
-                      <input class="form-input pairs-picker__search" id="bt-pairs-search" type="text" placeholder="Search pairsâ€¦" autocomplete="off">
+                      <input class="form-input pairs-picker__search" id="bt-pairs-search" type="text" placeholder="Search pairs..." autocomplete="off">
                       <div class="pairs-picker__actions">
                         <button type="button" class="pairs-picker__action" id="bt-pairs-all">All</button>
                         <button type="button" class="pairs-picker__action" id="bt-pairs-none">Clear</button>
-                        <button type="button" class="pairs-picker__action" id="bt-pairs-favs">â˜… Favs</button>
+                        <button type="button" class="pairs-picker__action" id="bt-pairs-favs">&#9733; Favs</button>
                       </div>
                       <span class="pairs-picker__count" id="bt-pairs-count">0 selected</span>
                     </div>
                     <div class="pairs-picker__list" id="bt-pairs-list">
-                      <div class="pairs-picker__empty">Loadingâ€¦</div>
+                      <div class="pairs-picker__empty">Loading...</div>
                     </div>
                   </div>
                   <div id="bt-pairs-hint" class="form-hint" style="margin-top:4px"></div>
@@ -490,7 +490,7 @@ window.BacktestPage = (() => {
           <div class="card card--utility" id="bt-status-card" style="display:none">
             <div class="card__header">
               <span class="card__title">Status</span>
-              <span class="badge" id="bt-status-badge">â€”</span>
+              <span class="badge" id="bt-status-badge">--</span>
             </div>
             <div class="card__body">
               <div class="log-panel" id="bt-logs"></div>
@@ -503,12 +503,7 @@ window.BacktestPage = (() => {
             </div>
             <div class="card__body" id="bt-results-body"></div>
           </div>
-          <div class="card card--panel" id="bt-quick-params-card" style="display:none">
-            <div class="card__header">
-              <span class="card__title">Quick Parameter Changes</span>
-            </div>
-            <div class="card__body" id="bt-quick-params-body"></div>
-          </div>
+
         </div>
       </div>
       </div>
@@ -519,7 +514,6 @@ window.BacktestPage = (() => {
     const stopBtn  = DOM.$('#bt-stop-btn', _el);
     const delBtn   = DOM.$('#bt-delete-btn', _el);
     const resultCard = DOM.$('#bt-results-card', _el);
-    const quickParamsBody = DOM.$('#bt-quick-params-body', _el);
 
     DOM.on(exchange, 'change', () => _loadPairs(exchange.value));
     DOM.on(form,     'submit', _onSubmit);
@@ -581,10 +575,6 @@ window.BacktestPage = (() => {
         ResultExplorer.open(_resultRunId);
       }
     });
-    DOM.on(quickParamsBody, 'click', _onQuickParamsAction);
-    DOM.on(quickParamsBody, 'input', _onQuickParamsInput);
-    DOM.on(quickParamsBody, 'change', _onQuickParamsInput);
-    DOM.on(quickParamsBody, 'focusout', _onQuickParamsCommit);
 
     _setupPickerEvents('bt-pairs-list', 'bt-pairs-count', 'bt-pairs-search', 'bt-pairs-all', 'bt-pairs-none', 'bt-pairs-favs');
     _wireSaveEvents();
@@ -693,7 +683,7 @@ window.BacktestPage = (() => {
   async function _loadPairs(exchange, preSelected = null) {
     const listEl = DOM.$('#bt-pairs-list', _el);
     if (!listEl) return;
-    listEl.innerHTML = '<div class="pairs-picker__empty">Loadingâ€¦</div>';
+    listEl.innerHTML = '<div class="pairs-picker__empty">Loading...</div>';
     try {
       const data    = await API.getPairs(exchange);
       const local   = data.local_pairs   || [];
@@ -730,7 +720,7 @@ window.BacktestPage = (() => {
           hint.textContent = `${local.length} pair(s) with downloaded data`;
           hint.style.color = 'var(--green)';
         } else {
-          hint.textContent = 'No local data â€” select pairs then use Download Data';
+          hint.textContent = 'No local data -- select pairs then use Download Data';
           hint.style.color = 'var(--amber)';
         }
       }
@@ -954,9 +944,9 @@ window.BacktestPage = (() => {
   function _quickParamDescription(param) {
     if (!param) return '';
     const range = _quickParamRangeText(param);
-    if (param.type === 'int') return `Integer${range ? ` Â· ${range}` : ''}`;
-    if (param.type === 'decimal') return `Decimal${range ? ` Â· ${range}` : ''} Â· ${param.decimals ?? 3} dp`;
-    if (param.type === 'categorical') return `Categorical Â· ${param.options?.length || 0} options`;
+    if (param.type === 'int') return `Integer${range ? `  /  ${range}` : ''}`;
+    if (param.type === 'decimal') return `Decimal${range ? `  /  ${range}` : ''}  /  ${param.decimals ?? 3} dp`;
+    if (param.type === 'categorical') return `Categorical  /  ${param.options?.length || 0} options`;
     if (param.type === 'bool') return 'Boolean';
     return param.type || 'Parameter';
   }
@@ -1115,7 +1105,7 @@ window.BacktestPage = (() => {
     const mode = _quickParamsMode();
     const strategyName = _quickParamsState.strategyName || _resolveRunStrategyName(meta) || 'Unknown strategy';
     const strategyLabel = _quickParamsState.strategyLabel || _resolveRunStrategyLabel(meta);
-    const runId = _quickParamsState.runId || _resultRunId || 'â€”';
+    const runId = _quickParamsState.runId || _resultRunId || '--';
     const totalParams = _quickParamsState.parameters.length;
     const dirtyCount = _quickDirtyCount();
     let dirtyLabel = dirtyCount ? `${dirtyCount} unsaved change${dirtyCount === 1 ? '' : 's'}` : 'Clean';
@@ -1128,8 +1118,8 @@ window.BacktestPage = (() => {
       dirtyTone = 'badge--red';
     }
     const subtitle = strategyLabel !== strategyName
-      ? `Run ${runId} Â· ${strategyLabel} (${strategyName})`
-      : `Run ${runId} Â· ${strategyName}`;
+      ? `Run ${runId}  /  ${strategyLabel} (${strategyName})`
+      : `Run ${runId}  /  ${strategyName}`;
 
     return `
       <div class="quick-params__toolbar">
@@ -1341,9 +1331,9 @@ window.BacktestPage = (() => {
       stateEl.className = 'quick-params__state';
       let stateText = '';
       if (_quickParamsState.loading) {
-        stateText = 'Loading strategy parametersâ€¦';
+        stateText = 'Loading strategy parameters...';
       } else if (_quickParamsState.saving) {
-        stateText = 'Saving strategy parametersâ€¦';
+        stateText = 'Saving strategy parameters...';
       } else if (isRunning) {
         stateText = `Backtest ${_activeRunId} is running. Run Again is disabled until it completes.`;
       } else if (isEditable && hasParams && dirtyCount) {
@@ -1757,7 +1747,7 @@ window.BacktestPage = (() => {
         command_override: commandOverride,
       });
       _pollDownload(res.job_id || res.run_id, logEl, formBtn);
-      Toast.info('Download startedâ€¦');
+      Toast.info('Download started...');
     } catch (err) {
       if (formBtn) formBtn.disabled = false;
       Toast.error('Download failed: ' + err.message);
@@ -1777,7 +1767,7 @@ window.BacktestPage = (() => {
           clearInterval(_dlPollTimer);
           if (formBtn) formBtn.disabled = false;
           if (data.status === 'completed') {
-            Toast.success('Data downloaded. Refreshing pairsâ€¦');
+            Toast.success('Data downloaded. Refreshing pairs...');
             const ex = DOM.$('#bt-exchange', _el)?.value || 'binance';
             await _loadPairs(ex);
           } else {
@@ -1853,7 +1843,7 @@ window.BacktestPage = (() => {
     if (coverage.ok) return true;
 
     const expandedTimerange = _expandDownloadTimerange(timerange);
-    Toast.info(`Missing/incomplete data detected for ${coverage.missingPairs.join(', ')}. Auto-downloading nowâ€¦`);
+    Toast.info(`Missing/incomplete data detected for ${coverage.missingPairs.join(', ')}. Auto-downloading now...`);
     const res = await API.downloadData({
       pairs,
       timeframe,
@@ -2132,7 +2122,7 @@ window.BacktestPage = (() => {
   }
 
   function _comparisonDeltaValue(row) {
-    if (!row || row.diff == null) return 'â€”';
+    if (!row || row.diff == null) return '--';
     if (row.format === 'currency') return FMT.currency(row.diff);
     if (row.format === 'integer') return `${row.diff > 0 ? '+' : ''}${FMT.integer(row.diff)}`;
     if (row.format === 'ratio') return `${row.diff > 0 ? '+' : ''}${FMT.number(row.diff, 2)}`;
@@ -2165,7 +2155,7 @@ window.BacktestPage = (() => {
     if (FMT.toNumber(snapshot.profit_factor) != null) parts.push(`Profit factor ${FMT.number(snapshot.profit_factor, 2)}`);
     if (FMT.toNumber(snapshot.total_profit_pct) != null) parts.push(`${FMT.pct(snapshot.total_profit_pct)} return`);
     if (FMT.toNumber(snapshot.max_drawdown_pct) != null) parts.push(`${FMT.pct(snapshot.max_drawdown_pct, 1, false)} max drawdown`);
-    return parts.join(' Â· ');
+    return parts.join('  /  ');
   }
 
   function _intelligenceMetricSnapshotText(snapshot) {
@@ -2176,7 +2166,7 @@ window.BacktestPage = (() => {
     return `
       <div class="si-stat-pill" data-intelligence-stat="${_esc(item.label || '')}">
         <span class="si-stat-pill__label">${_esc(item.label || '')}</span>
-        <span class="si-stat-pill__value text-${_esc(item.tone || 'muted')}">${_esc(item.value || 'â€”')}</span>
+        <span class="si-stat-pill__value text-${_esc(item.tone || 'muted')}">${_esc(item.value || '--')}</span>
       </div>
     `;
   }
@@ -2272,7 +2262,7 @@ window.BacktestPage = (() => {
           <div class="bt-intelligence__item-title bt-intelligence__item-title--subsection">Reviewed Payload</div>
           ${_reviewPayloadSummaryHtml()}
           <div class="bt-intelligence__item-evidence">${_esc(validation.message)}</div>
-          <div class="bt-intelligence__item-evidence">${_esc(`Applied: ${applied.length} Â· Skipped: ${skipped.length} Â· ${validation.contextOnly ? 'Context-only rerun' : 'Parameter rerun'}`)}</div>
+          <div class="bt-intelligence__item-evidence">${_esc(`Applied: ${applied.length}  /  Skipped: ${skipped.length}  /  ${validation.contextOnly ? 'Context-only rerun' : 'Parameter rerun'}`)}</div>
           <div class="bt-intelligence__actions" style="justify-content:flex-start">
             <button type="button" class="btn btn--primary btn--sm" data-intelligence-review-action="run" ${validation.ok ? '' : 'disabled'}>Run Improved Backtest</button>
             <button type="button" class="btn btn--secondary btn--sm" data-intelligence-review-action="cancel">Cancel Review</button>
@@ -2604,7 +2594,7 @@ window.BacktestPage = (() => {
     const tradesPerDay = FMT.toNumber(intelligenceSummary.trades_per_day ?? summary.tradesPerDay ?? summary.trades_per_day)
       ?? ((totalTrades != null && backtestDays) ? (totalTrades / backtestDays) : null);
     const tradeMeta = tradesPerDay != null
-      ? `${FMT.number(tradesPerDay, 1)} trades/day${backtestDays ? ` Â· ${FMT.number(backtestDays, 1)} day${backtestDays === 1 ? '' : 's'}` : ''}`
+      ? `${FMT.number(tradesPerDay, 1)} trades/day${backtestDays ? `  /  ${FMT.number(backtestDays, 1)} day${backtestDays === 1 ? '' : 's'}` : ''}`
       : '';
     const winLoss = _deriveWinLossStats(results);
     const winLossMeta = (winLoss.wins != null || winLoss.losses != null)
@@ -2612,7 +2602,7 @@ window.BacktestPage = (() => {
           winLoss.wins != null ? `${FMT.integer(winLoss.wins)} wins` : null,
           winLoss.losses != null ? `${FMT.integer(winLoss.losses)} losses` : null,
           winLoss.draws ? `${FMT.integer(winLoss.draws)} draws` : null,
-        ].filter(Boolean).join(' Â· ')
+        ].filter(Boolean).join('  /  ')
       : '';
     const resultCard = DOM.$('#bt-results-card', _el);
     if (resultCard) {
@@ -2630,13 +2620,13 @@ window.BacktestPage = (() => {
       <div class="bt-results-summary">
         <div class="bt-results-primary">
           <article class="bt-summary-card bt-summary-card--wallet">
-            <div class="bt-summary-card__label">Start Wallet â†’ Final Wallet</div>
+            <div class="bt-summary-card__label">Start Wallet -> Final Wallet</div>
             <div class="bt-wallet-flow">
               <div class="bt-wallet-flow__item">
                 <span class="bt-wallet-flow__tag">Start</span>
                 <span class="bt-wallet-flow__value">${FMT.currency(startingBalance)}</span>
               </div>
-              <span class="bt-wallet-flow__arrow">â†’</span>
+              <span class="bt-wallet-flow__arrow">-></span>
               <div class="bt-wallet-flow__item">
                 <span class="bt-wallet-flow__tag">Final</span>
                 <span class="bt-wallet-flow__value ${walletDelta != null ? `text-${FMT.toneProfit(walletDelta)}` : ''}">${FMT.currency(finalBalance)}</span>
@@ -2646,15 +2636,15 @@ window.BacktestPage = (() => {
           </article>
           <article class="bt-summary-card bt-summary-card--net">
             <div class="bt-summary-card__label">Net Profit / Loss</div>
-            <div class="bt-summary-card__hero ${totalProfitAbs != null ? `text-${FMT.toneProfit(totalProfitAbs)}` : ''}">${totalProfitAbs != null ? FMT.currency(totalProfitAbs) : 'â€”'}</div>
-            <div class="bt-summary-card__subvalue ${profitPct != null ? `text-${FMT.toneProfit(profitPct)}` : ''}">${profitPct != null ? FMT.pct(profitPct) : 'â€”'}</div>
+            <div class="bt-summary-card__hero ${totalProfitAbs != null ? `text-${FMT.toneProfit(totalProfitAbs)}` : ''}">${totalProfitAbs != null ? FMT.currency(totalProfitAbs) : '--'}</div>
+            <div class="bt-summary-card__subvalue ${profitPct != null ? `text-${FMT.toneProfit(profitPct)}` : ''}">${profitPct != null ? FMT.pct(profitPct) : '--'}</div>
             <div class="bt-summary-card__meta">${_esc(netResultMeta)}</div>
           </article>
         </div>
         <div class="bt-results-grid">
-          ${_resultSummaryCard('Trade Activity', totalTrades != null ? `${FMT.integer(totalTrades)} total trades` : 'â€”', tradeMeta || 'Trading frequency was unavailable', tradesPerDay != null ? (tradesPerDay >= 4 ? 'amber' : 'muted') : '', 'activity')}
-          ${_resultSummaryCard('Win Rate Across Closed Trades', winRate != null ? FMT.pct(winRate, 1, false) : 'â€”', winLossMeta || 'Win/loss breakdown was unavailable', FMT.toneWinRate(winRate), 'quality')}
-          ${_resultSummaryCard('Maximum Drawdown', drawdownPct != null ? FMT.pct(drawdownPct, 1, false) : 'â€”', _resultRiskMeta(results, drawdownAbs) || 'Peak-to-trough drawdown context was unavailable', FMT.toneDrawdown(drawdownPct), 'risk')}
+          ${_resultSummaryCard('Trade Activity', totalTrades != null ? `${FMT.integer(totalTrades)} total trades` : '--', tradeMeta || 'Trading frequency was unavailable', tradesPerDay != null ? (tradesPerDay >= 4 ? 'amber' : 'muted') : '', 'activity')}
+          ${_resultSummaryCard('Win Rate Across Closed Trades', winRate != null ? FMT.pct(winRate, 1, false) : '--', winLossMeta || 'Win/loss breakdown was unavailable', FMT.toneWinRate(winRate), 'quality')}
+          ${_resultSummaryCard('Maximum Drawdown', drawdownPct != null ? FMT.pct(drawdownPct, 1, false) : '--', _resultRiskMeta(results, drawdownAbs) || 'Peak-to-trough drawdown context was unavailable', FMT.toneDrawdown(drawdownPct), 'risk')}
         </div>
         ${sharpe != null ? `
           <div class="bt-results-tech">

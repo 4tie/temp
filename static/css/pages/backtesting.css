@@ -36,12 +36,16 @@
    ──────────────────────────────────────────────────────────── */
 
 #bt-status-card .card__body,
-#bt-results-card .card__body,
 #bt-quick-params-card .card__body {
   max-height: 400px;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
+}
+
+#bt-results-card .card__body {
+  max-height: none;
+  overflow: visible;
 }
 
 #bt-results-card.result-explorer-card {
@@ -1361,3 +1365,4 @@
   border-color: var(--border-subtle);
   color: var(--text-secondary);
 }
+

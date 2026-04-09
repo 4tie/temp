@@ -83,7 +83,7 @@ window.HyperoptPage = (() => {
 
   function _renderGroup(label, pairs, localSet, configSet, favs, checked = new Set()) {
     if (!pairs.length) return '';
-    const dot = localSet.has(pairs[0]) ? '<span style="color:var(--green)">â¬¤</span>' : configSet.has(pairs[0]) ? '<span style="color:var(--accent)">â¬¤</span>' : '';
+    const dot = localSet.has(pairs[0]) ? '<span style="color:var(--green)">&bull;</span>' : configSet.has(pairs[0]) ? '<span style="color:var(--accent)">&bull;</span>' : '';
     return `<div class="pairs-picker__group-label">${dot} ${_esc(label)}</div>` +
       pairs.map(p => {
         const isFav = favs.has(p);
@@ -92,7 +92,7 @@ window.HyperoptPage = (() => {
                     : configSet.has(p) ? '<span class="pairs-row__tag pairs-row__tag--config">Config</span>'
                     : '';
         return `<div class="pairs-row${isCk ? ' pairs-row--checked' : ''}" data-pair="${_esc(p)}">
-          <button type="button" class="pairs-row__fav${isFav ? ' pairs-row__fav--active' : ''}" data-fav="${_esc(p)}" title="Favourite">â™¥</button>
+          <button type="button" class="pairs-row__fav${isFav ? ' pairs-row__fav--active' : ''}" data-fav="${_esc(p)}" title="Favourite">&#9829;</button>
           <input type="checkbox" class="pairs-row__check" value="${_esc(p)}"${isCk ? ' checked' : ''}>
           <span class="pairs-row__name">${_esc(p)}</span>${tag}
         </div>`;
@@ -267,7 +267,7 @@ window.HyperoptPage = (() => {
                 <div class="form-group">
                   <label class="form-label" for="ho-strategy">Strategy</label>
                   <select class="form-select" id="ho-strategy" name="strategy" required data-ui-select="true" data-select-search="always">
-                    <option value="">Loadingâ€¦</option>
+                    <option value="">Loading...</option>
                   </select>
                 </div>
                 <div class="form-group">
@@ -282,16 +282,16 @@ window.HyperoptPage = (() => {
                   <label class="form-label">Pairs</label>
                   <div class="pairs-picker" id="ho-pairs-picker">
                     <div class="pairs-picker__toolbar">
-                      <input class="form-input pairs-picker__search" id="ho-pairs-search" type="text" placeholder="Search pairsâ€¦" autocomplete="off">
+                      <input class="form-input pairs-picker__search" id="ho-pairs-search" type="text" placeholder="Search pairs..." autocomplete="off">
                       <div class="pairs-picker__actions">
                         <button type="button" class="pairs-picker__action" id="ho-pairs-all">All</button>
                         <button type="button" class="pairs-picker__action" id="ho-pairs-none">Clear</button>
-                        <button type="button" class="pairs-picker__action" id="ho-pairs-favs">â˜… Favs</button>
+                        <button type="button" class="pairs-picker__action" id="ho-pairs-favs">&#9733; Favs</button>
                       </div>
                       <span class="pairs-picker__count" id="ho-pairs-count">0 selected</span>
                     </div>
                     <div class="pairs-picker__list" id="ho-pairs-list">
-                      <div class="pairs-picker__empty">Loadingâ€¦</div>
+                      <div class="pairs-picker__empty">Loading...</div>
                     </div>
                   </div>
                   <div id="ho-pairs-hint" class="form-hint hyperopt-pairs-hint"></div>
@@ -299,7 +299,7 @@ window.HyperoptPage = (() => {
                 <div class="form-group">
                   <label class="form-label" for="ho-loss">Loss Function</label>
                   <select class="form-select" id="ho-loss" name="loss_function" data-ui-select="true" data-select-search="always">
-                    <option value="">Loadingâ€¦</option>
+                    <option value="">Loading...</option>
                   </select>
                 </div>
                 <div class="form-group">
@@ -370,7 +370,7 @@ window.HyperoptPage = (() => {
             </div>
             <div class="card__header">
               <span class="card__title">Progress</span>
-              <span class="badge" id="ho-status-badge">â€”</span>
+              <span class="badge" id="ho-status-badge">--</span>
             </div>
             <div class="card__body">
               <div id="ho-cmd"></div>
@@ -454,7 +454,7 @@ window.HyperoptPage = (() => {
   async function _loadPairs(exchange, preSelected = null) {
     const listEl = DOM.$('#ho-pairs-list', _el);
     if (!listEl) return;
-    listEl.innerHTML = '<div class="pairs-picker__empty">Loadingâ€¦</div>';
+    listEl.innerHTML = '<div class="pairs-picker__empty">Loading...</div>';
     try {
       const data    = await API.getPairs(exchange);
       const local   = data.local_pairs   || [];
@@ -484,7 +484,7 @@ window.HyperoptPage = (() => {
       const hint = DOM.$('#ho-pairs-hint', _el);
       if (hint) {
         if (local.length) { hint.textContent = `${local.length} pair(s) with downloaded data`; hint.style.color = 'var(--green)'; }
-        else              { hint.textContent = 'No local data â€” select pairs then use Download Data'; hint.style.color = 'var(--amber)'; }
+        else              { hint.textContent = 'No local data -- select pairs then use Download Data'; hint.style.color = 'var(--amber)'; }
       }
     } catch {
       listEl.innerHTML = '<div class="pairs-picker__empty">Failed to load pairs</div>';
@@ -512,7 +512,7 @@ window.HyperoptPage = (() => {
       const timerange = DOM.$('#ho-timerange', _el)?.value || null;
       const res = await API.downloadData({ pairs: selected, timeframe: tf, timerange, command_override: commandOverride });
       _pollDownload(res.job_id || res.run_id, logEl, formBtn);
-      Toast.info('Download startedâ€¦');
+      Toast.info('Download started...');
     } catch (err) {
       if (formBtn) formBtn.disabled = false;
       Toast.error('Download failed: ' + err.message);
@@ -532,7 +532,7 @@ window.HyperoptPage = (() => {
           clearInterval(_dlPollTimer);
           if (formBtn) formBtn.disabled = false;
           if (data.status === 'completed') {
-            Toast.success('Data downloaded. Refreshing pairsâ€¦');
+            Toast.success('Data downloaded. Refreshing pairs...');
             await _loadPairs(DOM.$('#ho-exchange', _el)?.value || 'binance');
           } else {
             Toast.error('Download failed.');
@@ -554,10 +554,10 @@ window.HyperoptPage = (() => {
           <thead><tr><th>Run ID</th><th>Strategy</th><th>Status</th><th>Epochs</th></tr></thead>
           <tbody>${runs.map(r => `
             <tr>
-              <td class="font-mono text-sm">${FMT.truncate(r.run_id || 'â€”', 18)}</td>
-              <td>${r.strategy || 'â€”'}</td>
+              <td class="font-mono text-sm">${FMT.truncate(r.run_id || '--', 18)}</td>
+              <td>${r.strategy || '--'}</td>
               <td><span class="badge badge--${FMT.statusColor(r.status)}">${FMT.statusLabel(r.status)}</span></td>
-              <td>${r.epochs ?? 'â€”'}</td>
+              <td>${r.epochs ?? '--'}</td>
             </tr>`).join('')}
           </tbody>
         </table>`;
@@ -595,7 +595,7 @@ window.HyperoptPage = (() => {
     let coverage = await _validateSelectedPairData({ pairs, timeframe, exchange, timerange });
     if (coverage.ok) return true;
 
-    Toast.info(`Missing/incomplete data detected for ${coverage.missingPairs.join(', ')}. Auto-downloading nowâ€¦`);
+    Toast.info(`Missing/incomplete data detected for ${coverage.missingPairs.join(', ')}. Auto-downloading now...`);
     const res = await API.downloadData({
       pairs,
       timeframe,
@@ -773,10 +773,10 @@ window.HyperoptPage = (() => {
     const drawdownPct = FMT.resultDrawdownPercent(best.drawdown_pct);
     el.innerHTML = `
       <div class="results-overview hyperopt-results-overview">
-        ${_metric('Profit %',   profitPct != null ? FMT.pct(profitPct) : 'â€”', (profitPct||0)>0?'green':'red')}
-        ${_metric('Trades',     best.trades ?? best.trade_count ?? best.total_trades ?? 'â€”')}
-        ${_metric('Win Rate',   winRate != null ? FMT.pct(winRate,1,false) : 'â€”')}
-        ${_metric('Drawdown',   drawdownPct != null ? FMT.pct(drawdownPct,1,false) : 'â€”', 'red')}
+        ${_metric('Profit %',   profitPct != null ? FMT.pct(profitPct) : '--', (profitPct||0)>0?'green':'red')}
+        ${_metric('Trades',     best.trades ?? best.trade_count ?? best.total_trades ?? '--')}
+        ${_metric('Win Rate',   winRate != null ? FMT.pct(winRate,1,false) : '--')}
+        ${_metric('Drawdown',   drawdownPct != null ? FMT.pct(drawdownPct,1,false) : '--', 'red')}
       </div>
       ${Object.keys(params).length ? `
         <div class="section-heading">Best Parameters</div>

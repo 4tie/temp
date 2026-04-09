@@ -2060,9 +2060,9 @@ window.AIDiagPage = (() => {
     const accepted = !!evt.accepted;
     const fitBeforeVal = evt.fitness_after === null || evt.fitness_after === undefined ? evt.fitness_before : evt.fitness_before;
     const fitAfterVal = evt.fitness_after;
-    const fitBefore = fitBeforeVal === null || fitBeforeVal === undefined ? 'â€”' : Number(fitBeforeVal).toFixed(1);
-    const fitAfter  = fitAfterVal === null || fitAfterVal === undefined ? 'â€”' : Number(fitAfterVal).toFixed(1);
-    const delta     = evt.delta === null || evt.delta === undefined ? 'â€”' : evt.delta;
+    const fitBefore = fitBeforeVal === null || fitBeforeVal === undefined ? '--' : Number(fitBeforeVal).toFixed(1);
+    const fitAfter  = fitAfterVal === null || fitAfterVal === undefined ? '--' : Number(fitAfterVal).toFixed(1);
+    const delta     = evt.delta === null || evt.delta === undefined ? '--' : evt.delta;
     const deltaNum  = parseFloat(delta);
     const deltaClass = deltaNum > 0 ? 'pos' : deltaNum < 0 ? 'neg' : 'zero';
     const aborted = status === 'aborted_pre_mutation';
@@ -2115,7 +2115,7 @@ window.AIDiagPage = (() => {
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             <span>${fitAfter}</span>
           </div>
-          <span class="evo-fitness-delta evo-fitness-delta--${deltaClass}">${delta === 'â€”' ? 'â€”' : `(${delta})`}</span>
+          <span class="evo-fitness-delta evo-fitness-delta--${deltaClass}">${delta === '--' ? '--' : `(${delta})`}</span>
           <div class="evo-fitness-bar-wrap">
             <div class="evo-fitness-bar" style="width:${barWidth}%"></div>
           </div>
@@ -2123,7 +2123,7 @@ window.AIDiagPage = (() => {
 
         ${changes ? `<div class="evo-changes">&ldquo;${_escHtml(changes)}&rdquo;</div>` : ''}
         <div class="evo-changes" style="opacity:.8">
-          ${retryMeta ? `retry ${_escHtml(retryMeta)} Â· ` : ''}${fingerprint ? `fp ${_escHtml(String(fingerprint).slice(0, 16))} Â· ` : ''}${explorationLevel ? `explore ${_escHtml(explorationLevel)} Â· ` : ''}${rejectionCategory ? `reason ${_escHtml(rejectionCategory)}` : ' '}
+          ${retryMeta ? `retry ${_escHtml(retryMeta)}  /  ` : ''}${fingerprint ? `fp ${_escHtml(String(fingerprint).slice(0, 16))}  /  ` : ''}${explorationLevel ? `explore ${_escHtml(explorationLevel)}  /  ` : ''}${rejectionCategory ? `reason ${_escHtml(rejectionCategory)}` : ' '}
         </div>
 
         <div class="evo-card-actions">
@@ -2177,10 +2177,10 @@ window.AIDiagPage = (() => {
             : duplicateRejected
               ? 'Duplicate Rejected'
               : (acc ? 'Accepted' : 'Rejected');
-        const d = g.delta === null || g.delta === undefined ? 'â€”' : Number(g.delta).toFixed(1);
+        const d = g.delta === null || g.delta === undefined ? '--' : Number(g.delta).toFixed(1);
         const dNum = parseFloat(d);
         const dc = dNum > 0 ? 'pos' : dNum < 0 ? 'neg' : 'zero';
-        const fitAfter = g.fitness_after === null || g.fitness_after === undefined ? 'â€”' : Number(g.fitness_after).toFixed(1);
+        const fitAfter = g.fitness_after === null || g.fitness_after === undefined ? '--' : Number(g.fitness_after).toFixed(1);
         const retryMeta = (g.retry_attempt && g.retry_limit) ? `${g.retry_attempt}/${g.retry_limit}` : '-';
         const fingerprint = g.candidate_fingerprint ? String(g.candidate_fingerprint).slice(0, 10) : '-';
         const category = g.rejection_category || '-';
@@ -2189,7 +2189,7 @@ window.AIDiagPage = (() => {
             <td>${g.generation}</td>
             <td style="font-family:var(--font-mono);font-size:10px">${_escHtml(g.version_id || g.version_name || "-")}</td>
             <td>${fitAfter}</td>
-            <td class="evo-fitness-delta evo-fitness-delta--${dc}">${d === 'â€”' ? 'â€”' : `${dNum > 0 ? '+' : ''}${d}`}</td>
+            <td class="evo-fitness-delta evo-fitness-delta--${dc}">${d === '--' ? '--' : `${dNum > 0 ? '+' : ''}${d}`}</td>
             <td>${_escHtml(retryMeta)}</td>
             <td style="font-family:var(--font-mono);font-size:10px">${_escHtml(fingerprint)}</td>
             <td>${_escHtml(category)}</td>
