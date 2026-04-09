@@ -59,6 +59,9 @@ def _next_openrouter_key() -> tuple[str | None, int | None]:
 def _is_retryable_provider_error(provider_name: str, error_text: str) -> bool:
     text = str(error_text or "").lower()
     if provider_name != "openrouter":
+        # Ollama model errors (500 / OOM / corrupt weights) are not transient — skip retries.
+        if "ollama model error" in text or "empty content" in text:
+            return False
         return True
     if any(marker in text for marker in ("status=401", "status=403", "user not found", "no openrouter api keys configured")):
         return False

@@ -1,5 +1,5 @@
 {
-  "updated_at": 1775768368.0823915,
+  "updated_at": 1775776694.0455885,
   "roles": {
     "composer": {
       "openrouter/model:free": {
@@ -10,6 +10,15 @@
         "latency_samples": 4.0,
         "cooldown_until": 0.0,
         "updated_at": 1775432810.646853
+      },
+      "qwen2.5-coder:latest": {
+        "requests": 1.0,
+        "successes": 1.0,
+        "rate_limits": 0.0,
+        "latency_sum_ms": 42483.0,
+        "latency_samples": 1.0,
+        "cooldown_until": 0.0,
+        "updated_at": 1775776694.0455885
       }
     },
     "explainer": {
@@ -119,6 +128,15 @@
         "latency_samples": 3.0,
         "cooldown_until": 1775456464.4642913,
         "updated_at": 1775482411.5863523
+      },
+      "qwen2.5-coder:latest": {
+        "requests": 1.0,
+        "successes": 1.0,
+        "rate_limits": 0.0,
+        "latency_sum_ms": 37782.0,
+        "latency_samples": 1.0,
+        "cooldown_until": 0.0,
+        "updated_at": 1775776651.5540223
       }
     }
   }

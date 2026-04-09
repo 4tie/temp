@@ -589,96 +589,198 @@ window.ResultExplorer = (() => {
     }
   }
 
+  function _tradeRowClass(profitPct) {
+    const v = parseFloat(profitPct);
+    if (!Number.isFinite(v)) return '';
+    if (v >= 5)  return 'trade-row--big-win';
+    if (v > 0)   return 'trade-row--win';
+    if (v <= -5) return 'trade-row--big-loss';
+    if (v < 0)   return 'trade-row--loss';
+    return 'trade-row--flat';
+  }
+
+  function _formatDuration(trade) {
+    // prefer pre-computed duration string, else compute from timestamps
+    if (trade.duration) return _esc(trade.duration);
+    const open  = Date.parse(trade.openDate  || trade.open_date  || '');
+    const close = Date.parse(trade.closeDate || trade.close_date || '');
+    if (!open || !close) return '—';
+    const ms = close - open;
+    const h  = Math.floor(ms / 3600000);
+    const m  = Math.floor((ms % 3600000) / 60000);
+    if (h >= 24) return `${Math.floor(h / 24)}d ${h % 24}h`;
+    return `${h}h ${m}m`;
+  }
+
   function _renderTradesTab(results) {
-    const state = _state.tables.trades;
+    const state  = _state.tables.trades;
     const trades = _filteredTrades(results.trades || [], state.filter);
     const sorted = _sortRows(trades, state.key, state.dir);
+    const wins   = sorted.filter(t => parseFloat(t.profitPct ?? t.profit_ratio) > 0).length;
+    const losses = sorted.filter(t => parseFloat(t.profitPct ?? t.profit_ratio) < 0).length;
+    const totalPct = sorted.reduce((s, t) => s + (parseFloat(t.profitPct ?? t.profit_ratio ?? 0) || 0), 0);
     const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
     const page = Math.min(state.page, totalPages);
     _state.tables.trades.page = page;
-    const start = (page - 1) * PAGE_SIZE;
+    const start    = (page - 1) * PAGE_SIZE;
     const pageRows = sorted.slice(start, start + PAGE_SIZE);
 
     return `
-      <div class="result-explorer__table-tools">
-        <input class="form-input" type="text" placeholder="Filter trades by pair, tag, exit, direction…" value="${_esc(state.filter)}" data-table-filter="trades">
-        <div class="result-explorer__table-meta">${sorted.length} trade(s)</div>
+      <div class="trades-summary-bar">
+        <div class="trades-summary-bar__stat">
+          <span class="trades-summary-bar__label">Total</span>
+          <span class="trades-summary-bar__value">${sorted.length}</span>
+        </div>
+        <div class="trades-summary-bar__stat">
+          <span class="trades-summary-bar__label">Wins</span>
+          <span class="trades-summary-bar__value text-green">${wins}</span>
+        </div>
+        <div class="trades-summary-bar__stat">
+          <span class="trades-summary-bar__label">Losses</span>
+          <span class="trades-summary-bar__value text-red">${losses}</span>
+        </div>
+        <div class="trades-summary-bar__stat">
+          <span class="trades-summary-bar__label">Win Rate</span>
+          <span class="trades-summary-bar__value text-${FMT.toneWinRate(sorted.length ? wins / sorted.length * 100 : 0)}">${sorted.length ? (wins / sorted.length * 100).toFixed(1) : '0.0'}%</span>
+        </div>
+        <div class="trades-summary-bar__stat">
+          <span class="trades-summary-bar__label">Total P/L</span>
+          <span class="trades-summary-bar__value text-${_toneFromNumber(totalPct)}">${totalPct >= 0 ? '+' : ''}${totalPct.toFixed(2)}%</span>
+        </div>
+        <div class="trades-summary-bar__search">
+          <input class="form-input form-input--sm" type="text" placeholder="Filter by pair, tag, exit, direction…" value="${_esc(state.filter)}" data-table-filter="trades">
+        </div>
       </div>
-      ${_table(
-        [
-          ['pair', 'Pair'],
-          ['direction', 'Dir'],
-          ['openDate', 'Open'],
-          ['closeDate', 'Close'],
-          ['duration', 'Duration'],
-          ['stakeAmount', 'Stake'],
-          ['profitPct', 'Profit %'],
-          ['profit', 'Profit'],
-          ['minRate', 'MAE'],
-          ['maxRate', 'MFE'],
-          ['exitReason', 'Exit'],
-        ],
-        pageRows.map((trade) => [
-          `<span class="font-mono">${_esc(trade.pair)}</span>`,
-          _esc(trade.direction || 'long'),
-          FMT.ts(trade.openDate),
-          FMT.ts(trade.closeDate),
-          _esc(trade.duration || '—'),
-          FMT.currency(trade.stakeAmount),
-          `<span class="text-${_toneFromNumber(trade.profitPct)}">${_formatPct(trade.profitPct)}</span>`,
-          `<span class="text-${_toneFromNumber(trade.profit)}">${FMT.currency(trade.profit)}</span>`,
-          FMT.number(trade.minRate, 4),
-          FMT.number(trade.maxRate, 4),
-          _esc(trade.exitReason || '—'),
-        ]),
-        'trades'
-      )}
+      <div class="result-explorer__table-wrap">
+        <table class="data-table data-table--sm trades-table">
+          <thead>
+            <tr>
+              <th class="sortable ${state.key==='pair'?'sorted':''} trades-col--pair" data-table-sort="trades:pair">Pair${state.key==='pair'?(state.dir===1?' ▲':' ▼'):''}</th>
+              <th class="sortable ${state.key==='direction'?'sorted':''}" data-table-sort="trades:direction">Dir${state.key==='direction'?(state.dir===1?' ▲':' ▼'):''}</th>
+              <th class="sortable ${state.key==='openDate'?'sorted':''}" data-table-sort="trades:openDate">Open${state.key==='openDate'?(state.dir===1?' ▲':' ▼'):''}</th>
+              <th class="sortable ${state.key==='closeDate'?'sorted':''}" data-table-sort="trades:closeDate">Close${state.key==='closeDate'?(state.dir===1?' ▲':' ▼'):''}</th>
+              <th class="sortable ${state.key==='duration'?'sorted':''}" data-table-sort="trades:duration">Time Open${state.key==='duration'?(state.dir===1?' ▲':' ▼'):''}</th>
+              <th class="sortable ${state.key==='stakeAmount'?'sorted':''}" data-table-sort="trades:stakeAmount">Stake${state.key==='stakeAmount'?(state.dir===1?' ▲':' ▼'):''}</th>
+              <th class="sortable ${state.key==='profitPct'?'sorted':''}" data-table-sort="trades:profitPct">Profit %${state.key==='profitPct'?(state.dir===1?' ▲':' ▼'):''}</th>
+              <th class="sortable ${state.key==='profit'?'sorted':''}" data-table-sort="trades:profit">Profit${state.key==='profit'?(state.dir===1?' ▲':' ▼'):''}</th>
+              <th class="sortable ${state.key==='minRate'?'sorted':''}" data-table-sort="trades:minRate">MAE${state.key==='minRate'?(state.dir===1?' ▲':' ▼'):''}</th>
+              <th class="sortable ${state.key==='maxRate'?'sorted':''}" data-table-sort="trades:maxRate">MFE${state.key==='maxRate'?(state.dir===1?' ▲':' ▼'):''}</th>
+              <th class="sortable ${state.key==='exitReason'?'sorted':''}" data-table-sort="trades:exitReason">Exit${state.key==='exitReason'?(state.dir===1?' ▲':' ▼'):''}</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${pageRows.length ? pageRows.map((trade) => {
+              const pct = parseFloat(trade.profitPct ?? trade.profit_ratio ?? 0);
+              const rowClass = _tradeRowClass(pct);
+              const dur = _formatDuration(trade);
+              return `
+                <tr class="${rowClass}">
+                  <td class="trades-col--pair"><span class="font-mono trade-pair">${_esc(trade.pair)}</span></td>
+                  <td><span class="trade-dir trade-dir--${_esc((trade.direction||'long').toLowerCase())}">${_esc(trade.direction || 'long')}</span></td>
+                  <td class="font-mono text-muted trade-date">${FMT.ts(trade.openDate)}</td>
+                  <td class="font-mono text-muted trade-date">${FMT.ts(trade.closeDate)}</td>
+                  <td class="trade-duration">${dur}</td>
+                  <td class="font-mono">${FMT.currency(trade.stakeAmount)}</td>
+                  <td><span class="trade-pct trade-pct--${_toneFromNumber(pct)}">${_formatPct(pct)}</span></td>
+                  <td><span class="font-mono text-${_toneFromNumber(trade.profit)}">${FMT.currency(trade.profit)}</span></td>
+                  <td class="font-mono text-muted">${FMT.number(trade.minRate, 4)}</td>
+                  <td class="font-mono text-muted">${FMT.number(trade.maxRate, 4)}</td>
+                  <td><span class="trade-exit">${_esc(trade.exitReason || '—')}</span></td>
+                </tr>`;
+            }).join('') : `<tr><td colspan="11" class="text-muted" style="text-align:center;padding:32px">No trades match the current filter.</td></tr>`}
+          </tbody>
+        </table>
+      </div>
       <div class="result-explorer__pager">
-        <button class="btn btn--secondary btn--sm" data-trades-page="-1" ${page <= 1 ? 'disabled' : ''}>Prev</button>
-        <span>Page ${page} / ${totalPages}</span>
-        <button class="btn btn--secondary btn--sm" data-trades-page="1" ${page >= totalPages ? 'disabled' : ''}>Next</button>
+        <button class="btn btn--secondary btn--sm" data-trades-page="-1" ${page <= 1 ? 'disabled' : ''}>← Prev</button>
+        <span class="text-muted" style="font-size:var(--text-xs)">Page ${page} of ${totalPages} · ${sorted.length} trades</span>
+        <button class="btn btn--secondary btn--sm" data-trades-page="1" ${page >= totalPages ? 'disabled' : ''}>Next →</button>
       </div>
     `;
   }
 
   function _renderPerPairTab(results) {
-    const state = _state.tables.per_pair;
+    const state  = _state.tables.per_pair;
     const filter = (state.filter || '').trim().toLowerCase();
-    const rows = (results.per_pair || []).filter((row) => !filter || String(row.pair || '').toLowerCase().includes(filter));
+    const rows   = (results.per_pair || []).filter(r => !filter || String(r.pair || '').toLowerCase().includes(filter));
     const sorted = _sortRows(rows, state.key, state.dir);
+    const allTrades = results.trades || [];
+
+    // top-3 best / worst by profit_total_pct
+    const ranked = [...sorted].sort((a, b) => (b.profit_total_pct ?? 0) - (a.profit_total_pct ?? 0));
+    const top3   = ranked.slice(0, 3);
+    const bot3   = ranked.slice(-3).reverse();
+
+    const _pairCard = (row, rank, tone) => {
+      const pct = parseFloat(row.profit_total_pct ?? 0);
+      const wr  = parseFloat(row.winrate ?? 0);
+      // trades for this pair
+      const pairTrades = allTrades.filter(t => t.pair === row.pair);
+      const wins  = pairTrades.filter(t => parseFloat(t.profitPct ?? 0) > 0).length;
+      const total = pairTrades.length || row.trades || 0;
+      return `
+        <div class="pair-card pair-card--${tone}">
+          <div class="pair-card__rank">#${rank}</div>
+          <div class="pair-card__pair font-mono">${_esc(row.pair)}</div>
+          <div class="pair-card__pct text-${_toneFromNumber(pct)}">${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%</div>
+          <div class="pair-card__meta">
+            <span>${total} trades</span>
+            <span class="text-${FMT.toneWinRate(wr)}">${wr.toFixed(1)}% WR</span>
+            <span>${_esc(row.duration_avg || '—')} avg</span>
+          </div>
+          ${total > 0 ? `<div class="pair-card__bar"><div class="pair-card__bar-fill" style="width:${Math.min(100, (wins/total)*100).toFixed(1)}%;background:var(--success)"></div></div>` : ''}
+        </div>`;
+    };
 
     return `
+      <div class="per-pair-highlights">
+        <div class="per-pair-highlights__group">
+          <div class="per-pair-highlights__label">Top Performers</div>
+          <div class="per-pair-highlights__cards">${top3.map((r, i) => _pairCard(r, i + 1, 'win')).join('')}</div>
+        </div>
+        <div class="per-pair-highlights__group">
+          <div class="per-pair-highlights__label">Worst Performers</div>
+          <div class="per-pair-highlights__cards">${bot3.map((r, i) => _pairCard(r, i + 1, 'loss')).join('')}</div>
+        </div>
+      </div>
+
       <div class="result-explorer__table-tools">
         <input class="form-input" type="text" placeholder="Filter pairs…" value="${_esc(state.filter)}" data-table-filter="per_pair">
-        <div class="result-explorer__table-meta">${sorted.length} pair row(s)</div>
+        <div class="result-explorer__table-meta">${sorted.length} pair(s)</div>
       </div>
-      ${_table(
-        [
-          ['pair', 'Pair'],
-          ['trades', 'Trades'],
-          ['profit_total_pct', 'Profit %'],
-          ['profit_total_abs', 'Profit'],
-          ['winrate', 'Win Rate'],
-          ['max_drawdown', 'Drawdown'],
-          ['profit_factor', 'Factor'],
-          ['expectancy', 'Expectancy'],
-          ['sharpe', 'Sharpe'],
-          ['duration_avg', 'Avg Duration'],
-        ],
-        sorted.map((row) => [
-          `<span class="font-mono">${_esc(row.pair)}</span>`,
-          FMT.integer(row.trades),
-          `<span class="text-${_toneFromNumber(row.profit_total_pct)}">${_formatPct(row.profit_total_pct)}</span>`,
-          `<span class="text-${_toneFromNumber(row.profit_total_abs)}">${FMT.currency(row.profit_total_abs)}</span>`,
-          `<span class="text-${FMT.toneWinRate(row.winrate)}">${_formatPct(row.winrate, 1, false)}</span>`,
-          `<span class="text-${FMT.toneDrawdown(row.max_drawdown)}">${_formatPct(row.max_drawdown, 1, false)}</span>`,
-          `<span class="text-${FMT.toneRatio(row.profit_factor, 1)}">${FMT.number(row.profit_factor, 3)}</span>`,
-          `<span class="text-${FMT.toneProfit(row.expectancy)}">${FMT.number(row.expectancy, 4)}</span>`,
-          `<span class="text-${FMT.toneRatio(row.sharpe, 1)}">${FMT.number(row.sharpe, 3)}</span>`,
-          _esc(row.duration_avg || '—'),
-        ]),
-        'per_pair'
-      )}
+
+      <div class="result-explorer__table-wrap">
+        <table class="data-table data-table--sm per-pair-table">
+          <thead>
+            <tr>
+              ${[['pair','Pair'],['trades','Trades'],['profit_total_pct','Profit %'],['profit_total_abs','Profit'],['winrate','Win Rate'],['max_drawdown','Drawdown'],['profit_factor','Factor'],['expectancy','Expectancy'],['sharpe','Sharpe'],['duration_avg','Avg Duration']]
+                .map(([k, l]) => {
+                  const active = state.key === k;
+                  return `<th class="sortable ${active?'sorted':''}" data-table-sort="per_pair:${k}">${_esc(l)}${active?(state.dir===1?' ▲':' ▼'):''}</th>`;
+                }).join('')}
+            </tr>
+          </thead>
+          <tbody>
+            ${sorted.length ? sorted.map(row => {
+              const pct = parseFloat(row.profit_total_pct ?? 0);
+              const rowTone = pct > 0 ? 'pair-row--win' : pct < 0 ? 'pair-row--loss' : '';
+              return `
+                <tr class="${rowTone}">
+                  <td><span class="font-mono pair-name">${_esc(row.pair)}</span></td>
+                  <td class="font-mono">${FMT.integer(row.trades)}</td>
+                  <td><span class="trade-pct trade-pct--${_toneFromNumber(pct)}">${_formatPct(pct)}</span></td>
+                  <td><span class="font-mono text-${_toneFromNumber(row.profit_total_abs)}">${FMT.currency(row.profit_total_abs)}</span></td>
+                  <td><span class="text-${FMT.toneWinRate(row.winrate)}">${_formatPct(row.winrate, 1, false)}</span></td>
+                  <td><span class="text-${FMT.toneDrawdown(row.max_drawdown)}">${_formatPct(row.max_drawdown, 1, false)}</span></td>
+                  <td><span class="text-${FMT.toneRatio(row.profit_factor, 1)}">${FMT.number(row.profit_factor, 3)}</span></td>
+                  <td><span class="text-${FMT.toneProfit(row.expectancy)}">${FMT.number(row.expectancy, 4)}</span></td>
+                  <td><span class="text-${FMT.toneRatio(row.sharpe, 1)}">${FMT.number(row.sharpe, 3)}</span></td>
+                  <td class="text-muted">${_esc(row.duration_avg || '—')}</td>
+                </tr>`;
+            }).join('') : `<tr><td colspan="10" class="text-muted" style="text-align:center;padding:32px">No pairs match the current filter.</td></tr>`}
+          </tbody>
+        </table>
+      </div>
     `;
   }
 

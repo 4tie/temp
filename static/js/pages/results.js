@@ -1,5 +1,5 @@
 /* =================================================================
-   RESULTS PAGE - ENHANCED VERSION
+   RESULTS PAGE
    Exposes: window.ResultsPage
    ================================================================= */
 
@@ -7,451 +7,358 @@ window.ResultsPage = (() => {
   let _runs = [];
   let _filteredRuns = [];
   let _currentPage = 1;
-  let _itemsPerPage = 20;
-  let _sortColumn = 'date';
+  const _itemsPerPage = 20;
+  let _sortColumn = 'started_at';
   let _sortDirection = 'desc';
   let _searchQuery = '';
   let _activeFilter = 'all';
   let _loading = false;
+  let _pollTimer = null;
 
-  // Mock data for demonstration - replace with actual API calls
-  const MOCK_RUNS = [
-    {
-      id: 'run_001',
-      strategy: 'EMA_Cross_v2',
-      date: '2024-01-15',
-      totalReturn: 15.4,
-      trades: 127,
-      winRate: 68.5,
-      maxDrawdown: -8.2,
-      sharpeRatio: 1.34,
-      status: 'completed'
-    },
-    {
-      id: 'run_002', 
-      strategy: 'RSI_Divergence',
-      date: '2024-01-14',
-      totalReturn: -3.2,
-      trades: 89,
-      winRate: 42.7,
-      maxDrawdown: -12.1,
-      sharpeRatio: 0.67,
-      status: 'completed'
-    },
-    {
-      id: 'run_003',
-      strategy: 'Bollinger_Squeeze',
-      date: '2024-01-13',
-      totalReturn: 22.8,
-      trades: 156,
-      winRate: 71.2,
-      maxDrawdown: -5.4,
-      sharpeRatio: 1.89,
-      status: 'completed'
-    },
-    {
-      id: 'run_004',
-      strategy: 'MACD_Signal',
-      date: '2024-01-12',
-      totalReturn: 8.7,
-      trades: 203,
-      winRate: 55.2,
-      maxDrawdown: -9.8,
-      sharpeRatio: 1.12,
-      status: 'running'
-    },
-    {
-      id: 'run_005',
-      strategy: 'Triple_EMA',
-      date: '2024-01-11',
-      totalReturn: -7.3,
-      trades: 78,
-      winRate: 38.5,
-      maxDrawdown: -15.6,
-      sharpeRatio: 0.23,
-      status: 'failed'
-    }
-  ];
+  // ── field helpers ────────────────────────────────────────────────
+
+  function _runId(run)       { return run.run_id || run.id || ''; }
+  function _strategy(run)    { return run.display_strategy || run.strategy || run.strategy_class || '—'; }
+  function _version(run)     { return run.display_version || run.version_id || run.strategy_version || ''; }
+  function _status(run)      { return run.status || 'unknown'; }
+  function _date(run)        { return run.started_at || run.completed_at || run.created_at || ''; }
+  function _profit(run)      { return parseFloat(run.profit_percent ?? run.total_profit_pct ?? run.result_metrics?.profit_percent ?? 0) || 0; }
+  function _trades(run)      { return parseInt(run.total_trades ?? run.result_metrics?.total_trades ?? 0, 10) || 0; }
+  function _winRate(run)     { return parseFloat(run.win_rate ?? run.result_metrics?.win_rate ?? 0) || 0; }
+  function _drawdown(run)    { return parseFloat(run.max_drawdown ?? run.result_metrics?.max_drawdown ?? 0) || 0; }
+  function _sharpe(run)      { return parseFloat(run.sharpe_ratio ?? run.result_metrics?.sharpe_ratio ?? 0) || 0; }
+
+  // ── init ─────────────────────────────────────────────────────────
 
   function init() {
-    const resultsPage = document.querySelector('[data-view="results"]');
-    if (!resultsPage) return;
-
+    if (!document.querySelector('[data-view="results"]')) return;
     loadData();
-    bindEvents();
-    updateStats();
+    _bindPageVisibility();
   }
 
-  function loadData() {
+  function _bindPageVisibility() {
+    if (window.AppState) {
+      AppState.subscribe('activePage', page => {
+        if (page === 'results') { loadData({ silent: true }); _startPolling(); }
+        else _stopPolling();
+      });
+      if (AppState.get('activePage') === 'results') _startPolling();
+    }
+  }
+
+  function _startPolling() {
+    if (_pollTimer) return;
+    _pollTimer = setInterval(() => loadData({ silent: true }), 8000);
+  }
+
+  function _stopPolling() {
+    if (_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
+  }
+
+  // ── data loading ─────────────────────────────────────────────────
+
+  function loadData({ silent = false } = {}) {
+    if (_loading) return;
     _loading = true;
-    showLoading();
+    if (!silent) showLoading();
 
-    // Simulate API call
-    setTimeout(() => {
-      _runs = [...MOCK_RUNS];
-      _filteredRuns = [..._runs];
-      _loading = false;
-      hideLoading();
-      applyFilters();
-      renderTable();
-      updateStats();
-      updatePagination();
-    }, 1000);
+    const apiCall = (window.API && API.getRuns)
+      ? API.getRuns()
+      : fetch('/api/runs').then(r => r.json());
+
+    apiCall
+      .then(data => {
+        _runs = (data.runs || []);
+        _loading = false;
+        if (!silent) hideLoading();
+        applyFilters();
+        renderTable();
+        updateStats();
+        updatePagination();
+      })
+      .catch(err => {
+        _loading = false;
+        if (!silent) hideLoading();
+        console.error('ResultsPage: failed to load runs:', err);
+        if (!silent) showEmptyState();
+      });
   }
 
-  function bindEvents() {
-    // Search functionality
-    const searchInput = document.getElementById('results-search');
-    if (searchInput) {
-      searchInput.addEventListener('input', debounce(handleSearch, 300));
-    }
-
-    // Filter chips
-    document.querySelectorAll('.results-filter-chip').forEach(chip => {
-      chip.addEventListener('click', handleFilterClick);
-    });
-
-    // Table header sorting
-    document.querySelectorAll('[data-sort]').forEach(header => {
-      header.addEventListener('click', handleSort);
-    });
-
-    // Pagination
-    document.getElementById('prev-page')?.addEventListener('click', () => changePage(_currentPage - 1));
-    document.getElementById('next-page')?.addEventListener('click', () => changePage(_currentPage + 1));
-  }
-
-  function handleSearch(event) {
-    _searchQuery = event.target.value.toLowerCase();
-    _currentPage = 1;
-    applyFilters();
-    renderTable();
-    updatePagination();
-  }
-
-  function handleFilterClick(event) {
-    // Remove active class from all chips
-    document.querySelectorAll('.results-filter-chip').forEach(chip => {
-      chip.classList.remove('active');
-    });
-    
-    // Add active class to clicked chip
-    event.target.classList.add('active');
-    _activeFilter = event.target.dataset.filter;
-    _currentPage = 1;
-    applyFilters();
-    renderTable();
-    updatePagination();
-  }
-
-  function handleSort(event) {
-    const column = event.target.dataset.sort;
-    if (_sortColumn === column) {
-      _sortDirection = _sortDirection === 'asc' ? 'desc' : 'asc';
-    } else {
-      _sortColumn = column;
-      _sortDirection = 'desc';
-    }
-    
-    applyFilters();
-    renderTable();
-    updateSortIndicators();
-  }
+  // ── filtering / sorting ──────────────────────────────────────────
 
   function applyFilters() {
     let filtered = [..._runs];
 
-    // Apply search filter
     if (_searchQuery) {
-      filtered = filtered.filter(run => 
-        run.strategy.toLowerCase().includes(_searchQuery) ||
-        run.id.toLowerCase().includes(_searchQuery)
+      const q = _searchQuery.toLowerCase();
+      filtered = filtered.filter(run =>
+        _strategy(run).toLowerCase().includes(q) ||
+        _runId(run).toLowerCase().includes(q) ||
+        (_version(run) || '').toLowerCase().includes(q)
       );
     }
 
-    // Apply status filter
     switch (_activeFilter) {
       case 'profitable':
-        filtered = filtered.filter(run => run.totalReturn > 0);
+        filtered = filtered.filter(run => _profit(run) > 0);
         break;
-      case 'recent':
-        const oneWeekAgo = new Date();
-        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-        filtered = filtered.filter(run => new Date(run.date) >= oneWeekAgo);
+      case 'completed':
+        filtered = filtered.filter(run => _status(run) === 'completed');
         break;
-      case 'high-volume':
-        filtered = filtered.filter(run => run.trades > 150);
+      case 'recent': {
+        const cutoff = Date.now() - 7 * 86400000;
+        filtered = filtered.filter(run => Date.parse(_date(run)) >= cutoff);
         break;
+      }
     }
 
-    // Apply sorting
     filtered.sort((a, b) => {
-      let aVal = a[_sortColumn];
-      let bVal = b[_sortColumn];
-
-      if (_sortColumn === 'date') {
-        aVal = new Date(aVal);
-        bVal = new Date(bVal);
+      let av, bv;
+      switch (_sortColumn) {
+        case 'strategy':   av = _strategy(a); bv = _strategy(b); break;
+        case 'profit':     av = _profit(a);   bv = _profit(b);   break;
+        case 'trades':     av = _trades(a);   bv = _trades(b);   break;
+        case 'winrate':    av = _winRate(a);  bv = _winRate(b);  break;
+        case 'drawdown':   av = _drawdown(a); bv = _drawdown(b); break;
+        case 'sharpe':     av = _sharpe(a);   bv = _sharpe(b);   break;
+        default:           av = Date.parse(_date(a)) || 0; bv = Date.parse(_date(b)) || 0;
       }
-
-      if (_sortDirection === 'asc') {
-        return aVal > bVal ? 1 : -1;
-      } else {
-        return aVal < bVal ? 1 : -1;
-      }
+      if (av === bv) return 0;
+      return (av > bv ? 1 : -1) * (_sortDirection === 'asc' ? 1 : -1);
     });
 
     _filteredRuns = filtered;
   }
 
+  // ── rendering ────────────────────────────────────────────────────
+
   function renderTable() {
     const tableBody = document.getElementById('results-table-body');
     if (!tableBody) return;
 
-    if (_filteredRuns.length === 0) {
-      showEmptyState();
-      return;
-    }
-
+    if (_filteredRuns.length === 0) { showEmptyState(); return; }
     hideEmptyState();
 
-    const startIndex = (_currentPage - 1) * _itemsPerPage;
-    const endIndex = startIndex + _itemsPerPage;
-    const pageRuns = _filteredRuns.slice(startIndex, endIndex);
+    const start = (_currentPage - 1) * _itemsPerPage;
+    const pageRuns = _filteredRuns.slice(start, start + _itemsPerPage);
 
-    tableBody.innerHTML = pageRuns.map(run => `
-      <tr class="results-table-row" data-run-id="${run.id}">
-        <td class="results-cell-strategy">${run.strategy}</td>
-        <td class="results-cell-date">${formatDate(run.date)}</td>
-        <td class="results-cell-profit ${getProfitClass(run.totalReturn)}">
-          ${formatPercent(run.totalReturn)}
-        </td>
-        <td>${run.trades}</td>
-        <td>${formatPercent(run.winRate)}</td>
-        <td class="results-cell-profit negative">${formatPercent(run.maxDrawdown)}</td>
-        <td>${run.sharpeRatio.toFixed(2)}</td>
-        <td>
-          <span class="results-cell-status ${run.status}">${capitalizeFirst(run.status)}</span>
-        </td>
-        <td class="results-cell-actions">
-          <button class="results-action-btn" onclick="viewDetails('${run.id}')">View</button>
-          <button class="results-action-btn primary" onclick="openExplorer('${run.id}')">Explore</button>
-        </td>
-      </tr>
-    `).join('');
+    tableBody.innerHTML = pageRuns.map(run => {
+      const id      = _runId(run);
+      const strat   = _strategy(run);
+      const ver     = _version(run);
+      const status  = _status(run);
+      const profit  = _profit(run);
+      const trades  = _trades(run);
+      const wr      = _winRate(run);
+      const dd      = _drawdown(run);
+      const sharpe  = _sharpe(run);
+      const dateStr = _formatDate(_date(run));
+      const profCls = profit > 0 ? 'positive' : profit < 0 ? 'negative' : 'neutral';
 
-    // Add click handlers for rows
-    tableBody.querySelectorAll('.results-table-row').forEach(row => {
-      row.addEventListener('click', () => {
-        const runId = row.dataset.runId;
-        openExplorer(runId);
+      return `
+        <tr class="results-table-row" data-run-id="${_esc(id)}">
+          <td class="results-cell-strategy">
+            ${_esc(strat)}${ver ? `<span class="results-cell-version"> · ${_esc(ver)}</span>` : ''}
+          </td>
+          <td class="results-cell-date">${_esc(dateStr)}</td>
+          <td class="results-cell-profit ${profCls}">${_fmtPct(profit)}</td>
+          <td class="font-mono">${trades}</td>
+          <td class="${wr >= 50 ? 'positive' : 'negative'}">${_fmtPct(wr, false)}</td>
+          <td class="negative font-mono">${dd !== 0 ? _fmtPct(dd, false) : '—'}</td>
+          <td class="font-mono">${sharpe ? sharpe.toFixed(2) : '—'}</td>
+          <td><span class="results-cell-status ${_esc(status)}">${_esc(_cap(status))}</span></td>
+          <td class="results-cell-actions">
+            <button class="results-action-btn primary" data-open-run="${_esc(id)}">Explore</button>
+          </td>
+        </tr>`;
+    }).join('');
+
+    tableBody.querySelectorAll('[data-open-run]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        _openRun(btn.dataset.openRun);
       });
+    });
+
+    tableBody.querySelectorAll('.results-table-row').forEach(row => {
+      row.addEventListener('click', () => _openRun(row.dataset.runId));
     });
   }
 
-  function updateStats() {
-    const totalRuns = _runs.length;
-    const profitableRuns = _runs.filter(run => run.totalReturn > 0);
-    const avgReturn = _runs.reduce((sum, run) => sum + run.totalReturn, 0) / totalRuns;
-    const bestStrategy = _runs.reduce((best, run) => 
-      run.totalReturn > (best?.totalReturn || -Infinity) ? run : best, null);
-
-    document.getElementById('total-runs').textContent = totalRuns;
-    document.getElementById('avg-return').textContent = formatPercent(avgReturn);
-    document.getElementById('best-strategy').textContent = bestStrategy?.strategy || '-';
-    document.getElementById('success-rate').textContent = formatPercent((profitableRuns.length / totalRuns) * 100);
-
-    // Update change indicators
-    document.getElementById('runs-change').textContent = `+${Math.floor(totalRuns * 0.2)} this week`;
-    document.getElementById('return-change').textContent = `${avgReturn > 0 ? '+' : ''}${(avgReturn * 0.1).toFixed(1)}% vs last month`;
-    document.getElementById('best-return').textContent = `${formatPercent(bestStrategy?.totalReturn || 0)} return`;
-    document.getElementById('success-change').textContent = `${profitableRuns.length} profitable`;
-
-    // Update change classes
-    updateChangeClass('return-change', avgReturn);
-    updateChangeClass('success-change', profitableRuns.length / totalRuns);
+  function _openRun(runId) {
+    if (!runId) return;
+    if (window.ResultExplorer && ResultExplorer.open) {
+      ResultExplorer.open(runId);
+    }
   }
 
-  function updateChangeClass(elementId, value) {
-    const element = document.getElementById(elementId);
-    if (!element) return;
-    
-    element.classList.remove('positive', 'negative');
-    if (value > 0) {
-      element.classList.add('positive');
-    } else if (value < 0) {
-      element.classList.add('negative');
-    }
+  function updateStats() {
+    if (!_runs.length) return;
+    const completed   = _runs.filter(r => _status(r) === 'completed');
+    const profitable  = completed.filter(r => _profit(r) > 0);
+    const avgProfit   = completed.length
+      ? completed.reduce((s, r) => s + _profit(r), 0) / completed.length
+      : 0;
+    const best = completed.reduce((b, r) => _profit(r) > _profit(b || r) ? r : (b || r), null);
+
+    _setText('total-runs',    _runs.length);
+    _setText('avg-return',    _fmtPct(avgProfit));
+    _setText('best-strategy', best ? _strategy(best) : '—');
+    _setText('success-rate',  completed.length ? _fmtPct(profitable.length / completed.length * 100, false) : '—');
+    _setText('runs-change',   `${completed.length} completed`);
+    _setText('return-change', avgProfit >= 0 ? 'avg across runs' : 'avg across runs');
+    _setText('best-return',   best ? `${_fmtPct(_profit(best))} return` : '—');
+    _setText('success-change',`${profitable.length} profitable`);
+
+    _setClass('return-change', avgProfit);
+    _setClass('success-change', profitable.length);
   }
 
   function updatePagination() {
-    const totalPages = Math.ceil(_filteredRuns.length / _itemsPerPage);
-    const startItem = (_currentPage - 1) * _itemsPerPage + 1;
-    const endItem = Math.min(_currentPage * _itemsPerPage, _filteredRuns.length);
+    const total     = _filteredRuns.length;
+    const totalPages = Math.max(1, Math.ceil(total / _itemsPerPage));
+    const startItem  = total ? (_currentPage - 1) * _itemsPerPage + 1 : 0;
+    const endItem    = Math.min(_currentPage * _itemsPerPage, total);
 
-    document.getElementById('pagination-start').textContent = startItem;
-    document.getElementById('pagination-end').textContent = endItem;
-    document.getElementById('pagination-total').textContent = _filteredRuns.length;
+    _setText('pagination-start', startItem);
+    _setText('pagination-end',   endItem);
+    _setText('pagination-total', total);
 
-    // Update pagination buttons
     const prevBtn = document.getElementById('prev-page');
     const nextBtn = document.getElementById('next-page');
-    
-    if (prevBtn) {
-      prevBtn.disabled = _currentPage <= 1;
-    }
-    if (nextBtn) {
-      nextBtn.disabled = _currentPage >= totalPages;
-    }
+    if (prevBtn) prevBtn.disabled = _currentPage <= 1;
+    if (nextBtn) nextBtn.disabled = _currentPage >= totalPages;
 
-    // Update page numbers
-    const numbersContainer = document.getElementById('pagination-numbers');
-    if (numbersContainer) {
-      numbersContainer.innerHTML = generatePageNumbers(totalPages);
-    }
+    const nums = document.getElementById('pagination-numbers');
+    if (nums) nums.innerHTML = _pageNumbers(totalPages);
   }
 
-  function generatePageNumbers(totalPages) {
-    const numbers = [];
-    const maxVisible = 5;
-    let startPage = Math.max(1, _currentPage - Math.floor(maxVisible / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-
-    if (endPage - startPage + 1 < maxVisible) {
-      startPage = Math.max(1, endPage - maxVisible + 1);
+  function _pageNumbers(totalPages) {
+    const max = 5;
+    let s = Math.max(1, _currentPage - Math.floor(max / 2));
+    let e = Math.min(totalPages, s + max - 1);
+    if (e - s + 1 < max) s = Math.max(1, e - max + 1);
+    let html = '';
+    for (let i = s; i <= e; i++) {
+      html += `<button class="results-pagination-btn${i === _currentPage ? ' active' : ''}"
+        onclick="window.ResultsPage.changePage(${i})">${i}</button>`;
     }
+    return html;
+  }
 
-    for (let i = startPage; i <= endPage; i++) {
-      const isActive = i === _currentPage;
-      numbers.push(`
-        <button class="results-pagination-btn ${isActive ? 'active' : ''}" 
-                onclick="window.ResultsPage.changePage(${i})">
-          ${i}
-        </button>
-      `);
-    }
+  // ── event binding ────────────────────────────────────────────────
 
-    return numbers.join('');
+  function bindEvents() {
+    const search = document.getElementById('results-search');
+    if (search) search.addEventListener('input', _debounce(e => {
+      _searchQuery = e.target.value.toLowerCase();
+      _currentPage = 1;
+      applyFilters(); renderTable(); updatePagination();
+    }, 250));
+
+    document.querySelectorAll('.results-filter-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('.results-filter-chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        _activeFilter = chip.dataset.filter || 'all';
+        _currentPage = 1;
+        applyFilters(); renderTable(); updatePagination();
+      });
+    });
+
+    document.querySelectorAll('[data-sort]').forEach(th => {
+      th.addEventListener('click', () => {
+        const col = th.dataset.sort;
+        if (_sortColumn === col) _sortDirection = _sortDirection === 'asc' ? 'desc' : 'asc';
+        else { _sortColumn = col; _sortDirection = 'desc'; }
+        applyFilters(); renderTable();
+      });
+    });
+
+    document.getElementById('prev-page')?.addEventListener('click', () => changePage(_currentPage - 1));
+    document.getElementById('next-page')?.addEventListener('click', () => changePage(_currentPage + 1));
   }
 
   function changePage(page) {
-    const totalPages = Math.ceil(_filteredRuns.length / _itemsPerPage);
+    const totalPages = Math.max(1, Math.ceil(_filteredRuns.length / _itemsPerPage));
     if (page < 1 || page > totalPages) return;
-    
     _currentPage = page;
     renderTable();
     updatePagination();
   }
 
-  function updateSortIndicators() {
-    // Remove all sort indicators
-    document.querySelectorAll('[data-sort]').forEach(header => {
-      header.classList.remove('sorted-asc', 'sorted-desc');
-    });
-
-    // Add indicator to current sort column
-    const currentHeader = document.querySelector(`[data-sort="${_sortColumn}"]`);
-    if (currentHeader) {
-      currentHeader.classList.add(`sorted-${_sortDirection}`);
-    }
-  }
+  // ── visibility helpers ───────────────────────────────────────────
 
   function showLoading() {
-    const loading = document.getElementById('results-loading');
-    const container = document.querySelector('.results-table-container');
-    if (loading && container) {
-      loading.style.display = 'flex';
-      container.style.display = 'none';
-    }
+    document.getElementById('results-loading')?.style.setProperty('display', 'flex');
+    const c = document.querySelector('.results-table-container');
+    if (c) c.style.display = 'none';
   }
 
   function hideLoading() {
-    const loading = document.getElementById('results-loading');
-    const container = document.querySelector('.results-table-container');
-    if (loading && container) {
-      loading.style.display = 'none';
-      container.style.display = 'block';
-    }
+    document.getElementById('results-loading')?.style.setProperty('display', 'none');
+    const c = document.querySelector('.results-table-container');
+    if (c) c.style.display = 'block';
   }
 
   function showEmptyState() {
-    const empty = document.getElementById('results-empty');
-    const container = document.querySelector('.results-table-container');
-    if (empty && container) {
-      empty.style.display = 'block';
-      container.style.display = 'none';
-    }
+    document.getElementById('results-empty')?.style.setProperty('display', 'block');
+    const c = document.querySelector('.results-table-container');
+    if (c) c.style.display = 'none';
   }
 
   function hideEmptyState() {
-    const empty = document.getElementById('results-empty');
-    const container = document.querySelector('.results-table-container');
-    if (empty && container) {
-      empty.style.display = 'none';
-      container.style.display = 'block';
-    }
+    document.getElementById('results-empty')?.style.setProperty('display', 'none');
+    const c = document.querySelector('.results-table-container');
+    if (c) c.style.display = 'block';
   }
 
-  // Utility functions
-  function formatDate(dateString) {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
+  // ── utilities ────────────────────────────────────────────────────
+
+  function _formatDate(str) {
+    if (!str) return '—';
+    const d = new Date(str);
+    if (isNaN(d)) return str;
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   }
 
-  function formatPercent(value) {
-    return `${value > 0 ? '+' : ''}${value.toFixed(1)}%`;
+  function _fmtPct(v, sign = true) {
+    const n = parseFloat(v);
+    if (!isFinite(n)) return '—';
+    return `${sign && n > 0 ? '+' : ''}${n.toFixed(1)}%`;
   }
 
-  function getProfitClass(value) {
-    if (value > 0) return 'positive';
-    if (value < 0) return 'negative';
-    return 'neutral';
+  function _cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+
+  function _esc(v) {
+    const d = document.createElement('div');
+    d.textContent = String(v ?? '');
+    return d.innerHTML;
   }
 
-  function capitalizeFirst(str) {
-    return str.charAt(0).toUpperCase() + str.slice(1);
+  function _setText(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
   }
 
-  function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-      const later = () => {
-        clearTimeout(timeout);
-        func(...args);
-      };
-      clearTimeout(timeout);
-      timeout = setTimeout(later, wait);
-    };
+  function _setClass(id, val) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('positive', 'negative');
+    el.classList.add(val > 0 ? 'positive' : val < 0 ? 'negative' : '');
   }
 
-  // Global functions for button clicks
-  window.viewDetails = function(runId) {
-    console.log('Viewing details for run:', runId);
-    // Implement view details functionality
-  };
+  function _debounce(fn, ms) {
+    let t;
+    return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+  }
 
-  window.openExplorer = function(runId) {
-    console.log('Opening explorer for run:', runId);
-    // Implement result explorer functionality
-    if (window.ResultExplorer && window.ResultExplorer.open) {
-      window.ResultExplorer.open(runId);
-    }
-  };
-
-  // Public API
-  return {
-    init,
-    changePage,
-    refresh: loadData
-  };
+  return { init, bindEvents, changePage, refresh: () => loadData({ silent: true }) };
 })();
 
-// Initialize when DOM is ready
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', window.ResultsPage.init);
+  document.addEventListener('DOMContentLoaded', () => { window.ResultsPage.init(); window.ResultsPage.bindEvents(); });
 } else {
   window.ResultsPage.init();
+  window.ResultsPage.bindEvents();
 }

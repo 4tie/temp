@@ -100,11 +100,23 @@ async def chat_complete(messages: list[dict], model: str) -> str:
         "model": model,
         "messages": messages,
         "stream": False,
+        "options": {"num_ctx": 4096},
     }
-    async with httpx.AsyncClient(timeout=120, trust_env=False, follow_redirects=True) as client:
+    async with httpx.AsyncClient(timeout=180, trust_env=False, follow_redirects=True) as client:
         resp = await client.post(f"{base_url}/api/chat", json=payload)
+        if resp.status_code == 500:
+            body = ""
+            try:
+                body = resp.json().get("error", resp.text)
+            except Exception:
+                body = resp.text
+            raise RuntimeError(f"Ollama model error ({model}): {body}")
         resp.raise_for_status()
-        return resp.json()["message"]["content"]
+        data = resp.json()
+        content = data.get("message", {}).get("content") or data.get("response", "")
+        if not content:
+            raise RuntimeError(f"Ollama returned empty content for model {model}")
+        return content
 
 
 async def stream_chat(
@@ -120,24 +132,37 @@ async def stream_chat(
         "model": model,
         "messages": messages,
         "stream": True,
+        "options": {"num_ctx": 4096},
     }
-    async with httpx.AsyncClient(timeout=120, trust_env=False, follow_redirects=True) as client:
+    async with httpx.AsyncClient(timeout=180, trust_env=False, follow_redirects=True) as client:
         async with client.stream(
             "POST",
             f"{base_url}/api/chat",
             json=payload,
         ) as resp:
+            if resp.status_code == 500:
+                body = ""
+                try:
+                    raw = await resp.aread()
+                    body = json.loads(raw).get("error", raw.decode(errors="replace"))
+                except Exception:
+                    body = str(resp.status_code)
+                raise RuntimeError(f"Ollama model error ({model}): {body}")
             resp.raise_for_status()
             async for line in resp.aiter_lines():
                 if not line:
                     continue
                 try:
                     chunk = json.loads(line)
+                    if chunk.get("error"):
+                        raise RuntimeError(f"Ollama stream error ({model}): {chunk['error']}")
                     delta = chunk.get("message", {}).get("content", "")
                     if delta:
                         yield {"delta": delta, "done": False}
                     if chunk.get("done"):
                         yield {"done": True}
                         return
+                except RuntimeError:
+                    raise
                 except Exception:
                     continue
