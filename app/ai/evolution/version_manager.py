@@ -109,15 +109,35 @@ def _version_enrichment() -> dict[str, dict]:
         return enrichment
 
     for log_path in AI_EVOLUTION_DIR.glob("*.json"):
-        if log_path.stem.endswith("_feedback"):
+        if log_path.stem.endswith(("_feedback", "_candidates")):
             continue
+
         data = read_json(log_path, {})
-        for generation in data.get("generations", []):
-            version_name = generation.get("version_name")
+        if not isinstance(data, dict):
+            continue
+
+        generations = data.get("generations", [])
+        if not isinstance(generations, list):
+            continue
+
+        for generation in generations:
+            if not isinstance(generation, dict):
+                continue
+
+            version_name = generation.get("version_name") or generation.get("version_id")
             if not version_name:
                 continue
+
+            fitness = generation.get("fitness_after")
+            if fitness is None:
+                fitness_summary = generation.get("fitness_summary")
+                if isinstance(fitness_summary, dict):
+                    after_summary = fitness_summary.get("after")
+                    if isinstance(after_summary, dict):
+                        fitness = after_summary.get("score")
+
             enrichment[version_name] = {
-                "fitness": generation.get("fitness_after"),
+                "fitness": fitness,
                 "run_id": generation.get("new_run_id"),
             }
     return enrichment

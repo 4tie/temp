@@ -1,4 +1,4 @@
-/* =================================================================
+﻿/* =================================================================
    AI DIAGNOSIS - shared AI runtime + shell dock workspace
    Exposes: window.AIDiagPage
    ================================================================= */
@@ -197,12 +197,12 @@ window.AIDiagPage = (() => {
       </div>
 
       <!-- Model select -->
-      <select class="ai-model-select" id="ai-model-select">
+      <select class="ai-model-select" id="ai-model-select" data-ui-select="true" data-select-search="always">
         <option value="">Loading models...</option>
       </select>
 
       <!-- Goal select -->
-      <select class="ai-goal-select" id="ai-goal-select">
+      <select class="ai-goal-select" id="ai-goal-select" data-ui-select="true" data-select-search="never">
         <option value="balanced">Balanced</option>
         <option value="maximize_profit">Maximize Profit</option>
         <option value="reduce_drawdown">Reduce Drawdown</option>
@@ -306,7 +306,7 @@ window.AIDiagPage = (() => {
 <div class="ai-deep-panel" id="ai-deep-panel">
   <div class="ai-deep-panel__header">
     <span class="ai-deep-panel__title">Deep Analysis</span>
-    <button class="ai-deep-panel__close" id="ai-deep-panel-close">
+    <button class="ai-deep-panel__close" id="ai-deep-panel-close" type="button" aria-label="Close deep analysis panel" title="Close deep analysis panel">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
       </svg>
@@ -330,7 +330,7 @@ window.AIDiagPage = (() => {
       </svg>
       Evolve Strategy
     </span>
-    <button class="evo-panel__close" id="evo-panel-close">
+    <button class="evo-panel__close" id="evo-panel-close" type="button" aria-label="Close evolve strategy panel" title="Close evolve strategy panel">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
       </svg>
@@ -349,7 +349,7 @@ window.AIDiagPage = (() => {
   <div class="evo-diff-modal">
     <div class="evo-diff-modal__header">
       <span class="evo-diff-modal__title" id="evo-diff-title">Code Diff</span>
-      <button class="evo-diff-modal__close" id="evo-diff-close">
+      <button class="evo-diff-modal__close" id="evo-diff-close" type="button" aria-label="Close code diff modal" title="Close code diff modal">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
         </svg>
@@ -1744,11 +1744,12 @@ window.AIDiagPage = (() => {
 
   function _renderEvoConfig() {
     const strat = _state.contextStrategyName || 'strategy';
+    window.CustomSelect?.destroyWithin(_el.evoPanelBody);
     _el.evoPanelBody.innerHTML = `
       <div class="evo-config-form">
         <div class="evo-field">
           <label class="evo-label">Goal</label>
-          <select class="evo-select" id="evo-goal-select">
+          <select class="evo-select" id="evo-goal-select" data-ui-select="true" data-select-search="never">
             <option value="">Auto (AI decides)</option>
             <option value="lower_drawdown">Lower Drawdown</option>
             <option value="higher_win_rate">Higher Win Rate</option>
@@ -1767,14 +1768,14 @@ window.AIDiagPage = (() => {
         </div>
         <div class="evo-field">
           <label class="evo-label">Provider</label>
-          <select class="evo-select" id="evo-provider-select">
+          <select class="evo-select" id="evo-provider-select" data-ui-select="true" data-select-search="never">
             <option value="openrouter" ${_state.provider === 'openrouter' ? 'selected' : ''}>OpenRouter</option>
             <option value="ollama" ${_state.provider === 'ollama' ? 'selected' : ''}>Ollama</option>
           </select>
         </div>
         <div class="evo-field">
           <label class="evo-label">Model (optional override)</label>
-          <select class="evo-select" id="evo-model-select">
+          <select class="evo-select" id="evo-model-select" data-ui-select="true" data-select-search="always">
             <option value="">Same as chat</option>
           </select>
         </div>
@@ -1786,6 +1787,8 @@ window.AIDiagPage = (() => {
         <button class="evo-start-btn" id="evo-start-btn">Start Evolution</button>
       </div>
     `;
+
+    window.CustomSelect?.upgradeWithin(_el.evoPanelBody);
 
     // Populate model dropdown from current provider models
     const modelSel = document.getElementById('evo-model-select');
@@ -2057,9 +2060,9 @@ window.AIDiagPage = (() => {
     const accepted = !!evt.accepted;
     const fitBeforeVal = evt.fitness_after === null || evt.fitness_after === undefined ? evt.fitness_before : evt.fitness_before;
     const fitAfterVal = evt.fitness_after;
-    const fitBefore = fitBeforeVal === null || fitBeforeVal === undefined ? '—' : Number(fitBeforeVal).toFixed(1);
-    const fitAfter  = fitAfterVal === null || fitAfterVal === undefined ? '—' : Number(fitAfterVal).toFixed(1);
-    const delta     = evt.delta === null || evt.delta === undefined ? '—' : evt.delta;
+    const fitBefore = fitBeforeVal === null || fitBeforeVal === undefined ? 'â€”' : Number(fitBeforeVal).toFixed(1);
+    const fitAfter  = fitAfterVal === null || fitAfterVal === undefined ? 'â€”' : Number(fitAfterVal).toFixed(1);
+    const delta     = evt.delta === null || evt.delta === undefined ? 'â€”' : evt.delta;
     const deltaNum  = parseFloat(delta);
     const deltaClass = deltaNum > 0 ? 'pos' : deltaNum < 0 ? 'neg' : 'zero';
     const aborted = status === 'aborted_pre_mutation';
@@ -2112,7 +2115,7 @@ window.AIDiagPage = (() => {
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             <span>${fitAfter}</span>
           </div>
-          <span class="evo-fitness-delta evo-fitness-delta--${deltaClass}">${delta === '—' ? '—' : `(${delta})`}</span>
+          <span class="evo-fitness-delta evo-fitness-delta--${deltaClass}">${delta === 'â€”' ? 'â€”' : `(${delta})`}</span>
           <div class="evo-fitness-bar-wrap">
             <div class="evo-fitness-bar" style="width:${barWidth}%"></div>
           </div>
@@ -2120,7 +2123,7 @@ window.AIDiagPage = (() => {
 
         ${changes ? `<div class="evo-changes">&ldquo;${_escHtml(changes)}&rdquo;</div>` : ''}
         <div class="evo-changes" style="opacity:.8">
-          ${retryMeta ? `retry ${_escHtml(retryMeta)} · ` : ''}${fingerprint ? `fp ${_escHtml(String(fingerprint).slice(0, 16))} · ` : ''}${explorationLevel ? `explore ${_escHtml(explorationLevel)} · ` : ''}${rejectionCategory ? `reason ${_escHtml(rejectionCategory)}` : ' '}
+          ${retryMeta ? `retry ${_escHtml(retryMeta)} Â· ` : ''}${fingerprint ? `fp ${_escHtml(String(fingerprint).slice(0, 16))} Â· ` : ''}${explorationLevel ? `explore ${_escHtml(explorationLevel)} Â· ` : ''}${rejectionCategory ? `reason ${_escHtml(rejectionCategory)}` : ' '}
         </div>
 
         <div class="evo-card-actions">
@@ -2174,10 +2177,10 @@ window.AIDiagPage = (() => {
             : duplicateRejected
               ? 'Duplicate Rejected'
               : (acc ? 'Accepted' : 'Rejected');
-        const d = g.delta === null || g.delta === undefined ? '—' : Number(g.delta).toFixed(1);
+        const d = g.delta === null || g.delta === undefined ? 'â€”' : Number(g.delta).toFixed(1);
         const dNum = parseFloat(d);
         const dc = dNum > 0 ? 'pos' : dNum < 0 ? 'neg' : 'zero';
-        const fitAfter = g.fitness_after === null || g.fitness_after === undefined ? '—' : Number(g.fitness_after).toFixed(1);
+        const fitAfter = g.fitness_after === null || g.fitness_after === undefined ? 'â€”' : Number(g.fitness_after).toFixed(1);
         const retryMeta = (g.retry_attempt && g.retry_limit) ? `${g.retry_attempt}/${g.retry_limit}` : '-';
         const fingerprint = g.candidate_fingerprint ? String(g.candidate_fingerprint).slice(0, 10) : '-';
         const category = g.rejection_category || '-';
@@ -2186,7 +2189,7 @@ window.AIDiagPage = (() => {
             <td>${g.generation}</td>
             <td style="font-family:var(--font-mono);font-size:10px">${_escHtml(g.version_id || g.version_name || "-")}</td>
             <td>${fitAfter}</td>
-            <td class="evo-fitness-delta evo-fitness-delta--${dc}">${d === '—' ? '—' : `${dNum > 0 ? '+' : ''}${d}`}</td>
+            <td class="evo-fitness-delta evo-fitness-delta--${dc}">${d === 'â€”' ? 'â€”' : `${dNum > 0 ? '+' : ''}${d}`}</td>
             <td>${_escHtml(retryMeta)}</td>
             <td style="font-family:var(--font-mono);font-size:10px">${_escHtml(fingerprint)}</td>
             <td>${_escHtml(category)}</td>
@@ -2443,6 +2446,7 @@ window.AIDiagPage = (() => {
 
     DOM.setHTML(host, _buildLayout());
     _cacheRefs();
+    window.CustomSelect?.upgradeWithin(host);
     _setConversationListOpen(false);
     _updateLoopButton();
     _bindEvents();
@@ -2682,3 +2686,5 @@ window.AIDiagPage = (() => {
     _openDiff,
   };
 })();
+
+

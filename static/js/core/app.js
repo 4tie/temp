@@ -1,5 +1,5 @@
-/* =================================================================
-   APP — page router, bootstrap
+﻿/* =================================================================
+   APP â€” page router, bootstrap
    Exposes: window.App
    Requires: DOM, AppState, Auth, Sidebar, Tabs
    ================================================================= */
@@ -30,6 +30,28 @@ window.App = (() => {
   const _visited = new Set();
   let _current = null;
 
+  function _getModule(page) {
+    return PAGE_MODULES[page]?.() || null;
+  }
+
+  function _ensurePageInitialized(page) {
+    const mod = _getModule(page);
+    if (mod && !_visited.has(page) && typeof mod.init === 'function') {
+      _visited.add(page);
+      mod.init();
+    }
+    return mod;
+  }
+
+  function refresh(page = _current || _pageFromHash()) {
+    if (!PAGE_TITLES[page]) page = 'dashboard';
+    const wasVisited = _visited.has(page);
+    const mod = _ensurePageInitialized(page);
+    if (mod && wasVisited && typeof mod.refresh === 'function') {
+      mod.refresh();
+    }
+  }
+
   function _pageFromHash() {
     const h = (location.hash || '').replace('#', '').trim().toLowerCase();
     return PAGE_TITLES[h] ? h : 'dashboard';
@@ -54,14 +76,10 @@ window.App = (() => {
     AppState.set('activePage', page);
     location.hash = page;
 
-    const mod = PAGE_MODULES[page]?.();
-    if (mod) {
-      if (!_visited.has(page) && typeof mod.init === 'function') {
-        _visited.add(page);
-        mod.init();
-      } else if (_visited.has(page) && typeof mod.refresh === 'function') {
-        mod.refresh();
-      }
+    const wasVisited = _visited.has(page);
+    const mod = _ensurePageInitialized(page);
+    if (mod && wasVisited && typeof mod.refresh === 'function') {
+      mod.refresh();
     }
   }
 
@@ -99,6 +117,7 @@ window.App = (() => {
     Auth.startPolling();
     window.UILog?.init?.();
     window.AIDiagPage?.initShell?.();
+    window.ShellMenu?.init?.();
 
     _bindNavLinks();
     _bindClock();
@@ -110,6 +129,7 @@ window.App = (() => {
 
   document.addEventListener('DOMContentLoaded', init);
 
-  return { navigate, refresh: () => navigate(_current) };
+  return { navigate, refresh };
 })();
+
 

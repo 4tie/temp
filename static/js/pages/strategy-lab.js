@@ -1,4 +1,4 @@
-/* =================================================================
+﻿/* =================================================================
    STRATEGY LAB PAGE
    Exposes: window.StrategyLabPage
    ================================================================= */
@@ -50,10 +50,10 @@ window.StrategyLabPage = (() => {
             </div>
             <div class="card__body card__body--flush">
               <div class="search-wrap">
-                <input class="form-input form-input--sm" id="sl-search" type="search" placeholder="Search strategies…">
+                <input class="form-input form-input--sm" id="sl-search" type="search" placeholder="Search strategiesâ€¦">
               </div>
               <ul class="strategy-list" id="sl-list">
-                <li class="empty-state">Loading…</li>
+                <li class="empty-state">Loadingâ€¦</li>
               </ul>
             </div>
           </div>
@@ -121,7 +121,7 @@ window.StrategyLabPage = (() => {
     if (listItem) listItem.classList.add('active');
 
     const detail = DOM.$('#sl-detail', _el);
-    detail.innerHTML = '<div class="card__body"><div class="empty-state">Loading strategy details…</div></div>';
+    detail.innerHTML = '<div class="card__body"><div class="empty-state">Loading strategy detailsâ€¦</div></div>';
 
     try {
       const [paramsRes, sourceRes] = await Promise.all([
@@ -179,10 +179,10 @@ window.StrategyLabPage = (() => {
               <tbody>
                 ${params.map(p => `
                   <tr>
-                    <td class="font-mono text-sm">${_esc(p.name || '—')}</td>
-                    <td><span class="badge badge--muted">${_esc(p.type || '—')}</span></td>
-                    <td class="font-mono text-sm text-amber">${_esc(String(p.default ?? '—'))}</td>
-                    <td class="text-secondary text-sm">${_esc(p.description || '—')}</td>
+                    <td class="font-mono text-sm">${_esc(p.name || 'â€”')}</td>
+                    <td><span class="badge badge--muted">${_esc(p.type || 'â€”')}</span></td>
+                    <td class="font-mono text-sm text-amber">${_esc(String(p.default ?? 'â€”'))}</td>
+                    <td class="text-secondary text-sm">${_esc(p.description || 'â€”')}</td>
                   </tr>`).join('')}
               </tbody>
             </table>
@@ -241,6 +241,7 @@ window.StrategyLabPage = (() => {
     DOM.on(toggleEditorBtn, 'click', () => {
       _editorVisible = !_editorVisible;
       _saveEditorVisibilityPref(_editorVisible);
+      if (_editorVisible) _mountEditor();
       _updateEditorUi();
     });
 
@@ -263,7 +264,7 @@ window.StrategyLabPage = (() => {
       _hideSourceError();
       saveBtn.disabled = true;
       const originalLabel = saveBtn.textContent;
-      saveBtn.textContent = 'Saving…';
+      saveBtn.textContent = 'Savingâ€¦';
       try {
         const source = _getEditorSource();
         await API.saveStrategySource(_selected, source);
@@ -515,3 +516,4 @@ window.StrategyLabPage = (() => {
 
   return { init, refresh };
 })();
+

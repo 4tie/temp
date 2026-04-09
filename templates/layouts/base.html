@@ -1,10 +1,22 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en" data-theme="dark" data-theme-accent="indigo">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="4tie — FreqTrade Strategy Management">
+  <meta name="description" content="4tie â€” FreqTrade Strategy Management">
   <title>4tie</title>
+  <script>
+    (() => {
+      try {
+        const url = new URL(window.location.href);
+        if (url.searchParams.has('__4tie_hr')) {
+          url.searchParams.delete('__4tie_hr');
+          const next = `${url.pathname}${url.search}${url.hash}`;
+          history.replaceState(history.state, '', next || '/');
+        }
+      } catch {}
+    })();
+  </script>
   <script>
     (() => {
       try {
@@ -151,6 +163,7 @@
 <script src="/static/js/components/tabs.js" defer></script>
 <script src="/static/js/components/result-explorer.js" defer></script>
 <script src="/static/js/components/sidebar.js" defer></script>
+<script src="/static/js/components/custom-select.js" defer></script>
 <script src="/static/js/components/ui-log.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/python/python.min.js" defer></script>
@@ -168,9 +181,14 @@
 <script src="/static/js/pages/results.js" defer></script>
 <script src="/static/js/pages/settings.js" defer></script>
 
+<!-- Shell -->
+<script src="/static/js/core/shell-menu.js" defer></script>
+
 <!-- App bootstrap (last) -->
 <script src="/static/js/core/app.js" defer></script>
 
 </body>
 </html>
+
+
 

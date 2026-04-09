@@ -1,4 +1,4 @@
-/* =================================================================
+﻿/* =================================================================
    SETTINGS PAGE
    Exposes: window.SettingsPage
    ================================================================= */
@@ -11,7 +11,7 @@ window.SettingsPage = (() => {
   let _selectedThemeMode = 'dark';
   let _selectedThemeAccent = 'indigo';
 
-  /* ── Helpers ─────────────────────────────────────────────── */
+  /* â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   function _esc(str) {
     const d = document.createElement('div');
     d.textContent = String(str || '');
@@ -95,16 +95,16 @@ window.SettingsPage = (() => {
         const result = await API.testOpenRouterKey(input.value.trim());
         if (result.valid) {
           Toast.success('API key is valid');
-          btn.textContent = '✓ Valid';
+          btn.textContent = 'âœ“ Valid';
           setTimeout(() => { btn.textContent = originalText; }, 2000);
         } else {
           Toast.error(`API key test failed: ${result.error}`);
-          btn.textContent = '✗ Failed';
+          btn.textContent = 'âœ— Failed';
           setTimeout(() => { btn.textContent = originalText; }, 3000);
         }
       } catch (err) {
         Toast.error('Failed to test API key: ' + err.message);
-        btn.textContent = '✗ Error';
+        btn.textContent = 'âœ— Error';
         setTimeout(() => { btn.textContent = originalText; }, 3000);
       } finally {
         btn.disabled = false;
@@ -133,7 +133,7 @@ window.SettingsPage = (() => {
     keys.forEach(key => _addApiKeyRow(key));
   }
 
-  /* ── Render ──────────────────────────────────────────────── */
+  /* â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   function _render() {
     DOM.setHTML(_el, `
       <div class="page-header">
@@ -143,7 +143,7 @@ window.SettingsPage = (() => {
 
       <div class="settings-layout">
 
-        <!-- ── Environment / Secrets ── -->
+        <!-- â”€â”€ Environment / Secrets â”€â”€ -->
         <div class="card">
           <div class="card__header">
             <span class="card__title">Environment &amp; Secrets</span>
@@ -157,7 +157,7 @@ window.SettingsPage = (() => {
               <div class="form-group">
                 <label class="form-label" for="s-or-list">
                   OpenRouter API Keys
-                  <a class="settings-link" href="https://openrouter.ai/keys" target="_blank" rel="noopener">Get key ↗</a>
+                  <a class="settings-link" href="https://openrouter.ai/keys" target="_blank" rel="noopener">Get key â†—</a>
                 </label>
                 <div class="settings-api-box">
                   <div class="settings-api-toolbar">
@@ -233,7 +233,7 @@ window.SettingsPage = (() => {
                     </div>
                     <div class="form-group">
                       <label class="form-label" for="s-exchange-env">Default Exchange</label>
-                      <select class="form-select" id="s-exchange-env">
+                      <select class="form-select" id="s-exchange-env" data-ui-select="true" data-select-search="never">
                         <option value="binance">Binance</option>
                         <option value="binanceus">Binance US</option>
                         <option value="kraken">Kraken</option>
@@ -254,7 +254,7 @@ window.SettingsPage = (() => {
           </div>
         </div>
 
-        <!-- ── Trade Defaults ── -->
+        <!-- â”€â”€ Trade Defaults â”€â”€ -->
         <div class="card" style="margin-top:var(--space-4)">
           <div class="card__header">
             <span class="card__title">Trade Defaults</span>
@@ -271,7 +271,7 @@ window.SettingsPage = (() => {
                   <div class="form-row">
                     <div class="form-group">
                       <label class="form-label" for="s-exchange">Exchange</label>
-                      <select class="form-select" id="s-exchange" name="exchange">
+                      <select class="form-select" id="s-exchange" name="exchange" data-ui-select="true" data-select-search="never">
                         <option value="binance">Binance</option>
                         <option value="binanceus">Binance US</option>
                         <option value="kraken">Kraken</option>
@@ -282,7 +282,7 @@ window.SettingsPage = (() => {
                     </div>
                     <div class="form-group">
                       <label class="form-label" for="s-timeframe">Default Timeframe</label>
-                      <select class="form-select" id="s-timeframe" name="timeframe">
+                      <select class="form-select" id="s-timeframe" name="timeframe" data-ui-select="true" data-select-search="never">
                         <option value="1m">1m</option>
                         <option value="5m" selected>5m</option>
                         <option value="15m">15m</option>
@@ -351,18 +351,18 @@ window.SettingsPage = (() => {
           </div>
         </div>
 
-        <!-- ── Presets ── -->
+        <!-- â”€â”€ Presets â”€â”€ -->
         <div class="card" style="margin-top:var(--space-4)">
           <div class="card__header">
             <span class="card__title">Backtest Presets</span>
             <button class="btn btn--secondary btn--sm" id="s-save-preset-btn">Save Current as Preset</button>
           </div>
           <div class="card__body" id="s-presets-body">
-            <div class="empty-state">Loading…</div>
+            <div class="empty-state">Loadingâ€¦</div>
           </div>
         </div>
 
-        <!-- ── Master Save Button ── -->
+        <!-- â”€â”€ Master Save Button â”€â”€ -->
         <div class="settings-master-save" style="margin-top:var(--space-4)">
           <button type="button" class="btn btn--primary btn--lg" id="master-save-btn">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
@@ -374,7 +374,7 @@ window.SettingsPage = (() => {
       </div>
     `);
 
-    /* ── Bind events ── */
+    /* â”€â”€ Bind events â”€â”€ */
     DOM.on(DOM.$('#env-form', _el), 'submit', (e) => e.preventDefault()); // Prevent default form submission
     DOM.on(DOM.$('#settings-form', _el), 'submit', (e) => e.preventDefault()); // Prevent default form submission
     DOM.on(DOM.$('#s-or-add', _el), 'click', () => _addApiKeyRow(''));
@@ -384,7 +384,7 @@ window.SettingsPage = (() => {
     DOM.on(DOM.$('#master-save-btn', _el), 'click', _onMasterSave);
   }
 
-  /* ── Load ────────────────────────────────────────────────── */
+  /* â”€â”€ Load â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   async function load() {
     try {
       const [envData, cfgData, presetsData] = await Promise.all([
@@ -423,7 +423,7 @@ window.SettingsPage = (() => {
     }
   }
 
-  /* ── Save env ────────────────────────────────────────────── */
+  /* â”€â”€ Save env â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   async function _onSaveEnv(e) {
     e.preventDefault();
     const btn    = DOM.$('#env-save-btn', _el);
@@ -442,7 +442,7 @@ window.SettingsPage = (() => {
     try {
       await API.saveSettings(body);
       if (status) {
-        status.textContent = '✓ Saved to .env';
+        status.textContent = 'âœ“ Saved to .env';
         status.className = 'settings-save-status settings-save-status--ok';
         setTimeout(() => { status.textContent = ''; status.className = 'settings-save-status'; }, 3000);
       }
@@ -454,7 +454,7 @@ window.SettingsPage = (() => {
     }
   }
 
-  /* ── Save trade defaults ─────────────────────────────────── */
+  /* â”€â”€ Save trade defaults â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   function _onSaveDefaults(e) {
     e.preventDefault();
     const vals = {
@@ -481,7 +481,7 @@ window.SettingsPage = (() => {
     try { return JSON.parse(localStorage.getItem('4tie_settings') || 'null'); } catch { return null; }
   }
 
-  /* ── Presets ─────────────────────────────────────────────── */
+  /* â”€â”€ Presets â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   function _renderPresets() {
     const el = DOM.$('#s-presets-body', _el);
     if (!el) return;
@@ -500,8 +500,8 @@ window.SettingsPage = (() => {
             return `
             <tr>
               <td class="font-semibold">${_esc(name)}</td>
-              <td>${_esc(cfg.exchange || '—')}</td>
-              <td>${_esc(cfg.timeframe || '—')}</td>
+              <td>${_esc(cfg.exchange || 'â€”')}</td>
+              <td>${_esc(cfg.timeframe || 'â€”')}</td>
               <td class="text-muted text-sm">${FMT.tsShort(entry.saved_at)}</td>
               <td>
                 <button class="btn btn--ghost btn--sm" data-load-preset="${_esc(name)}">Load</button>
@@ -652,7 +652,7 @@ window.SettingsPage = (() => {
     }
   }
 
-  /* ── Master Save ─────────────────────────────────────────── */
+  /* â”€â”€ Master Save â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   async function _onMasterSave() {
     const btn = DOM.$('#master-save-btn', _el);
     const status = DOM.$('#master-save-status', _el);
@@ -687,7 +687,7 @@ window.SettingsPage = (() => {
       });
 
       if (status) {
-        status.textContent = '✓ All settings saved';
+        status.textContent = 'âœ“ All settings saved';
         status.className = 'settings-save-status settings-save-status--ok';
         setTimeout(() => { status.textContent = ''; status.className = 'settings-save-status'; }, 3000);
       }
@@ -696,7 +696,7 @@ window.SettingsPage = (() => {
     } catch (err) {
       Toast.error('Failed to save settings: ' + err.message);
       if (status) {
-        status.textContent = '✗ Save failed';
+        status.textContent = 'âœ— Save failed';
         status.className = 'settings-save-status settings-save-status--error';
         setTimeout(() => { status.textContent = ''; status.className = 'settings-save-status'; }, 3000);
       }
@@ -706,11 +706,12 @@ window.SettingsPage = (() => {
     }
   }
 
-  /* ── Public ──────────────────────────────────────────────── */
+  /* â”€â”€ Public â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   function init() {
     _el = DOM.$('[data-view="settings"]');
     if (!_el) return;
     _render();
+    window.CustomSelect?.upgradeWithin(_el);
     load();
   }
 
@@ -718,3 +719,4 @@ window.SettingsPage = (() => {
 
   return { init, refresh };
 })();
+

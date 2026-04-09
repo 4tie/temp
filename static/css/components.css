@@ -1,5 +1,5 @@
-/* ============================================================
-   COMPONENTS — cards, buttons, inputs, tables, badges,
+﻿/* ============================================================
+   COMPONENTS â€” cards, buttons, inputs, tables, badges,
                 modals, toasts, logs, progress
    ============================================================ */
 
@@ -548,6 +548,62 @@
 }
 .toast__close:hover { color: var(--text-primary); }
 
+/* ---- Shell context menu ------------------------------------ */
+
+.shell-menu {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-shell-menu);
+  pointer-events: none;
+}
+
+.shell-menu__panel {
+  position: absolute;
+  min-width: 220px;
+  max-width: min(320px, calc(100vw - 16px));
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 72%),
+    var(--surface-panel-strong);
+  box-shadow: var(--shadow-lg);
+  pointer-events: auto;
+}
+
+.shell-menu__item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 34px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  text-align: left;
+  transition: background-color var(--ease-fast), color var(--ease-fast);
+}
+
+.shell-menu__item:hover,
+.shell-menu__item.is-active,
+.shell-menu__item:focus-visible {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--text-primary);
+}
+
+.shell-menu__item:disabled,
+.shell-menu__item[aria-disabled="true"] {
+  background: transparent;
+  color: var(--text-disabled);
+  cursor: not-allowed;
+}
+
+.shell-menu__separator {
+  height: 1px;
+  margin: var(--space-2) var(--space-1);
+  background: var(--border-subtle);
+}
 /* ---- Log panel -------------------------------------------- */
 
 .log-panel {
@@ -1912,4 +1968,257 @@ html[data-theme="light"] .results-table__row:hover {
   background: rgba(255, 255, 255, 0.03);
   border-color: var(--border-subtle);
   color: var(--text-secondary);
+}
+
+
+/* ---- Custom Select --------------------------------------- */
+
+.form-select {
+  color-scheme: var(--color-scheme, dark);
+}
+
+.custom-select {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.custom-select.form-select,
+.custom-select.ai-model-select,
+.custom-select.ai-goal-select,
+.custom-select.evo-select,
+.custom-select.quick-params__control {
+  height: auto;
+  padding: 0;
+  background: none;
+  border: 0;
+  box-shadow: none;
+}
+
+.custom-select__native {
+  position: absolute !important;
+  inline-size: 1px !important;
+  block-size: 1px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.custom-select__trigger {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: 100%;
+  min-width: 0;
+  min-height: var(--control-height);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--text-primary) 1.5%, transparent), transparent 100%),
+    var(--surface-2);
+  color: var(--text-primary);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition: border-color var(--ease-fast), background-color var(--ease-fast), box-shadow var(--ease-fast), transform var(--ease-fast);
+}
+
+.custom-select__trigger.form-select {
+  background-image: none;
+  padding-right: calc(var(--space-6) + 12px);
+}
+
+.custom-select__trigger.ai-model-select,
+.custom-select__trigger.ai-goal-select {
+  min-height: 30px;
+  padding: 0 var(--space-2);
+  border-radius: 9px;
+  font-size: 10px;
+  max-width: none;
+}
+
+.custom-select__trigger.evo-select {
+  min-height: 40px;
+  padding: 6px var(--space-2);
+  border-radius: var(--radius-sm);
+  max-width: none;
+}
+
+.custom-select__trigger.quick-params__control {
+  min-width: 0;
+}
+
+.custom-select__trigger:hover:not(:disabled) {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--text-primary) 2.5%, transparent), transparent 100%),
+    var(--surface-1);
+}
+
+.custom-select__trigger:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--surface-1);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+.custom-select__trigger:disabled {
+  cursor: not-allowed;
+  color: var(--text-muted);
+  opacity: 0.75;
+}
+
+.custom-select__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.custom-select__chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--text-muted);
+  transition: transform var(--ease-fast), color var(--ease-fast);
+}
+
+.custom-select--open .custom-select__chevron {
+  transform: rotate(180deg);
+  color: var(--accent);
+}
+
+.custom-select--monospace .custom-select__label,
+.custom-select--monospace .custom-select__option-label {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+  letter-spacing: 0.01em;
+}
+
+.custom-select-layer {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-modal, 1000) + 20);
+  pointer-events: none;
+}
+
+.custom-select__panel {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  min-width: 220px;
+  max-width: min(520px, calc(100vw - 20px));
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--accent-ring) 44%, var(--border));
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 10%, transparent), transparent 22%),
+    linear-gradient(180deg, color-mix(in srgb, var(--text-primary) 2%, transparent), transparent 22%),
+    color-mix(in srgb, var(--surface-1) 96%, transparent);
+  box-shadow: 0 22px 58px rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(18px);
+  pointer-events: auto;
+}
+
+.custom-select__search-wrap {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-1) 98%, transparent), color-mix(in srgb, var(--surface-2) 92%, transparent));
+}
+
+.custom-select__search {
+  width: 100%;
+  min-height: 36px;
+  padding-right: var(--space-3);
+  background-image: none;
+}
+
+.custom-select__meta {
+  margin-top: 6px;
+  font-size: 10px;
+  color: var(--text-muted);
+  text-align: right;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.custom-select__list {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: var(--space-1);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.custom-select__empty {
+  padding: var(--space-4);
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  text-align: center;
+}
+
+.custom-select__option {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text-primary);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition: background-color var(--ease-fast), border-color var(--ease-fast), transform var(--ease-fast);
+}
+
+.custom-select__option:hover:not(:disabled),
+.custom-select__option.is-active {
+  background: color-mix(in srgb, var(--accent) 9%, var(--surface-2));
+  border-color: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.custom-select__option[aria-selected="true"] {
+  background: color-mix(in srgb, var(--accent) 15%, var(--surface-2));
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.custom-select__option:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.custom-select__option-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.custom-select__option-check {
+  font-size: 12px;
+  color: var(--accent);
+  opacity: 0;
+  transform: scale(0.82);
+  transition: opacity var(--ease-fast), transform var(--ease-fast);
+}
+
+.custom-select__option[aria-selected="true"] .custom-select__option-check {
+  opacity: 1;
+  transform: scale(1);
 }

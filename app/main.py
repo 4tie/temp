@@ -1,4 +1,4 @@
-from contextlib import asynccontextmanager
+﻿from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,7 +14,12 @@ from app.services.ai_chat.loop_service import load_loop_state
 class NoCacheMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         response = await call_next(request)
-        if request.url.path.startswith("/static/css/"):
+        path = request.url.path
+        if (
+            path == "/"
+            or path.startswith("/static/js/")
+            or path.startswith("/static/css/")
+        ):
             response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
             response.headers["Pragma"] = "no-cache"
             response.headers["Expires"] = "0"
@@ -76,3 +81,4 @@ async def service_worker() -> Response:
         media_type="application/javascript",
         headers={"Cache-Control": "no-store"},
     )
+

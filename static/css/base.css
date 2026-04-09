@@ -1,5 +1,5 @@
-/* ============================================================
-   BASE — CSS custom properties, resets, typography
+﻿/* ============================================================
+   BASE â€” CSS custom properties, resets, typography
    ============================================================ */
 
 :root {
@@ -77,6 +77,7 @@
   --z-status: 100;
   --z-modal: 400;
   --z-toast: 500;
+  --z-shell-menu: 550;
 
   /* --- Semantic defaults, overridden by theme + accent --- */
   --accent: #4f46e5;
@@ -485,3 +486,4 @@ body {
     radial-gradient(circle at bottom right, var(--bg-glow-bottom), transparent 26%),
     linear-gradient(180deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
 }
+

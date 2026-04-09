@@ -243,6 +243,43 @@ async def _dispatch_ollama_model_v2(requested_model: str) -> str:
     raise RuntimeError("No Ollama models available for fallback")
 
 
+def _ollama_fallback_priority(model_name: str) -> tuple[int, int, str]:
+    name = str(model_name or "").lower()
+    cloud_penalty = 1 if ":cloud" in name else 0
+    if "coder" in name or "code" in name:
+        tier = 0
+    elif "llama3.1" in name:
+        tier = 1
+    elif "llama3" in name:
+        tier = 2
+    elif "qwen" in name:
+        tier = 3
+    elif "gemma" in name:
+        tier = 4
+    elif "granite" in name:
+        tier = 5
+    elif "deepseek" in name:
+        tier = 6
+    else:
+        tier = 7
+    return cloud_penalty, tier, name
+
+
+async def _ollama_candidate_models_v2(requested_model: str, *, limit: int = 3) -> list[str]:
+    primary = await _dispatch_ollama_model_v2(requested_model)
+    installed = await _ollama_list_models()
+    candidates: list[str] = [primary]
+    alternates = sorted(
+        {name for name in installed if name and name != primary},
+        key=_ollama_fallback_priority,
+    )
+    for name in alternates:
+        candidates.append(name)
+        if len(candidates) >= max(1, limit):
+            break
+    return candidates
+
+
 def _finalize_meta_v2(
     requested_provider: str,
     requested_model: str,
@@ -270,16 +307,31 @@ async def chat_complete(messages: list[dict], model: str, provider: str = "openr
     if requested_provider == "ollama":
         from .ollama_client import chat_complete as ollama_chat
 
-        actual_model = await _dispatch_ollama_model_v2(model)
-        text, meta = await _retry_call_v2(
-            "ollama",
-            requested_model,
-            actual_model,
-            ollama_chat,
-            caller_kwargs={"messages": messages, "model": actual_model},
-        )
-        _finalize_meta_v2(requested_provider, requested_model, meta, provider_attempts, fallback_chain)
-        return text
+        ollama_models = await _ollama_candidate_models_v2(model)
+        last_ollama_error: str | None = None
+        for index, actual_model in enumerate(ollama_models):
+            try:
+                text, meta = await _retry_call_v2(
+                    "ollama",
+                    requested_model,
+                    actual_model,
+                    ollama_chat,
+                    caller_kwargs={"messages": messages, "model": actual_model},
+                )
+                _finalize_meta_v2(requested_provider, requested_model, meta, provider_attempts, fallback_chain)
+                return text
+            except Exception as ollama_exc:
+                last_ollama_error = str(ollama_exc)
+                provider_attempts.append({
+                    "provider": "ollama",
+                    "model": actual_model,
+                    "status": "failed",
+                    "error": last_ollama_error,
+                })
+                fallback_chain.append(f"ollama:{actual_model}")
+                if index < len(ollama_models) - 1:
+                    logger.warning("Ollama failed for %s, trying alternate local model: %s", actual_model, ollama_exc)
+        raise RuntimeError(last_ollama_error or "Ollama request failed")
 
     from .openrouter_client import chat_complete as openrouter_chat
 
@@ -337,17 +389,43 @@ async def stream_chat(
     if requested_provider == "ollama":
         from .ollama_client import stream_chat as ollama_stream
 
-        actual_model = await _dispatch_ollama_model_v2(model)
-        async for chunk in _stream_with_retries_v2(
-            "ollama",
-            requested_model,
-            actual_model,
-            ollama_stream,
-            caller_kwargs={"messages": messages, "model": actual_model},
-        ):
-            if chunk.get("meta"):
-                chunk["meta"] = _finalize_meta_v2(requested_provider, requested_model, chunk["meta"], [], [])
-            yield chunk
+        provider_attempts: list[dict] = []
+        fallback_chain: list[str] = []
+        ollama_models = await _ollama_candidate_models_v2(model)
+        last_ollama_error: str | None = None
+
+        for index, actual_model in enumerate(ollama_models):
+            try:
+                async for chunk in _stream_with_retries_v2(
+                    "ollama",
+                    requested_model,
+                    actual_model,
+                    ollama_stream,
+                    caller_kwargs={"messages": messages, "model": actual_model},
+                ):
+                    if chunk.get("meta"):
+                        chunk["meta"] = _finalize_meta_v2(
+                            requested_provider,
+                            requested_model,
+                            chunk["meta"],
+                            provider_attempts,
+                            fallback_chain,
+                        )
+                    yield chunk
+                return
+            except Exception as ollama_exc:
+                last_ollama_error = str(ollama_exc)
+                provider_attempts.append({
+                    "provider": "ollama",
+                    "model": actual_model,
+                    "status": "failed",
+                    "error": last_ollama_error,
+                })
+                fallback_chain.append(f"ollama:{actual_model}")
+                if index < len(ollama_models) - 1:
+                    logger.warning("Ollama stream failed for %s, trying alternate local model: %s", actual_model, ollama_exc)
+
+        yield {"error": last_ollama_error or "Ollama request failed", "done": True}
         return
 
     from .openrouter_client import stream_chat as openrouter_stream

@@ -307,3 +307,66 @@ class ProviderDispatchReliabilityTest(unittest.IsolatedAsyncioTestCase):
         self.assertIn("openrouter:qwen/qwen3.6-plus:free", meta.get("fallback_chain", []))
 
 
+    async def test_requested_ollama_model_falls_back_to_alternate_local_model(self) -> None:
+        async def _fake_ollama_chat(*, messages: list[dict], model: str) -> str:
+            self.assertEqual(messages, [{"role": "user", "content": "hi"}])
+            if model == "deepseek-r1:14b":
+                raise RuntimeError("Server error '500 Internal Server Error' for url 'http://localhost:11434/api/chat'")
+            if model == "qwen2.5-coder:latest":
+                return "local fallback ok"
+            raise AssertionError(f"unexpected model {model}")
+
+        with patch(
+            "app.ai.models.provider_dispatch._ollama_list_models",
+            new=AsyncMock(return_value=["deepseek-r1:14b", "qwen2.5-coder:latest", "llama3:latest"]),
+        ), patch(
+            "app.ai.models.ollama_client.chat_complete",
+            new=_fake_ollama_chat,
+        ), patch("app.ai.models.provider_dispatch._asyncio.sleep", new=AsyncMock()):
+            text = await provider_dispatch.chat_complete(
+                [{"role": "user", "content": "hi"}],
+                model="ollama/deepseek-r1:14b",
+                provider="ollama",
+            )
+
+        meta = provider_dispatch.get_last_dispatch_meta()
+        self.assertEqual(text, "local fallback ok")
+        self.assertTrue(meta.get("fallback_used"))
+        self.assertEqual(meta.get("provider"), "ollama")
+        self.assertEqual(meta.get("model"), "qwen2.5-coder:latest")
+        self.assertIn("ollama:deepseek-r1:14b", meta.get("fallback_chain", []))
+
+    async def test_requested_ollama_stream_falls_back_to_alternate_local_model(self) -> None:
+        async def _fake_ollama_stream(*, messages: list[dict], model: str):
+            self.assertEqual(messages, [{"role": "user", "content": "hi"}])
+            if model == "deepseek-r1:14b":
+                raise RuntimeError("Server error '500 Internal Server Error' for url 'http://localhost:11434/api/chat'")
+            if model == "qwen2.5-coder:latest":
+                yield {"delta": "local stream ok", "done": False}
+                yield {"done": True}
+                return
+            raise AssertionError(f"unexpected model {model}")
+
+        chunks: list[dict] = []
+        with patch(
+            "app.ai.models.provider_dispatch._ollama_list_models",
+            new=AsyncMock(return_value=["deepseek-r1:14b", "qwen2.5-coder:latest", "llama3:latest"]),
+        ), patch(
+            "app.ai.models.ollama_client.stream_chat",
+            new=_fake_ollama_stream,
+        ), patch("app.ai.models.provider_dispatch._asyncio.sleep", new=AsyncMock()):
+            async for chunk in provider_dispatch.stream_chat(
+                [{"role": "user", "content": "hi"}],
+                model="ollama/deepseek-r1:14b",
+                provider="ollama",
+            ):
+                chunks.append(chunk)
+
+        self.assertEqual([chunk.get("delta") for chunk in chunks if chunk.get("delta")], ["local stream ok"])
+        final_meta = next(chunk["meta"] for chunk in chunks if chunk.get("meta"))
+        self.assertTrue(final_meta.get("fallback_used"))
+        self.assertEqual(final_meta.get("provider"), "ollama")
+        self.assertEqual(final_meta.get("model"), "qwen2.5-coder:latest")
+        self.assertIn("ollama:deepseek-r1:14b", final_meta.get("fallback_chain", []))
+
+

@@ -1,5 +1,5 @@
 {
-  "updated_at": 1775530181.7291315,
+  "updated_at": 1775768368.0823915,
   "roles": {
     "composer": {
       "openrouter/model:free": {
@@ -63,13 +63,13 @@
         "updated_at": 1775517579.3420928
       },
       "meta-llama/llama-3.2-1b-instruct:free": {
-        "requests": 22.0,
+        "requests": 24.0,
         "successes": 0.0,
         "rate_limits": 0.0,
         "latency_sum_ms": 0.0,
-        "latency_samples": 22.0,
+        "latency_samples": 24.0,
         "cooldown_until": 0.0,
-        "updated_at": 1775490956.686458
+        "updated_at": 1775768368.0823915
       },
       "gemma4:latest": {
         "requests": 3.0,
@@ -79,6 +79,24 @@
         "latency_samples": 3.0,
         "cooldown_until": 0.0,
         "updated_at": 1775530181.7291315
+      },
+      "qwen2.5-coder:latest": {
+        "requests": 3.0,
+        "successes": 3.0,
+        "rate_limits": 0.0,
+        "latency_sum_ms": 23796.0,
+        "latency_samples": 3.0,
+        "cooldown_until": 0.0,
+        "updated_at": 1775767166.1663878
+      },
+      "ollama/deepseek-r1:14b": {
+        "requests": 3.0,
+        "successes": 0.0,
+        "rate_limits": 0.0,
+        "latency_sum_ms": 22092.0,
+        "latency_samples": 3.0,
+        "cooldown_until": 0.0,
+        "updated_at": 1775767873.4985073
       }
     },
     "tool_caller": {

@@ -1,4 +1,4 @@
-/* =================================================================
+﻿/* =================================================================
    UI LOG - in-app runtime log drawer
    Exposes: window.UILog
    ================================================================= */
@@ -187,7 +187,6 @@ window.UILog = (() => {
     _load();
     _mount();
     _wireGlobalCapture();
-    info('UI log system initialized');
   }
 
   return {
@@ -204,3 +203,4 @@ window.UILog = (() => {
     download,
   };
 })();
+
