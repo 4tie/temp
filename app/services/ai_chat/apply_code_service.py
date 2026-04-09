@@ -11,6 +11,7 @@ from app.ai.memory.threads import load_thread
 from app.core.config import STRATEGIES_DIR
 from app.services.strategies import (
     atomic_write_text,
+    create_snapshot,
     resolve_strategy_sidecar_path,
     resolve_strategy_source_path,
     stage_strategy_source_change,
@@ -114,6 +115,25 @@ def apply_code_impl(
     staged = not direct_apply
 
     if direct_apply:
+        # Create snapshot before direct apply to live strategy
+        try:
+            snapshot_result = create_snapshot(
+                strategy_name=strategy_name,
+                reason="apply_code_impl_direct",
+                actor="ai",
+                linked_run_id=None,
+                metadata={
+                    "operation": "direct_apply",
+                    "thread_id": thread_id,
+                    "assistant_message_id": assistant_message_id,
+                    "code_block_index": code_block_index,
+                    "source_bytes": len(source.encode("utf-8"))
+                }
+            )
+        except Exception:
+            # Don't fail the apply if snapshot creation fails
+            pass
+
         bytes_written = atomic_write_text(py_path, source)
         new_json = json_path.read_text(encoding="utf-8") if json_path.exists() else None
     else:
