@@ -213,6 +213,11 @@ window.ResultExplorer = (() => {
     Tabs.init(_body.querySelector('[data-tab-group]'));
     _activateTab(_state.activeTab);
     _bind();
+
+    // Initialize charts if on charts tab
+    if (_state.activeTab === 'charts' && window.Charts) {
+      setTimeout(() => _initCharts(_state.detail?.results || {}), 100);
+    }
   }
 
   function _bind() {
@@ -342,104 +347,119 @@ window.ResultExplorer = (() => {
     const risk = results.risk_metrics || {};
     const run = results.run_metadata || {};
     const config = results.config_snapshot || {};
+
+    // Performance metrics
     const performance = [
-      ['Total Profit %', _formatPct(FMT.resultProfitPercent(summary), 2), FMT.toneProfit(FMT.resultProfitPercent(summary))],
-      ['Profit (abs)', FMT.currency(summary.totalProfit), FMT.toneProfit(summary.totalProfit)],
-      ['Avg Profit %', _formatPct(summary.avgProfitPct, 2, false), FMT.toneProfit(summary.avgProfitPct)],
-      ['Profit Factor', FMT.number(summary.profitFactor, 3), FMT.toneRatio(summary.profitFactor, 1)],
-      ['Win Rate', _formatPct(FMT.resultWinRate(summary.winRate), 1, false), FMT.toneWinRate(summary.winRate)],
-      ['CAGR', _formatPct(summary.cagr, 2, false), FMT.toneProfit(summary.cagr)],
-      ['Calmar', FMT.number(summary.calmarRatio, 3), FMT.toneRatio(summary.calmarRatio, 1)],
-      ['Sortino', FMT.number(summary.sortinoRatio, 3), FMT.toneRatio(summary.sortinoRatio, 1)],
-      ['Sharpe', FMT.number(summary.sharpeRatio, 3), FMT.toneRatio(summary.sharpeRatio, 1)],
-      ['SQN', FMT.number(summary.sqn, 3), FMT.toneRatio(summary.sqn, 1)],
-      ['Expectancy', FMT.number(summary.expectancy, 4), FMT.toneProfit(summary.expectancy)],
-      ['Expectancy Ratio', FMT.number(summary.expectancyRatio, 3), FMT.toneRatio(summary.expectancyRatio, 1)],
+      { label: 'Total Profit %', value: _formatPct(FMT.resultProfitPercent(summary), 2), tone: FMT.toneProfit(FMT.resultProfitPercent(summary)) },
+      { label: 'Profit (abs)', value: FMT.currency(summary.totalProfit), tone: FMT.toneProfit(summary.totalProfit) },
+      { label: 'Avg Profit %', value: _formatPct(summary.avgProfitPct, 2, false), tone: FMT.toneProfit(summary.avgProfitPct) },
+      { label: 'Profit Factor', value: FMT.number(summary.profitFactor, 3), tone: FMT.toneRatio(summary.profitFactor, 1) },
+      { label: 'Win Rate', value: _formatPct(FMT.resultWinRate(summary.winRate), 1, false), tone: FMT.toneWinRate(summary.winRate) },
+      { label: 'CAGR', value: _formatPct(summary.cagr, 2, false), tone: FMT.toneProfit(summary.cagr) },
+      { label: 'Calmar', value: FMT.number(summary.calmarRatio, 3), tone: FMT.toneRatio(summary.calmarRatio, 1) },
+      { label: 'Sortino', value: FMT.number(summary.sortinoRatio, 3), tone: FMT.toneRatio(summary.sortinoRatio, 1) },
+      { label: 'Sharpe', value: FMT.number(summary.sharpeRatio, 3), tone: FMT.toneRatio(summary.sharpeRatio, 1) },
+      { label: 'SQN', value: FMT.number(summary.sqn, 3), tone: FMT.toneRatio(summary.sqn, 1) },
+      { label: 'Expectancy', value: FMT.number(summary.expectancy, 4), tone: FMT.toneProfit(summary.expectancy) },
+      { label: 'Expectancy Ratio', value: FMT.number(summary.expectancyRatio, 3), tone: FMT.toneRatio(summary.expectancyRatio, 1) },
     ];
 
+    // Wallet & Exposure metrics
     const wallet = [
-      ['Starting Balance', _formatCurrencyOrNA(balance.starting_balance)],
-      ['Final Balance', _formatCurrencyOrNA(balance.final_balance), FMT.toneProfit((balance.final_balance ?? 0) - (balance.starting_balance ?? 0))],
-      ['Wallet Config', _formatCurrencyOrNA(balance.dry_run_wallet)],
-      ['Long Profit', `${_formatCurrencyOrNA(balance.profit_total_long_abs)} / ${_formatPct(balance.profit_total_long_pct)}`, FMT.toneProfit(balance.profit_total_long_abs)],
-      ['Short Profit', `${_formatCurrencyOrNA(balance.profit_total_short_abs)} / ${_formatPct(balance.profit_total_short_pct)}`, FMT.toneProfit(balance.profit_total_short_abs)],
-      ['Trading Volume', _formatCurrencyOrNA(summary.tradingVolume)],
-      ['Avg Stake', _formatCurrencyOrNA(summary.avgStakeAmount)],
-      ['Stake Amount', _esc(summary.stakeAmount || '—')],
-      ['Stake Currency', _esc(summary.stakeCurrency || '—')],
-      ['Market Change', _formatPct(summary.marketChange, 2, false), FMT.toneProfit(summary.marketChange)],
+      { label: 'Starting Balance', value: _formatCurrencyOrNA(balance.starting_balance), tone: '' },
+      { label: 'Final Balance', value: _formatCurrencyOrNA(balance.final_balance), tone: FMT.toneProfit((balance.final_balance ?? 0) - (balance.starting_balance ?? 0)) },
+      { label: 'Wallet Config', value: _formatCurrencyOrNA(balance.dry_run_wallet), tone: '' },
+      { label: 'Long Profit', value: `${_formatCurrencyOrNA(balance.profit_total_long_abs)} / ${_formatPct(balance.profit_total_long_pct)}`, tone: FMT.toneProfit(balance.profit_total_long_abs) },
+      { label: 'Short Profit', value: `${_formatCurrencyOrNA(balance.profit_total_short_abs)} / ${_formatPct(balance.profit_total_short_pct)}`, tone: FMT.toneProfit(balance.profit_total_short_abs) },
+      { label: 'Trading Volume', value: _formatCurrencyOrNA(summary.tradingVolume), tone: '' },
+      { label: 'Avg Stake', value: _formatCurrencyOrNA(summary.avgStakeAmount), tone: '' },
+      { label: 'Stake Amount', value: _esc(summary.stakeAmount || '—'), tone: '' },
+      { label: 'Stake Currency', value: _esc(summary.stakeCurrency || '—'), tone: '' },
+      { label: 'Market Change', value: _formatPct(summary.marketChange, 2, false), tone: FMT.toneProfit(summary.marketChange) },
     ];
 
-    const riskCards = [
-      ['Max Drawdown', _formatPct(FMT.resultDrawdownPercent(summary.maxDrawdown), 2, false), FMT.toneDrawdown(summary.maxDrawdown)],
-      ['Max Drawdown (abs)', FMT.currency(summary.maxDrawdownAbs), 'red'],
-      ['Max Relative Drawdown', _formatPct(risk.max_relative_drawdown, 2, false), FMT.toneDrawdown(risk.max_relative_drawdown)],
-      ['Drawdown Start', FMT.ts(risk.drawdown_start), 'red'],
-      ['Drawdown End', FMT.ts(risk.drawdown_end), 'red'],
-      ['Drawdown Duration', _esc(risk.drawdown_duration || '—'), 'red'],
-      ['Max Consecutive Wins', FMT.integer(risk.max_consecutive_wins), 'green'],
-      ['Max Consecutive Losses', FMT.integer(risk.max_consecutive_losses), 'red'],
-      ['Best Day', `${_formatPct(summary.bestDayPct, 2, false)} / ${FMT.currency(summary.bestDayAbs)}`, FMT.toneProfit(summary.bestDayPct)],
-      ['Worst Day', `${_formatPct(summary.worstDayPct, 2, false)} / ${FMT.currency(summary.worstDayAbs)}`, 'red'],
-      ['Winning Days', FMT.integer(summary.winningDays), 'green'],
-      ['Losing Days', FMT.integer(summary.losingDays), 'red'],
+    // Risk metrics
+    const riskMetrics = [
+      { label: 'Max Drawdown', value: _formatPct(FMT.resultDrawdownPercent(summary.maxDrawdown), 2, false), tone: FMT.toneDrawdown(summary.maxDrawdown) },
+      { label: 'Max Drawdown (abs)', value: FMT.currency(summary.maxDrawdownAbs), tone: 'red' },
+      { label: 'Max Relative Drawdown', value: _formatPct(risk.max_relative_drawdown, 2, false), tone: FMT.toneDrawdown(risk.max_relative_drawdown) },
+      { label: 'Drawdown Start', value: FMT.ts(risk.drawdown_start), tone: 'red' },
+      { label: 'Drawdown End', value: FMT.ts(risk.drawdown_end), tone: 'red' },
+      { label: 'Drawdown Duration', value: _esc(risk.drawdown_duration || '—'), tone: 'red' },
+      { label: 'Max Consecutive Wins', value: FMT.integer(risk.max_consecutive_wins), tone: 'green' },
+      { label: 'Max Consecutive Losses', value: FMT.integer(risk.max_consecutive_losses), tone: 'red' },
+      { label: 'Best Day', value: `${_formatPct(summary.bestDayPct, 2, false)} / ${FMT.currency(summary.bestDayAbs)}`, tone: FMT.toneProfit(summary.bestDayPct) },
+      { label: 'Worst Day', value: `${_formatPct(summary.worstDayPct, 2, false)} / ${FMT.currency(summary.worstDayAbs)}`, tone: 'red' },
+      { label: 'Winning Days', value: FMT.integer(summary.winningDays), tone: 'green' },
+      { label: 'Losing Days', value: FMT.integer(summary.losingDays), tone: 'red' },
     ];
 
+    // Run Metadata
     const runtime = [
-      ['Run ID', _esc(_state.runId)],
-      ['Strategy', _esc(meta.display_strategy || meta.strategy || run.strategy_name || '—')],
-      ['Strategy Version', _esc(meta.display_version || meta.strategy_version || results.display_version || '—')],
-      ['Strategy Class', _esc(meta.strategy_class || '—')],
-      ['Exchange', _esc(meta.exchange || '—')],
-      ['Timeframe', _esc(run.timeframe || meta.timeframe || '—')],
-      ['Timerange', _esc(run.timerange || meta.timerange || '—')],
-      ['Backtest Start', FMT.ts(run.backtest_start || summary.backtestStart)],
-      ['Backtest End', FMT.ts(run.backtest_end || summary.backtestEnd)],
-      ['Run Started', FMT.ts(meta.started_at)],
-      ['Run Completed', FMT.ts(meta.completed_at)],
-      ['Trades / Day', FMT.number(run.trades_per_day, 2)],
-      ['Backtest Days', FMT.integer(run.backtest_days)],
-      ['Long Trades', FMT.integer(summary.tradeCountLong)],
-      ['Short Trades', FMT.integer(summary.tradeCountShort)],
-      ['Best Pair', _esc(_pairLabel(summary.bestPair) || '—')],
-      ['Worst Pair', _esc(_pairLabel(summary.worstPair) || '—')],
+      { label: 'Run ID', value: _esc(_state.runId), tone: '' },
+      { label: 'Strategy', value: _esc(meta.display_strategy || meta.strategy || run.strategy_name || '—'), tone: '' },
+      { label: 'Strategy Version', value: _esc(meta.display_version || meta.strategy_version || results.display_version || '—'), tone: '' },
+      { label: 'Strategy Class', value: _esc(meta.strategy_class || '—'), tone: '' },
+      { label: 'Exchange', value: _esc(meta.exchange || '—'), tone: '' },
+      { label: 'Timeframe', value: _esc(run.timeframe || meta.timeframe || '—'), tone: '' },
+      { label: 'Timerange', value: _esc(run.timerange || meta.timerange || '—'), tone: '' },
+      { label: 'Backtest Start', value: FMT.ts(run.backtest_start || summary.backtestStart), tone: '' },
+      { label: 'Backtest End', value: FMT.ts(run.backtest_end || summary.backtestEnd), tone: '' },
+      { label: 'Run Started', value: FMT.ts(meta.started_at), tone: '' },
+      { label: 'Run Completed', value: FMT.ts(meta.completed_at), tone: '' },
+      { label: 'Trades / Day', value: FMT.number(run.trades_per_day, 2), tone: '' },
+      { label: 'Backtest Days', value: FMT.integer(run.backtest_days), tone: '' },
+      { label: 'Long Trades', value: FMT.integer(summary.tradeCountLong), tone: '' },
+      { label: 'Short Trades', value: FMT.integer(summary.tradeCountShort), tone: '' },
+      { label: 'Best Pair', value: _esc(_pairLabel(summary.bestPair) || '—'), tone: '' },
+      { label: 'Worst Pair', value: _esc(_pairLabel(summary.worstPair) || '—'), tone: '' },
     ];
 
+    // Strategy Runtime Settings
     const behavior = [
-      ['Stoploss', _formatPct(config.stoploss, 2, false)],
-      ['Trailing Stop', _bool(config.trailing_stop)],
-      ['Trailing Positive', _formatPct(config.trailing_stop_positive, 2, false)],
-      ['Trailing Offset', _formatPct(config.trailing_stop_positive_offset, 2, false)],
-      ['Exit Signal', _bool(config.use_exit_signal)],
-      ['Exit Profit Only', _bool(config.exit_profit_only)],
-      ['Exit Offset', _formatPct(config.exit_profit_offset, 2, false)],
-      ['Ignore ROI On Entry', _bool(config.ignore_roi_if_entry_signal)],
-      ['Custom Stoploss', _bool(config.use_custom_stoploss)],
-      ['Protections', _bool(config.enable_protections)],
-      ['ROI Table', _jsonMini(config.minimal_roi || {})],
-      ['Pairlist', _jsonMini(config.pairlist || [])],
+      { label: 'Stoploss', value: _formatPct(config.stoploss, 2, false), tone: '' },
+      { label: 'Trailing Stop', value: _bool(config.trailing_stop), tone: '' },
+      { label: 'Trailing Positive', value: _formatPct(config.trailing_stop_positive, 2, false), tone: '' },
+      { label: 'Trailing Offset', value: _formatPct(config.trailing_stop_positive_offset, 2, false), tone: '' },
+      { label: 'Exit Signal', value: _bool(config.use_exit_signal), tone: '' },
+      { label: 'Exit Profit Only', value: _bool(config.exit_profit_only), tone: '' },
+      { label: 'Exit Offset', value: _formatPct(config.exit_profit_offset, 2, false), tone: '' },
+      { label: 'Ignore ROI On Entry', value: _bool(config.ignore_roi_if_entry_signal), tone: '' },
+      { label: 'Custom Stoploss', value: _bool(config.use_custom_stoploss), tone: '' },
+      { label: 'Protections', value: _bool(config.enable_protections), tone: '' },
+      { label: 'ROI Table', value: _jsonMini(config.minimal_roi || {}), tone: '' },
+      { label: 'Pairlist', value: _jsonMini(config.pairlist || []), tone: '' },
     ];
 
     return `
-      <div class="result-explorer__section">
-        <div class="section-heading">Performance</div>
-        <div class="detail-grid">${performance.map(([k, v, t]) => _detailItem(k, v, t)).join('')}</div>
+      <div class="metrics-section">
+        <div class="metrics-section-title">Performance</div>
+        <div class="metrics-grid">${performance.map(m => _metricItem(m.label, m.value, m.tone)).join('')}</div>
       </div>
-      <div class="result-explorer__section">
-        <div class="section-heading">Wallet & Exposure</div>
-        <div class="detail-grid">${wallet.map(([k, v, t]) => _detailItem(k, v, t)).join('')}</div>
+      <div class="metrics-section">
+        <div class="metrics-section-title">Wallet & Exposure</div>
+        <div class="metrics-grid">${wallet.map(m => _metricItem(m.label, m.value, m.tone)).join('')}</div>
       </div>
-      <div class="result-explorer__section">
-        <div class="section-heading">Risk</div>
-        <div class="detail-grid">${riskCards.map(([k, v, t]) => _detailItem(k, v, t)).join('')}</div>
+      <div class="metrics-section">
+        <div class="metrics-section-title">Risk</div>
+        <div class="metrics-grid">${riskMetrics.map(m => _metricItem(m.label, m.value, m.tone)).join('')}</div>
       </div>
-      <div class="result-explorer__section">
-        <div class="section-heading">Run Metadata</div>
-        <div class="detail-grid">${runtime.map(([k, v]) => _detailItem(k, v)).join('')}</div>
+      <div class="metrics-section">
+        <div class="metrics-section-title">Run Metadata</div>
+        <div class="metrics-grid">${runtime.map(m => _metricItem(m.label, m.value, m.tone)).join('')}</div>
       </div>
-      <div class="result-explorer__section">
-        <div class="section-heading">Strategy Runtime Settings</div>
-        <div class="detail-grid">${behavior.map(([k, v]) => _detailItem(k, v)).join('')}</div>
+      <div class="metrics-section">
+        <div class="metrics-section-title">Strategy Runtime Settings</div>
+        <div class="metrics-grid">${behavior.map(m => _metricItem(m.label, m.value, m.tone)).join('')}</div>
+      </div>
+    `;
+  }
+
+  function _metricItem(label, value, tone) {
+    return `
+      <div class="metric-item">
+        <div class="metric-label">${_esc(label)}</div>
+        <div class="metric-value ${tone ? tone : ''}">${value}</div>
       </div>
     `;
   }
@@ -476,14 +496,97 @@ window.ResultExplorer = (() => {
       value: row.profit_abs || 0,
     }));
 
+    // Calculate totals for chart headers
+    const totalProfit = cumulativeSeries.length > 0 ? cumulativeSeries[cumulativeSeries.length - 1].value : 0;
+    const totalDaily = dailySeries.reduce((sum, d) => sum + d.value, 0);
+    const maxDrawdown = drawdownSeries.length > 0 ? Math.max(...drawdownSeries.map(d => d.value)) : 0;
+    const totalMonthly = monthSeries.reduce((sum, m) => sum + m.value, 0);
+
     return `
-      <div class="result-explorer__chart-grid">
-        ${_chartCard('Cumulative Profit', _lineChart(cumulativeSeries, { color: 'var(--violet)' }), _seriesMeta(cumulativeSeries))}
-        ${_chartCard('Daily Profit', _barChart(dailySeries), _seriesMeta(dailySeries))}
-        ${_chartCard('Drawdown', _lineChart(drawdownSeries, { color: 'var(--red)', area: false }), _seriesMeta(drawdownSeries))}
-        ${_chartCard('Monthly Aggregate', _barChart(monthSeries), _seriesMeta(monthSeries))}
+      <div class="charts-grid" data-charts-container>
+        <div class="chart-container" data-chart="cumulative">
+          <div class="chart-header">
+            <div class="chart-title">Cumulative Profit</div>
+            <div class="chart-value ${_toneFromNumber(totalProfit)}">${totalProfit > 0 ? '+' : ''}${FMT.currency(totalProfit)}</div>
+          </div>
+          <div class="chart-canvas-wrapper" data-chart-wrapper="cumulative"></div>
+        </div>
+        <div class="chart-container" data-chart="daily">
+          <div class="chart-header">
+            <div class="chart-title">Daily Profit</div>
+            <div class="chart-value ${_toneFromNumber(totalDaily)}">${totalDaily > 0 ? '+' : ''}${FMT.currency(totalDaily)}</div>
+          </div>
+          <div class="chart-canvas-wrapper" data-chart-wrapper="daily"></div>
+        </div>
+        <div class="chart-container" data-chart="drawdown">
+          <div class="chart-header">
+            <div class="chart-title">Drawdown</div>
+            <div class="chart-value red">-${FMT.currency(maxDrawdown)}</div>
+          </div>
+          <div class="chart-canvas-wrapper" data-chart-wrapper="drawdown"></div>
+        </div>
+        <div class="chart-container" data-chart="monthly">
+          <div class="chart-header">
+            <div class="chart-title">Monthly Aggregate</div>
+            <div class="chart-value ${_toneFromNumber(totalMonthly)}">${totalMonthly > 0 ? '+' : ''}${FMT.currency(totalMonthly)}</div>
+          </div>
+          <div class="chart-canvas-wrapper" data-chart-wrapper="monthly"></div>
+        </div>
       </div>
     `;
+  }
+
+  function _initCharts(results) {
+    if (!window.Charts) return;
+
+    const daily = results.daily_profit || results.equity_curve || [];
+    const cumulativeSeries = daily.map((row) => ({ label: row.date, value: row.cumulative || 0 }));
+    const dailySeries = daily.map((row) => ({ label: row.date, value: row.profit || 0 }));
+    const drawdownSeries = _buildDrawdownSeries(cumulativeSeries);
+    const monthSeries = ((results.periodic_breakdown || {}).month || []).map((row) => ({
+      label: row.date,
+      value: row.profit_abs || 0,
+    }));
+
+    // Render charts
+    const cumulativeWrapper = _body.querySelector('[data-chart-wrapper="cumulative"]');
+    const dailyWrapper = _body.querySelector('[data-chart-wrapper="daily"]');
+    const drawdownWrapper = _body.querySelector('[data-chart-wrapper="drawdown"]');
+    const monthlyWrapper = _body.querySelector('[data-chart-wrapper="monthly"]');
+
+    if (cumulativeWrapper && cumulativeSeries.length > 0) {
+      window.Charts.createLineChart(cumulativeWrapper, cumulativeSeries, {
+        color: 'var(--accent)',
+        area: true,
+        animate: true,
+        showPoints: false
+      });
+    }
+
+    if (dailyWrapper && dailySeries.length > 0) {
+      window.Charts.createBarChart(dailyWrapper, dailySeries, {
+        positiveColor: 'var(--green)',
+        negativeColor: 'var(--red)',
+        animate: true
+      });
+    }
+
+    if (drawdownWrapper && drawdownSeries.length > 0) {
+      window.Charts.createLineChart(drawdownWrapper, drawdownSeries, {
+        color: 'var(--red)',
+        area: true,
+        animate: true,
+        showPoints: false
+      });
+    }
+
+    if (monthlyWrapper && monthSeries.length > 0) {
+      window.Charts.createBarChart(monthlyWrapper, monthSeries, {
+        positiveColor: 'var(--green)',
+        negativeColor: 'var(--red)',
+        animate: true
+      });
+    }
   }
 
   function _renderTradesTab(results) {

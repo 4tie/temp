@@ -5,6 +5,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+from app.services.strategies.strategy_restore_service import create_snapshot
 from app.services.strategies.strategy_validation_service import (
     resolve_strategy_source_path,
     validate_python_source,
@@ -71,6 +72,20 @@ def save_strategy_source(strategy_name: str, source: str, *, strategies_dir: Pat
         raise FileNotFoundError(f"Strategy source not found: {path.name}")
 
     validation = validate_python_source(name, source)
+
+    # Create snapshot before modifying live strategy
+    try:
+        snapshot_result = create_snapshot(
+            strategy_name=name,
+            reason="save_strategy_source",
+            actor="system",
+            linked_run_id=None,
+            metadata={"operation": "save_source", "source_bytes": len(source.encode("utf-8"))}
+        )
+    except Exception:
+        # Don't fail the save if snapshot creation fails, but log it
+        pass
+
     bytes_written = atomic_write_text(path, source)
     return {
         "ok": True,

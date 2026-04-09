@@ -7,6 +7,7 @@ from typing import Any
 
 from app.core.config import STRATEGIES_DIR
 from app.services.strategies.strategy_param_metadata_service import load_strategy_param_metadata
+from app.services.strategies.strategy_restore_service import create_snapshot
 from app.services.strategies.strategy_sidecar_service import load_strategy_sidecar_record
 from app.services.strategies.strategy_sidecar_service import read_strategy_sidecar_payload
 from app.services.strategies.strategy_source_service import atomic_write_text

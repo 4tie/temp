@@ -157,6 +157,71 @@ async def accept_strategy_version(strategy_name: str, body: VersionAcceptRequest
     return result
 
 
+# History endpoints
+@router.get("/{strategy_name}/history")
+async def get_strategy_history(strategy_name: str):
+    strategy = _checked_strategy(strategy_name)
+    try:
+        snapshots = list_snapshots(strategy)
+        return {"strategy": strategy, "snapshots": snapshots}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to list snapshots: {exc}") from exc
+
+
+@router.get("/{strategy_name}/history/{snapshot_id}")
+async def get_snapshot(strategy_name: str, snapshot_id: str):
+    strategy = _checked_strategy(strategy_name)
+    try:
+        snapshot = load_snapshot(strategy, snapshot_id)
+        return snapshot
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Snapshot not found")
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to load snapshot: {exc}") from exc
+
+
+@router.post("/{strategy_name}/history/snapshot")
+async def create_strategy_snapshot(strategy_name: str, body: SnapshotCreateRequest):
+    strategy = _checked_strategy(strategy_name)
+    try:
+        result = create_snapshot(
+            strategy_name=strategy,
+            reason=body.reason,
+            actor=body.actor,
+            linked_run_id=body.linked_run_id,
+            metadata=body.metadata,
+        )
+        return result
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Strategy not found")
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to create snapshot: {exc}") from exc
+
+
+@router.post("/{strategy_name}/history/{snapshot_id}/restore")
+async def restore_strategy_snapshot(strategy_name: str, snapshot_id: str):
+    strategy = _checked_strategy(strategy_name)
+    try:
+        result = restore_snapshot(strategy, snapshot_id)
+        return result
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Snapshot not found")
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to restore snapshot: {exc}") from exc
+
+
+@router.get("/{strategy_name}/history/{snapshot_id}/compare")
+async def compare_strategy_snapshot(strategy_name: str, snapshot_id: str):
+    strategy = _checked_strategy(strategy_name)
+    try:
+        result = compare_snapshot_to_current(strategy, snapshot_id)
+        return result
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Snapshot not found")
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to compare snapshot: {exc}") from exc
+
+
 @router.post("/{strategy_name}/versions/{version_name}/accept")
 async def accept_strategy_version_path(strategy_name: str, version_name: str):
     strategy = _checked_strategy(strategy_name)

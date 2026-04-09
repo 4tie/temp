@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from app.services.strategies.strategy_param_metadata_service import get_strategy_param_metadata
+from app.services.strategies.strategy_restore_service import create_snapshot
 from app.services.strategies.strategy_validation_service import resolve_strategy_sidecar_path, validate_strategy_name
 
 _JSON_SCALAR_TYPES = (str, int, float, bool, type(None))
@@ -177,6 +178,20 @@ def save_strategy_current_values(
     )
     path = resolve_strategy_sidecar_path(name, strategies_dir=strategies_dir)
     payload = build_strategy_sidecar_payload(name, flat_params, extracted_params=resolved_params)
+
+    # Create snapshot before modifying live strategy
+    try:
+        snapshot_result = create_snapshot(
+            strategy_name=name,
+            reason="save_strategy_current_values",
+            actor="system",
+            linked_run_id=None,
+            metadata={"operation": "save_params", "param_count": len(flat_params)}
+        )
+    except Exception:
+        # Don't fail the save if snapshot creation fails, but log it
+        pass
+
     _atomic_write_json(path, payload)
     return {
         "ok": True,
