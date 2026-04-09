@@ -365,33 +365,3 @@
     height: min(50vh, 420px);
   }
 }
-/* ============================================================
-   RESULTS THEME UNIFICATION OVERRIDES
-   ============================================================ */
-
-.sl-sidebar-card,
-#sl-detail,
-.sl-source-card,
-.sl-inspector-metric,
-.sl-params-table-wrap,
-.sl-source-editor,
-.sl-source-toolbar,
-.sl-source-editor .CodeMirror-merge-gap {
-  box-shadow: none;
-}
-
-.sl-inspector-metric,
-.sl-params-table-wrap,
-.sl-source-card,
-.sl-source-editor {
-  background: transparent;
-  border-color: var(--border-subtle);
-}
-
-.sl-source-toolbar {
-  padding: var(--space-3) 0;
-}
-
-.sl-source-body {
-  padding: var(--space-3) 0 0;
-}

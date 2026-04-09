@@ -51,34 +51,3 @@
     min-height: 280px;
   }
 }
-
-/* Minimal SaaS overrides */
-.dashboard-hero .stat-card {
-  min-height: 148px;
-  justify-content: space-between;
-}
-
-.dashboard-grid {
-  gap: 18px;
-}
-
-.dashboard-panel {
-  min-height: 390px;
-}
-
-.dashboard-panel .card__meta {
-  padding-top: 14px;
-}
-/* ============================================================
-   RESULTS THEME UNIFICATION OVERRIDES
-   ============================================================ */
-
-.dashboard-grid,
-.dashboard-page {
-  gap: var(--space-3);
-}
-
-.dashboard-hero .stat-card,
-.dashboard-panel {
-  min-height: auto;
-}
