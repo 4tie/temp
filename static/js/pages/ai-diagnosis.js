@@ -1681,7 +1681,12 @@ window.AIDiagPage = (() => {
         Toast.error('No active thread yet. Send a chat message first.');
         return;
       }
-      const fallbackStrategy = _state.contextStrategyName || _strategyFromFilename(inferredFilename) || undefined;
+      // Best-effort strategy resolution: context name > inferred filename > ask user
+      const fallbackStrategy =
+        _state.contextStrategyName ||
+        _strategyFromFilename(inferredFilename) ||
+        undefined;
+
       if (_state.loopEnabled) {
         await _startLoopFromBlock({
           assistantMessageId,
@@ -1694,7 +1699,7 @@ window.AIDiagPage = (() => {
         thread_id: _state.conversationId,
         assistant_message_id: assistantMessageId,
         code_block_index: blockIndex,
-        fallback_strategy: fallbackStrategy,
+        fallback_strategy: fallbackStrategy || null,
       };
       const res = await fetch('/ai/chat/apply-code', {
         method: 'POST',
@@ -1703,7 +1708,9 @@ window.AIDiagPage = (() => {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        Toast.error(data.detail || `Apply failed: HTTP ${res.status}`);
+        // Surface a clear message when strategy resolution fails
+        const detail = data.detail || `Apply failed: HTTP ${res.status}`;
+        Toast.error(detail);
         return;
       }
       _state.lastApplied = data;

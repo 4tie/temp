@@ -20,6 +20,31 @@ from app.services.strategies import (
 
 _CODE_FENCE_RE = re.compile(r"```([A-Za-z0-9_\-]*)\n?([\s\S]*?)```")
 _PY_FILE_RE = re.compile(r"\b([A-Za-z0-9_\-]+\.py)\b")
+_CLASS_RE = re.compile(r"^class\s+([A-Za-z][A-Za-z0-9_]*)\s*(?:\(|:)", re.MULTILINE)
+
+
+def _strategy_from_code(code: str) -> str | None:
+    """Extract the first class name from a Python code block as a strategy hint."""
+    match = _CLASS_RE.search(code or "")
+    return match.group(1) if match else None
+
+
+def _strategy_from_thread(thread: dict) -> str | None:
+    """Walk thread messages newest-first for any context_strategy_name or .py filename hint."""
+    messages = list(reversed(thread.get("messages", [])))
+    for msg in messages:
+        # Check meta fields stored by the frontend when injecting context
+        meta = msg.get("meta") or {}
+        for key in ("context_strategy_name", "strategy", "strategy_name"):
+            val = meta.get(key)
+            if val and isinstance(val, str) and val.strip():
+                return val.strip()
+        # Scan message content for .py filename hints
+        content = msg.get("content") or ""
+        files = _PY_FILE_RE.findall(content)
+        if files:
+            return files[-1].rsplit(".", 1)[0]
+    return None
 
 
 def validate_strategy_name(name: str) -> str:
@@ -81,9 +106,27 @@ def apply_code_impl(
 
     filename_hint = block.get("filename_hint")
     strategy_hint = filename_hint.rsplit(".", 1)[0] if filename_hint else None
-    strategy_name_raw = strategy_hint or fallback_strategy
+
+    # Resolution order:
+    # 1. filename hint extracted from text near the code block
+    # 2. explicit fallback_strategy from the request
+    # 3. class name found inside the code block itself
+    # 4. strategy name found anywhere in the thread history
+    strategy_name_raw = (
+        strategy_hint
+        or fallback_strategy
+        or _strategy_from_code(block.get("code", ""))
+        or _strategy_from_thread(thread)
+    )
     if not strategy_name_raw:
-        raise HTTPException(status_code=400, detail="Could not resolve strategy target from message or fallback")
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Could not resolve strategy target. "
+                "Mention the strategy filename (e.g. MyStrategy.py) in your message, "
+                "or inject a backtest context first."
+            ),
+        )
 
     strategy_name = validate_strategy_name(strategy_name_raw)
     source = str(block.get("code") or "").strip()
