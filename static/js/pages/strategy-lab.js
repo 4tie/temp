@@ -137,6 +137,7 @@ window.StrategyLabPage = (() => {
       _renderDetail(detail, name, params, source);
       _mountEditor();
       _updateEditorUi();
+      _initHistoryUI();
     } catch (err) {
       detail.innerHTML = `<div class="card__body"><div class="empty-state text-red">Failed: ${_esc(err.message)}</div></div>`;
     }
@@ -508,6 +509,168 @@ window.StrategyLabPage = (() => {
     const d = document.createElement('div');
     d.textContent = String(str || '');
     return d.innerHTML;
+  }
+
+  // History tab support
+  function _initHistoryUI() {
+    const tabButtons = document.querySelectorAll('#sl-main-tabs .tab');
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', e => _switchTab(e.target.dataset.tab));
+    });
+  }
+
+  function _switchTab(tabName) {
+    // Hide all panes
+    document.querySelectorAll('.tab-pane').forEach(pane => {
+      pane.classList.remove('tab-pane--active');
+    });
+    // Hide all tabs as active
+    document.querySelectorAll('#sl-main-tabs .tab').forEach(btn => {
+      btn.classList.remove('tab--active');
+    });
+
+    // Show selected pane and mark tab active
+    const pane = document.getElementById(`sl-tab-${tabName}`);
+    if (pane) {
+      pane.classList.add('tab-pane--active');
+    }
+    const btn = document.getElementById(`tab-${tabName}`);
+    if (btn) {
+      btn.classList.add('tab--active');
+    }
+
+    // Load history if switching to history tab
+    if (tabName === 'history' && _selected) {
+      _loadAndRenderHistory(_selected);
+    }
+  }
+
+  async function _loadAndRenderHistory(strategyName) {
+    try {
+      const response = await fetch(`/api/strategies/${encodeURIComponent(strategyName)}/history`);
+      if (!response.ok) {
+        Toast.error('Failed to load strategy history');
+        return;
+      }
+      const data = await response.json();
+      const snapshots = data.snapshots || [];
+      _renderHistorySnapshots(snapshots, strategyName);
+    } catch (err) {
+      Toast.error('Error loading history: ' + err.message);
+    }
+  }
+
+  function _renderHistorySnapshots(snapshots, strategyName) {
+    const container = DOM.$('#sl-history-container', _el);
+    if (!container) return;
+
+    if (!snapshots.length) {
+      container.innerHTML = '<div class="empty-state">No snapshots found for this strategy</div>';
+      return;
+    }
+
+    const html = snapshots.map(snap => _renderSnapshotCard(snap, strategyName)).join('');
+    container.innerHTML = html;
+
+    // Attach event listeners
+    snapshots.forEach(snap => {
+      const restoreBtn = DOM.$(`[data-action="restore"][data-snapshot-id="${snap.snapshot_id}"]`, container);
+      if (restoreBtn) {
+        DOM.on(restoreBtn, 'click', () => _promptRestore(strategyName, snap));
+      }
+
+      const compareBtn = DOM.$(`[data-action="compare"][data-snapshot-id="${snap.snapshot_id}"]`, container);
+      if (compareBtn) {
+        DOM.on(compareBtn, 'click', () => _showSnapshotComparison(strategyName, snap.snapshot_id));
+      }
+    });
+  }
+
+  function _renderSnapshotCard(snap, strategyName) {
+    const created = new Date(snap.created_at);
+    const createdStr = created.toLocaleString();
+    const reason = snap.reason || 'unknown';
+    const actor = snap.actor || 'system';
+    const resultSummary = snap.result_summary;
+
+    let metricsBadge = '';
+    if (resultSummary) {
+      const profit = (resultSummary.profit_percent || 0).toFixed(2);
+      const trades = resultSummary.total_trades || 0;
+      const wr = (resultSummary.win_rate || 0).toFixed(1);
+      metricsBadge = `
+        <div class="snapshot-metrics">
+          <span class="badge badge--info">${profit}% profit</span>
+          <span class="badge badge--neutral">${trades} trades, ${wr}% WR</span>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="snapshot-card" data-snapshot-id="${snap.snapshot_id}">
+        <div class="snapshot-card__header">
+          <div class="snapshot-card__timestamp">${_esc(createdStr)}</div>
+          <div class="snapshot-card__badges">
+            <span class="badge badge--primary">${_esc(actor)}</span>
+            <span class="badge badge--neutral">${_esc(reason)}</span>
+          </div>
+        </div>
+        <div class="snapshot-card__body">
+          <p class="text-sm"><strong>Snapshot ID:</strong> ${_esc(snap.snapshot_id.substring(0, 8))}</p>
+          <p class="text-sm"><strong>Source bytes:</strong> ${snap.source_bytes || 0}</p>
+          ${metricsBadge}
+        </div>
+        <div class="snapshot-card__actions">
+          <button class="btn btn--sm btn--secondary" data-action="compare" data-snapshot-id="${snap.snapshot_id}">Compare</button>
+          <button class="btn btn--sm btn--primary" data-action="restore" data-snapshot-id="${snap.snapshot_id}">Restore</button>
+        </div>
+      </div>
+    `;
+  }
+
+  async function _promptRestore(strategyName, snapshot) {
+    const confirmed = confirm(
+      `Restore "${strategyName}" to snapshot from ${new Date(snapshot.created_at).toLocaleString()}?\n\nCurrent state will be auto-saved first.`
+    );
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(
+        `/api/strategies/${encodeURIComponent(strategyName)}/history/${encodeURIComponent(snapshot.snapshot_id)}/restore`,
+        { method: 'POST' }
+      );
+      if (!response.ok) {
+        Toast.error('Restore failed');
+        return;
+      }
+      Toast.success('Strategy restored successfully');
+      _loadAndRenderHistory(strategyName);
+      _sourceOriginal = ''; // Reset to force reload
+    } catch (err) {
+      Toast.error('Restore error: ' + err.message);
+    }
+  }
+
+  async function _showSnapshotComparison(strategyName, snapshotId) {
+    try {
+      const response = await fetch(
+        `/api/strategies/${encodeURIComponent(strategyName)}/history/${encodeURIComponent(snapshotId)}/compare`
+      );
+      if (!response.ok) {
+        Toast.error('Failed to load comparison');
+        return;
+      }
+      const data = await response.json();
+      const sourceDiff = data.source_diff || {};
+      const sidecarDiff = data.sidecar_diff || {};
+
+      let msg = `Snapshot vs Current:\n\n`;
+      msg += `Source: ${sourceDiff.has_changes ? 'CHANGED' : 'Same'} (${sourceDiff.snapshot_lines || 0} vs ${sourceDiff.current_lines || 0} lines)\n`;
+      msg += `Sidecar: ${sidecarDiff.has_changes ? 'CHANGED' : 'Same'}`;
+      alert(msg);
+    } catch (err) {
+      Toast.error('Comparison error: ' + err.message);
+    }
   }
 
   function refresh() {

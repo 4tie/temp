@@ -47,6 +47,7 @@ def build_backtest_meta(
         "status": "running",
         "started_at": utcnow_iso(),
         "completed_at": None,
+        "snapshot_id": None,  # Will be populated by caller if linking to history
     }
     if extra_meta:
         meta.update(extra_meta)

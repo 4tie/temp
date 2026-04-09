@@ -5,8 +5,21 @@
 <div class="workspace-shell" aria-label="Strategy lab workspace">
   <section class="workspace-main">
     <section class="workspace-block">
-      <h2 class="section-title">Source Workspace</h2>
-      <p class="text-muted text-sm">Code editor, save actions, and version-aware details.</p>
+      <div class="tabs-bar" id="sl-main-tabs">
+        <button class="tab" data-tab="source" id="tab-source">Source</button>
+        <button class="tab" data-tab="history" id="tab-history">History</button>
+      </div>
+      <div id="sl-tab-source" class="tab-pane tab-pane--active">
+        <h2 class="section-title">Source Workspace</h2>
+        <p class="text-muted text-sm">Code editor, save actions, and version-aware details.</p>
+      </div>
+      <div id="sl-tab-history" class="tab-pane">
+        <h2 class="section-title">Strategy History</h2>
+        <p class="text-muted text-sm">View snapshots and linked backtest results.</p>
+        <div id="sl-history-container" class="strategy-history-container">
+          <div class="empty-state">Select a strategy to view history</div>
+        </div>
+      </div>
     </section>
   </section>
   <aside class="workspace-rail">
