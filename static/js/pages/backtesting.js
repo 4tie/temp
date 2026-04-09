@@ -496,12 +496,8 @@ window.BacktestPage = (() => {
               <div class="log-panel" id="bt-logs"></div>
             </div>
           </div>
-          <div class="card card--hero" id="bt-results-card" style="display:none">
-            <div class="card__header">
-              <span class="card__title">Results</span>
-              <button class="btn btn--danger btn--sm" id="bt-delete-btn">Delete Run</button>
-            </div>
-            <div class="card__body" id="bt-results-body"></div>
+          <div id="bt-results-card" style="display:none">
+            <div id="bt-results-body"></div>
           </div>
 
         </div>
@@ -518,10 +514,8 @@ window.BacktestPage = (() => {
     DOM.on(exchange, 'change', () => _loadPairs(exchange.value));
     DOM.on(form,     'submit', _onSubmit);
     DOM.on(stopBtn,  'click',  _onStop);
-    DOM.on(delBtn,   'click',  _onDeleteRun);
     DOM.on(resultCard, 'click', (e) => {
       if (!_resultRunId) return;
-      if (e.target.closest('#bt-delete-btn')) return;
       const suggestionApply = e.target.closest('[data-intelligence-suggestion-apply]');
       if (suggestionApply) {
         e.preventDefault();
@@ -560,20 +554,12 @@ window.BacktestPage = (() => {
         _onStrategyIntelligenceAction(intelligenceAction.dataset.intelligenceAction || '');
         return;
       }
-      ResultExplorer.open(_resultRunId);
     });
     DOM.on(resultCard, 'change', (e) => {
       const toggle = e.target.closest('[data-review-toggle]');
       if (!toggle) return;
       e.stopPropagation();
       _toggleStrategyRerunReviewChange(toggle.dataset.reviewToggle || '', Boolean(toggle.checked));
-    });
-    DOM.on(resultCard, 'keydown', (e) => {
-      if (!_resultRunId) return;
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        ResultExplorer.open(_resultRunId);
-      }
     });
 
     _setupPickerEvents('bt-pairs-list', 'bt-pairs-count', 'bt-pairs-search', 'bt-pairs-all', 'bt-pairs-none', 'bt-pairs-favs');
@@ -2605,19 +2591,11 @@ window.BacktestPage = (() => {
         ].filter(Boolean).join('  /  ')
       : '';
     const resultCard = DOM.$('#bt-results-card', _el);
-    if (resultCard) {
-      resultCard.classList.add('result-explorer-card');
-      resultCard.tabIndex = 0;
-      resultCard.setAttribute('role', 'button');
-      resultCard.setAttribute('aria-label', 'Open result explorer');
-    }
     const walletFlowLabel = walletDelta != null && walletDelta !== 0
       ? `${walletDelta > 0 ? 'Gained' : 'Lost'} ${FMT.currency(Math.abs(walletDelta))} from the starting wallet`
       : 'Start and final wallet ended at the same level';
     const netResultMeta = profitPct != null ? `Profit moved ${FMT.pct(profitPct)} versus the starting wallet` : 'Profit percentage was unavailable';
     el.innerHTML = `
-      <div class="result-explorer-card__hint">Click anywhere in this card to open the full explorer.</div>
-      <div class="bt-results-summary">
         <div class="bt-results-primary">
           <article class="bt-summary-card bt-summary-card--wallet">
             <div class="bt-summary-card__label">Start Wallet -> Final Wallet</div>
