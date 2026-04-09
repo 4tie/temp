@@ -10,6 +10,7 @@ BACKTEST_RESULTS_DIR = BASE_DIR / "backtest_results"
 HYPEROPT_RESULTS_DIR = BASE_DIR / "hyperopt_results"
 HYPEROPT_RUNS_DIR = HYPEROPT_RESULTS_DIR / "runs"
 STRATEGIES_DIR = BASE_DIR / "strategies"
+STRATEGY_HISTORY_DIR = BASE_DIR / "strategy_history"
 DATA_DIR = BASE_DIR / "data"
 PRESETS_FILE = BASE_DIR / "presets.json"
 LAST_CONFIG_FILE = BASE_DIR / "last_config.json"
@@ -41,6 +42,7 @@ BACKTEST_RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 HYPEROPT_RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 HYPEROPT_RUNS_DIR.mkdir(parents=True, exist_ok=True)
 STRATEGIES_DIR.mkdir(parents=True, exist_ok=True)
+STRATEGY_HISTORY_DIR.mkdir(parents=True, exist_ok=True)
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 AI_CONVERSATIONS_DIR.mkdir(parents=True, exist_ok=True)
 AI_THREADS_DIR.mkdir(parents=True, exist_ok=True)

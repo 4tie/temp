@@ -5,10 +5,15 @@ from typing import Any
 
 from app.core.config import STRATEGIES_DIR
 from app.services.strategies import (
+    compare_snapshot_to_current,
+    create_snapshot,
     get_strategy_editable_context,
+    list_snapshots,
     list_strategies,
+    load_snapshot,
     promote_staged_strategy_version,
     read_strategy_source,
+    restore_snapshot,
     save_strategy_current_values,
     save_strategy_source,
     stage_strategy_source_change,
@@ -35,6 +40,13 @@ class SourceUpdate(BaseModel):
 
 class VersionAcceptRequest(BaseModel):
     version_name: str
+
+
+class SnapshotCreateRequest(BaseModel):
+    reason: str
+    actor: str
+    linked_run_id: str | None = None
+    metadata: dict[str, Any] | None = None
 
 
 @router.get("")

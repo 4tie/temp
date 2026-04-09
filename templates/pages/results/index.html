@@ -1,22 +1,104 @@
 <div class="page-header">
-  <h1 class="page-header__title">Results</h1>
-  <p class="page-header__subtitle">Sortable run table with direct drill-down into performance details.</p>
+  <h1 class="page-header__title">Results Dashboard</h1>
+  <p class="page-header__subtitle">Comprehensive analysis of your backtesting runs with advanced filtering and performance insights.</p>
 </div>
+
 <div class="workspace-shell" aria-label="Results workspace">
-  <section class="workspace-main">
-    <section class="workspace-block">
-      <h2 class="section-title">Results Table</h2>
-      <p class="text-muted text-sm">Compare strategies by date, returns, drawdown, and risk metrics.</p>
-    </section>
-  </section>
-  <aside class="workspace-rail">
-    <section class="workspace-block">
-      <h2 class="section-title">Quick Filters</h2>
-      <ul class="workspace-list">
-        <li>Date window</li>
-        <li>Strategy class</li>
-        <li>Status and quality gates</li>
-      </ul>
-    </section>
-  </aside>
+  <!-- Quick Stats Overview -->
+  <div class="results-stats-bar">
+    <div class="results-stat-card">
+      <div class="results-stat-label">Total Runs</div>
+      <div class="results-stat-value" id="total-runs">0</div>
+      <div class="results-stat-change positive" id="runs-change">+0 this week</div>
+    </div>
+    <div class="results-stat-card">
+      <div class="results-stat-label">Avg Return</div>
+      <div class="results-stat-value" id="avg-return">0%</div>
+      <div class="results-stat-change" id="return-change">0% vs last month</div>
+    </div>
+    <div class="results-stat-card">
+      <div class="results-stat-label">Best Strategy</div>
+      <div class="results-stat-value" id="best-strategy">-</div>
+      <div class="results-stat-change positive" id="best-return">0% return</div>
+    </div>
+    <div class="results-stat-card">
+      <div class="results-stat-label">Success Rate</div>
+      <div class="results-stat-value" id="success-rate">0%</div>
+      <div class="results-stat-change" id="success-change">0% profitable</div>
+    </div>
+  </div>
+  
+  <!-- Main Results Table -->
+  <div class="results-table-container">
+    <div class="results-table-header">
+      <div class="results-table-info">
+        <h2 class="results-table-title">Backtest Results</h2>
+        <p class="results-table-meta">All your strategy testing runs with detailed performance metrics</p>
+      </div>
+      
+      <div class="results-table-controls">
+        <div class="results-search">
+          <input type="text" placeholder="Search strategies, dates, or metrics..." id="results-search">
+        </div>
+        
+        <div class="results-filter-chips">
+          <div class="results-filter-chip active" data-filter="all">All</div>
+          <div class="results-filter-chip" data-filter="profitable">Profitable</div>
+          <div class="results-filter-chip" data-filter="recent">Recent</div>
+          <div class="results-filter-chip" data-filter="high-volume">High Volume</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="results-table-wrapper">
+      <table class="results-data-table" id="results-table">
+        <thead>
+          <tr>
+            <th data-sort="strategy">Strategy</th>
+            <th data-sort="date">Date</th>
+            <th data-sort="profit">Total Return</th>
+            <th data-sort="trades">Trades</th>
+            <th data-sort="winrate">Win Rate</th>
+            <th data-sort="drawdown">Max Drawdown</th>
+            <th data-sort="sharpe">Sharpe Ratio</th>
+            <th data-sort="status">Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="results-table-body">
+          <!-- Table rows will be populated by JavaScript -->
+        </tbody>
+      </table>
+    </div>
+    
+    <div class="results-pagination">
+      <div class="results-pagination-info">
+        Showing <span id="pagination-start">0</span>-<span id="pagination-end">0</span> of <span id="pagination-total">0</span> results
+      </div>
+      
+      <div class="results-pagination-controls">
+        <button class="results-pagination-btn" id="prev-page" disabled>Previous</button>
+        <div class="results-pagination-numbers" id="pagination-numbers">
+          <!-- Page numbers will be populated by JavaScript -->
+        </div>
+        <button class="results-pagination-btn" id="next-page" disabled>Next</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Empty State (hidden by default) -->
+  <div class="results-empty-state" id="results-empty" style="display: none;">
+    <div class="results-empty-state-icon">📊</div>
+    <h3 class="results-empty-state-title">No Results Found</h3>
+    <p class="results-empty-state-subtitle">
+      Start by running your first backtest to see results here. 
+      Your strategy performance data will appear in this table.
+    </p>
+  </div>
+  
+  <!-- Loading State (hidden by default) -->
+  <div class="results-loading" id="results-loading" style="display: none;">
+    <div class="results-loading-spinner"></div>
+    <span>Loading results...</span>
+  </div>
 </div>

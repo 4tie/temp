@@ -1,26 +1,65 @@
 <div class="page-header">
   <h1 class="page-header__title">Backtesting</h1>
-  <p class="page-header__subtitle">Run historical simulations and inspect outcomes in a single workspace.</p>
+  <p class="page-header__subtitle">Advanced strategy testing with AI-powered insights and real-time performance analytics.</p>
 </div>
+
 <div class="workspace-shell" aria-label="Backtesting workspace">
   <section class="workspace-main">
-    <section class="workspace-block">
-      <h2 class="section-title">Run Setup</h2>
-      <p class="text-muted text-sm">Strategy, market, timeframe, and wallet controls.</p>
-    </section>
-    <section class="workspace-block">
-      <h2 class="section-title">Result Stream</h2>
-      <p class="text-muted text-sm">Logs and rolling metrics update while execution is active.</p>
-    </section>
+    <!-- Configuration Panel -->
+    <div class="bt-config-section">
+      <div class="bt-config-card card">
+        <div class="card__header">
+          <h2 class="card__title">Strategy Configuration</h2>
+          <p class="card__subtitle">Select strategy, timeframe, and market parameters</p>
+        </div>
+        <div class="card__body">
+          <!-- Configuration form content will be injected here -->
+        </div>
+      </div>
+    </div>
+    
+    <!-- Quick Parameters -->
+    <div class="bt-params-section">
+      <div id="bt-quick-params-card" class="card">
+        <div class="card__header">
+          <h2 class="card__title">Quick Parameters</h2>
+          <p class="card__subtitle">Fine-tune strategy settings</p>
+        </div>
+        <div class="card__body">
+          <!-- Quick params content will be injected here -->
+        </div>
+      </div>
+    </div>
   </section>
+  
   <aside class="workspace-rail">
-    <section class="workspace-block">
-      <h2 class="section-title">Validation</h2>
-      <ul class="workspace-list">
-        <li>Input sanity checks</li>
-        <li>Parameter constraints</li>
-        <li>Execution notes</li>
-      </ul>
-    </section>
+    <!-- Status Monitor -->
+    <div class="bt-status-section">
+      <div id="bt-status-card" class="card">
+        <div class="card__header">
+          <h2 class="card__title">Execution Status</h2>
+          <p class="card__subtitle">Real-time backtest progress</p>
+        </div>
+        <div class="card__body">
+          <!-- Status content will be injected here -->
+        </div>
+      </div>
+    </div>
+    
+    <!-- Results Preview -->
+    <div class="bt-results-section">
+      <div id="bt-results-card" class="card result-explorer-card">
+        <div class="card__header">
+          <h2 class="card__title">Results Preview</h2>
+          <p class="card__subtitle">Performance summary and insights</p>
+        </div>
+        <div class="card__body">
+          <div class="result-explorer-card__hint">
+            Click to explore detailed results
+          </div>
+          <!-- Results content will be injected here -->
+        </div>
+      </div>
+    </div>
   </aside>
 </div>
